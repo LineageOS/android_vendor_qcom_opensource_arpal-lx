@@ -2,7 +2,6 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_C_INCLUDES += vendor/qcom/opensource/pal
 LOCAL_MODULE := libpalclient
 LOCAL_MODULE_OWNER := qti
 LOCAL_VENDOR_MODULE := true
@@ -19,6 +18,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     vendor.qti.hardware.pal@1.0
 
+LOCAL_EXPORT_HEADER_LIBRARY_HEADERS := libarpal_headers
+LOCAL_HEADER_LIBRARIES := libarpal_headers
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
