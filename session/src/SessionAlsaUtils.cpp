@@ -1,6 +1,5 @@
 /*
 * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Innovation Center are provided under the following license:
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
 #define LOG_TAG "PAL: SessionAlsaUtils"
@@ -34,6 +37,7 @@
 
 #include <sstream>
 #include <string>
+#include <set>
 //#include "SessionAlsa.h"
 //#include "SessionAlsaPcm.h"
 //#include "SessionAlsaCompress.h"
@@ -289,6 +293,16 @@ bool SessionAlsaUtils::isMmapUsecase(struct pal_stream_attributes sAttr)
                         ||(sAttr.flags & PAL_STREAM_FLAG_MMAP_NO_IRQ_MASK))
             );
 
+}
+
+struct mixer_ctl *SessionAlsaUtils::getStaticMixerControl(struct mixer *am, std::string name)
+{
+    std::ostringstream cntrlName;
+
+    cntrlName << name;
+    PAL_DBG(LOG_TAG, "mixer control name is %s", cntrlName.str().data());
+
+    return mixer_get_ctl_by_name(am, cntrlName.str().data());
 }
 
 struct mixer_ctl *SessionAlsaUtils::getFeMixerControl(struct mixer *am, std::string feName,
@@ -653,6 +667,156 @@ freeMetaData:
     if (streamMetaData.buf)
         free(streamMetaData.buf);
 exit:
+    return status;
+}
+
+int SessionAlsaUtils::rwACDBTunnel(Stream * streamHandle, std::shared_ptr<ResourceManager> rmHandle,
+    pal_device_id_t deviceId, void *payload, bool isParamWrite, uint32_t instanceId)
+{
+    std::vector <std::pair<int, int>> acdbGKV;
+    std::vector <std::pair<int, int>> emptyKV;
+    std::set <std::pair<int, int>> acdbGKVSet;
+    int status = 0;
+    struct pal_stream_attributes sAttr;
+    struct mixer_ctl *acdbMixerCtrl = nullptr;
+    struct mixer *mixerHandle = nullptr;
+    uint32_t i;
+    PayloadBuilder* builder = nullptr;
+    struct vsid_info vsidDummy;
+    std::string acdbMixerName = "setACDBTunnel";
+    uint8_t *payloadData = NULL;
+    agm_acdb_param *effectACDBPayload = nullptr;
+    pal_param_payload *paramPayload = nullptr;
+    size_t payloadSize = 0;
+
+    if (!isParamWrite) {
+        PAL_ERR(LOG_TAG, "ACDB parameter read is not supported now.");
+        return -EINVAL;
+    }
+
+    paramPayload = (pal_param_payload *)payload;
+    if (!paramPayload)
+        return -EINVAL;
+
+    effectACDBPayload = (agm_acdb_param *)(paramPayload->payload);
+    if (!effectACDBPayload)
+        return -EINVAL;
+
+    PAL_DBG(LOG_TAG, "Entry \n");
+
+    status = streamHandle->getStreamAttributes(&sAttr);
+    if(0 != status) {
+        PAL_ERR(LOG_TAG,"getStreamAttributes Failed \n");
+        goto exit;
+    }
+
+    builder = new PayloadBuilder();
+    if (!builder) {
+        PAL_ERR(LOG_TAG, "Payload builder creation failed \n");
+        goto exit;
+    }
+
+    // get streamKV
+    if ((status = builder->populateStreamKVTunnel(streamHandle, acdbGKV, instanceId)) != 0) {
+        PAL_ERR(LOG_TAG, "get stream KV failed %d", status);
+        goto exit;
+    }
+
+    for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
+        PAL_DBG(LOG_TAG, "stream kv key=0x%x value=0x%x",
+                    kv->first, kv->second);
+    }
+
+    if ((status = builder->populateDeviceKVTunnel(streamHandle, deviceId, acdbGKV)) != 0) {
+        PAL_ERR(LOG_TAG, "get device KV failed %d", status);
+        goto freePaylodData;
+    }
+
+    for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
+        PAL_DBG(LOG_TAG, "device kv key=0x%x value=0x%x",
+                    kv->first, kv->second);
+    }
+
+    status = builder->populateDevicePPKVTunnel(streamHandle, deviceId, acdbGKV);
+    if (status) {
+        PAL_ERR(LOG_TAG, "get device KV failed %d", status);
+        goto freePaylodData;
+    }
+
+    for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
+        PAL_DBG(LOG_TAG, "device pp kv key=0x%x value=0x%x",
+                    kv->first, kv->second);
+    }
+
+    status = builder->populateStreamDeviceKV(streamHandle, deviceId, acdbGKV,
+                0, emptyKV, vsidDummy, SIDETONE_OFF);
+
+    if (status) {
+        PAL_ERR(LOG_TAG, "get stream device KV failed %d", status);
+        goto freePaylodData;
+    }
+
+    for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
+        PAL_DBG(LOG_TAG, "stream device kv key=0x%x value=0x%x",
+                    kv->first, kv->second);
+    }
+
+    /* remove duplicate element */
+    for (const auto & i : acdbGKV) {
+        acdbGKVSet.insert(i);
+    }
+
+    acdbGKV.clear();
+    acdbGKV.assign(acdbGKVSet.begin(), acdbGKVSet.end());
+    PAL_INFO(LOG_TAG, "ACDB gkv size = 0x%x", acdbGKV.size());
+    for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
+        PAL_INFO(LOG_TAG, "unique gkv key=0x%x value=0x%x",
+                    kv->first, kv->second);
+    }
+
+    status = builder->payloadACDBTunnelParam(&payloadData,
+         &payloadSize, (uint8_t *)effectACDBPayload, acdbGKVSet,
+                                0, sAttr.out_media_config.sample_rate);
+    if (!payloadData) {
+        PAL_ERR(LOG_TAG, "failed to allocate memory. status = %d", status);
+        goto exit;
+    }
+
+    PAL_DBG(LOG_TAG, "payload size = 0x%x", payloadSize);
+    status = rmHandle->getVirtualAudioMixer(&mixerHandle);
+    if (status) {
+        PAL_ERR(LOG_TAG, "Error: Failed to get mixer handle\n");
+        goto freePaylodData;
+    }
+
+    acdbMixerCtrl = SessionAlsaUtils::getStaticMixerControl(mixerHandle,
+        acdbMixerName);
+    if (!acdbMixerCtrl) {
+        PAL_ERR(LOG_TAG, "invalid mixer control");
+        status = -EINVAL;
+        goto freePaylodData;
+    }
+
+    /* set mixer controls */
+    if (payloadSize) {
+        status = mixer_ctl_set_array(acdbMixerCtrl, payloadData,
+                payloadSize);
+    }
+
+freePaylodData:
+    if (payloadData)
+        free(payloadData);
+
+exit:
+    acdbGKV.clear();
+    acdbGKVSet.clear();
+    if(builder) {
+       delete builder;
+       builder = NULL;
+    }
+
+    PAL_DBG(LOG_TAG,"Exit, status %d", status);
+
     return status;
 }
 
