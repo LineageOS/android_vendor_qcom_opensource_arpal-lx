@@ -89,6 +89,7 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
     mVolumeData->no_of_volpair = 1;
     mVolumeData->volume_pair[0].channel_mask = 0x03;
     mVolumeData->volume_pair[0].vol = 1.0f;
+    volRampPeriodms = 0x28;
 
     if (!sattr || !dattr) {
         PAL_ERR(LOG_TAG,"invalid arguments");
@@ -838,7 +839,7 @@ int32_t StreamPCM::setVolume(struct pal_volume_data *volume)
     memset(&vol_set_param_info, 0, sizeof(struct volume_set_param_info));
     rm->getVolumeSetParamInfo(&vol_set_param_info);
     if ((rm->cardState == CARD_STATUS_ONLINE) && (currentState != STREAM_IDLE)
-            && (currentState != STREAM_INIT)) {
+            && (currentState != STREAM_INIT) && (!isPaused)) {
         bool isStreamAvail = (find(vol_set_param_info.streams_.begin(),
                     vol_set_param_info.streams_.end(), mStreamAttr->type) !=
                     vol_set_param_info.streams_.end());
@@ -1190,6 +1191,7 @@ int32_t StreamPCM::pause_l()
     struct pal_volume_data *voldata = NULL;
     struct pal_volume_data *volume = NULL;
     std::unique_lock<std::mutex> pauseLock(pauseMutex);
+
     PAL_DBG(LOG_TAG, "Enter. session handle - %pK", session);
     if (rm->cardState == CARD_STATUS_OFFLINE) {
         cachedState = STREAM_PAUSED;
@@ -1221,6 +1223,7 @@ int32_t StreamPCM::pause_l()
             PAL_ERR(LOG_TAG, "session setParam for vol ctrl ramp failed with status %d", status);
 
         volSize = sizeof(uint32_t) + (sizeof(struct pal_channel_vol_kv) * (voldata->no_of_volpair));
+        volRampPeriodms = 0;
         status = 0; /* not fatal , reset status to 0 */
         /* set volume to 0 */
         volume = (struct pal_volume_data *)calloc(1, volSize);
@@ -1274,6 +1277,8 @@ int32_t StreamPCM::pause()
 int32_t StreamPCM::resume_l()
 {
     int32_t status = 0;
+    struct pal_vol_ctrl_ramp_param ramp_param;
+    struct pal_volume_data *voldata = NULL;
     PAL_DBG(LOG_TAG, "Enter. session handle - %pK", session);
     if (rm->cardState == CARD_STATUS_OFFLINE) {
         cachedState = STREAM_STARTED;
@@ -1288,7 +1293,36 @@ int32_t StreamPCM::resume_l()
         goto exit;
     }
 
+    /* set ramp period to default */
+    if (volRampPeriodms == 0) {
+        ramp_param.ramp_period_ms = 0x28;
+        status = session->setParameters(this, TAG_STREAM_VOLUME, PAL_PARAM_ID_VOLUME_CTRL_RAMP, &ramp_param);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "session setParam for vol ctrl ramp failed with status %d", status);
+        } else {
+            volRampPeriodms = 0x28;
+        }
+        status = 0;
+    }
+
     isPaused = false;
+
+    //since we set the volume to 0 in pause, in resume we need to set vol back to default
+    voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                      (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+    if (!voldata) {
+        status = -ENOMEM;
+        goto exit;
+    }
+
+    status = this->getVolumeData(voldata);
+    if (0 != status) {
+        PAL_ERR(LOG_TAG,"getVolumeData Failed \n");
+        goto exit;
+    }
+
+    setVolume(voldata);
+    free(voldata);
     PAL_DBG(LOG_TAG, "session setConfig successful");
 exit:
     PAL_DBG(LOG_TAG, "Exit status: %d", status);

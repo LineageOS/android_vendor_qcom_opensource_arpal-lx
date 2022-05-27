@@ -82,6 +82,17 @@ struct volume_ctrl_master_gain_t
 /* Structure type def for above payload. */
 typedef struct volume_ctrl_master_gain_t volume_ctrl_master_gain_t;
 
+#define PARAM_ID_VOL_CTRL_GAIN_RAMP_PARAMETERS 0x08001037
+#define PARAM_VOL_CTRL_RAMPINGCURVE_LINEAR 0
+
+/* Structure for holding soft stepping volume parameters. */
+struct volume_ctrl_gain_ramp_params_t
+{
+   uint32_t period_ms;
+   uint32_t step_us;
+   uint32_t ramping_curve;
+};
+
 /* ID of the Output Media Format parameters used by MODULE_ID_MFC */
 #define PARAM_ID_MFC_OUTPUT_MEDIA_FORMAT            0x08001024
 #include "spf_begin_pack.h"
@@ -388,6 +399,40 @@ void PayloadBuilder::payloadMultichVolumemConfig(uint8_t** payload, size_t* size
      *size = payloadSize + padBytes;
      *payload = payloadInfo;
      PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
+}
+
+void PayloadBuilder::payloadVolumeCtrlRamp(uint8_t** payload, size_t* size,
+        uint32_t miid, uint32_t ramp_period_ms)
+{
+    struct apm_module_param_data_t* header = NULL;
+    struct volume_ctrl_gain_ramp_params_t *rampParams;
+    uint8_t* payloadInfo = NULL;
+    size_t payloadSize = 0, padBytes = 0;
+
+    payloadSize = sizeof(struct apm_module_param_data_t) +
+                  sizeof(struct volume_ctrl_gain_ramp_params_t);
+    padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+    payloadInfo = new uint8_t[payloadSize + padBytes]();
+    if (!payloadInfo) {
+        PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s", strerror(errno));
+        return;
+    }
+    header = (struct apm_module_param_data_t*)payloadInfo;
+    header->module_instance_id = miid;
+    header->param_id = PARAM_ID_VOL_CTRL_GAIN_RAMP_PARAMETERS;
+    header->error_code = 0x0;
+    header->param_size = payloadSize -  sizeof(struct apm_module_param_data_t);
+    rampParams = (struct volume_ctrl_gain_ramp_params_t*) (payloadInfo + sizeof(struct apm_module_param_data_t));
+    rampParams->period_ms = ramp_period_ms;
+    rampParams->step_us = 0;
+    rampParams->ramping_curve = PARAM_VOL_CTRL_RAMPINGCURVE_LINEAR;
+    PAL_VERBOSE(LOG_TAG, "header params IID:%x param_id:%x error_code:%d param_size:%d",
+                  header->module_instance_id, header->param_id,
+                  header->error_code, header->param_size);
+    *size = payloadSize + padBytes;;
+    *payload = payloadInfo;
+    PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
+
 }
 
 void PayloadBuilder::payloadMFCConfig(uint8_t** payload, size_t* size,
