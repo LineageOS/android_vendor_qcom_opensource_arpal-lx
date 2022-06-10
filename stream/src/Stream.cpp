@@ -1614,9 +1614,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             rm->checkHapticsConcurrency(&newDevices[newDeviceSlots[i]], NULL, streamsToSwitch/* not used */, NULL);
         }
         /*
-         * switch all streams that are running on the current device if:
-         * 1. switching device for Voice Call
-         * 2. switching device for Rx stream currently using same rx device as voice call
+         * switch all streams that are running on the current device if
+         * switching device for Voice Call
          */
         sharedBEStreamDev.clear();
         for (int j = 0; j < mDevices.size(); j++) {
@@ -1628,15 +1627,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 if (type == PAL_STREAM_VOICE_CALL &&
                     newDeviceId != PAL_DEVICE_OUT_HEARING_AID) {
                     voice_call_switch = true;
-                } else if (rm->isOutputDevId(mDevices[j]->getSndDeviceId())) {
-                    for (const auto &elem : sharedBEStreamDev) {
-                        std::get<0>(elem)->getStreamAttributes(&strAttr);
-                        if (strAttr.type == PAL_STREAM_VOICE_CALL &&
-                            newDeviceId != PAL_DEVICE_OUT_HEARING_AID) {
-                            voice_call_switch = true;
-                            break;
-                        }
-                    }
                 }
                 if (voice_call_switch) {
                     for (const auto &elem : sharedBEStreamDev) {
