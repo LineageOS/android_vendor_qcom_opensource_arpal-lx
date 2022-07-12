@@ -2835,7 +2835,7 @@ int ResourceManager::increaseStreamUserCounter(Stream* s)
         PAL_DBG(LOG_TAG, "stream %p counter increased to %d", s, it->second);
         return 0;
     } else {
-        PAL_ERR(LOG_TAG, "stream %p is not found.");
+        PAL_ERR(LOG_TAG, "stream %p is not found.", s);
         return -EINVAL;
     }
 }
@@ -2848,7 +2848,7 @@ int ResourceManager::decreaseStreamUserCounter(Stream* s)
     if (it != mActiveStreamUserCounter.end()) {
         PAL_DBG(LOG_TAG, "stream %p counter was %d", s, it->second);
         if (0 == it->second) {
-            PAL_ERR(LOG_TAG, "counter of stream %p has already been 0.");
+            PAL_ERR(LOG_TAG, "counter of stream %p has already been 0.", s);
             return -EINVAL;
         }
 
@@ -2860,7 +2860,7 @@ int ResourceManager::decreaseStreamUserCounter(Stream* s)
         PAL_DBG(LOG_TAG, "stream %p counter decreased to %d", s, it->second);
         return 0;
     } else {
-        PAL_ERR(LOG_TAG, "stream %p is not found.");
+        PAL_ERR(LOG_TAG, "stream %p is not found.", s);
         return -EINVAL;
     }
 }
@@ -2873,7 +2873,7 @@ int ResourceManager::getStreamUserCounter(Stream *s)
     if (it != mActiveStreamUserCounter.end()) {
         return it->second;
     } else {
-        PAL_ERR(LOG_TAG, "stream %p is not found.");
+        PAL_ERR(LOG_TAG, "stream %p is not found.", s);
         return -EINVAL;
     }
 }
