@@ -24,6 +24,7 @@ h_sources = ./stream/inc/Stream.h \
             ./device/inc/UltrasoundDevice.h \
             ./session/inc/Session.h \
             ./session/inc/PayloadBuilder.h \
+            ./session/inc/kvh2xml.h \
             ./session/inc/SessionGsl.h \
             ./session/inc/SessionAlsaUtils.h \
             ./session/inc/SessionAlsaPcm.h \
@@ -101,6 +102,7 @@ h_sources = ${top_srcdir}/stream/inc/Stream.h \
             ${top_srcdir}/session/inc/ACDEngine.h \
             ${top_srcdir}/session/inc/Session.h \
             ${top_srcdir}/session/inc/PayloadBuilder.h \
+            $(top_srcdir)/session/inc/kvh2xml.h \
             ${top_srcdir}/session/inc/SessionGsl.h \
             ${top_srcdir}/session/inc/SessionAlsaPcm.h \
             ${top_srcdir}/session/inc/SessionAlsaCompress.h \
@@ -135,6 +137,7 @@ AM_CPPFLAGS += @MMHEADERS_CFLAGS@
 AM_CPPFLAGS += -Wno-sign-compare -Wno-unused-result
 AM_CPPFLAGS += -D__unused=__attribute__\(\(__unused__\)\) -DLINUX_ENABLED
 AM_CPPFLAGS += -DSND_AUDIOCODEC_ALAC=0x00000020 -DSND_AUDIOCODEC_APE=0x00000021
+AM_CPPFLAGS += $(GECKO_CFLAGS)
 AM_CPPFLAGS += -DCONFIG_GSL
 
 pal_sources = ${top_srcdir}/stream/src/Stream.cpp \
