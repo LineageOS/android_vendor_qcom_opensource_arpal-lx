@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -113,6 +113,8 @@ StreamCommon::StreamCommon(const struct pal_stream_attributes *sattr, struct pal
     }
 
     PAL_VERBOSE(LOG_TAG, "Create new Devices with no_of_devices - %d", no_of_devices);
+
+    bool str_registered = false;
     for (int i = 0; i < no_of_devices; i++) {
         //Check with RM if the configuration given can work or not
         //for e.g., if incoming stream needs 24 bit device thats also
@@ -129,6 +131,10 @@ StreamCommon::StreamCommon(const struct pal_stream_attributes *sattr, struct pal
         }
         mPalDevice.push_back(dattr[i]);
         mStreamMutex.unlock();
+        if (!str_registered) {
+            rm->registerStream(this);
+            str_registered = true;
+        }
         isDeviceConfigUpdated = rm->updateDeviceConfig(&dev, &dattr[i], sattr);
         mStreamMutex.lock();
 

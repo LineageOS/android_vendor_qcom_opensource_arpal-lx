@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: StreamUltraSound"
@@ -43,7 +47,6 @@ StreamUltraSound::StreamUltraSound(const struct pal_stream_attributes *sattr __u
                   StreamCommon(sattr,dattr,no_of_devices,modifiers,no_of_modifiers,rm)
 {
     session->registerCallBack((session_callback)HandleCallBack,((uint64_t) this));
-    rm->registerStream(this);
 }
 
 StreamUltraSound::~StreamUltraSound()

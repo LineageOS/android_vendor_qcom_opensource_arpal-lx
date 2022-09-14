@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -131,6 +131,7 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
 
     session->registerCallBack(handleSessionCallBack, (uint64_t)this);
     PAL_VERBOSE(LOG_TAG,"Create new Devices with no_of_devices - %d", no_of_devices);
+    bool str_registered = false;
     for (uint32_t i = 0; i < no_of_devices; i++) {
         dev = Device::getInstance((struct pal_device *)&dattr[i] , rm);
         if (dev == nullptr) {
@@ -144,6 +145,10 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
         }
         mPalDevice.push_back(dattr[i]);
         mStreamMutex.unlock();
+        if (!str_registered) {
+            rm->registerStream(this);
+            str_registered = true;
+        }
         isDeviceConfigUpdated = rm->updateDeviceConfig(&dev, &dattr[i], sattr);
         mStreamMutex.lock();
 
@@ -154,7 +159,6 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
         dev = nullptr;
     }
     mStreamMutex.unlock();
-    rm->registerStream(this);
     PAL_VERBOSE(LOG_TAG,"exit, state %d", currentState);
 }
 
