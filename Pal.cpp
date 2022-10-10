@@ -230,7 +230,7 @@ int32_t pal_stream_close(pal_stream_handle_t *stream_handle)
     s->setCachedState(STREAM_IDLE);
     status = s->close();
 
-    rm->deinitStreamUserCounter(s);
+    rm->deactivateStreamUserCounter(s);
 
     if (0 != status) {
         PAL_ERR(LOG_TAG, "stream closed failed. status %d", status);
@@ -240,6 +240,7 @@ exit:
     s->getStreamAttributes(&sAttr);
     notify_concurrent_stream(sAttr.type, sAttr.direction, false);
     delete s;
+    rm->eraseStreamUserCounter(s);
     PAL_INFO(LOG_TAG, "Exit. status %d", status);
     return status;
 }
