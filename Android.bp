@@ -3,7 +3,14 @@ cc_library_headers {
     vendor: true,
 
     export_include_dirs: [
+        "context_manager/inc",
+        "device/inc",
         "inc",
+        "plugins/codecs",
+        "resource_manager/inc",
+        "session/inc",
+        "stream/inc",
+        "utils/inc",
     ],
 }
 
@@ -105,16 +112,6 @@ cc_library_shared {
     include_dirs: [
         "system/media/audio/include",
         "system/media/audio_route/include",
-    ],
-
-    local_include_dirs: [
-        "context_manager/inc",
-        "device/inc",
-        "plugins/codecs",
-        "resource_manager/inc",
-        "session/inc",
-        "stream/inc",
-        "utils/inc",
     ],
 
     header_libs: [
