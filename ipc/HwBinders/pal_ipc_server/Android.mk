@@ -13,6 +13,11 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc
 
+ifeq ($(QCPATH),)
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/../../..
+endif
+
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
