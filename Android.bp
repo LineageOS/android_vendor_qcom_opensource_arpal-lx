@@ -1,7 +1,16 @@
 cc_library_headers {
 
     name: "libarpal_headers",
-    export_include_dirs: ["inc"],
+    export_include_dirs: [
+        "inc",
+        "stream/inc",
+        "device/inc",
+        "session/inc",
+        "resource_manager/inc",
+        "context_manager/inc",
+        "utils/inc",
+        "plugins/codecs",
+    ],
     vendor: true,
 
 }
