@@ -49,6 +49,14 @@ enum AllKeyIds{
 	INSTANCE = 0xAB000000,       /**< @h2xmle_name{Instance} */
 	DEVICEPP_RX = 0xAC000000,    /**< @h2xmle_name{DevicePP_Rx} */
 	DEVICEPP_TX = 0xAD000000,    /**< @h2xmle_name{DevicePP_Tx} */
+	MEDIAFMTID = 0xae000000,
+	EQUALIZER_SWITCH = 0xb2000000,
+	VIRTUALIZER_SWITCH = 0xb9000000,
+	REVERB_SWITCH = 0xb8000000,
+	PBE_SWITCH = 0xb6000000,
+	BASS_BOOST_SWITCH = 0xb7000000,
+	STREAM_SLOWTALK = 0xbb000000,
+	STREAM_MUXDEMUX = 0xbd000000
 };
 
 /**
@@ -280,6 +288,81 @@ enum TAG_STREAM_VOLUME_Keys {
 */
 enum TAG_DEVICE_PP_MFC_Keys {
 	tk1_SamplingRate = SAMPLINGRATE,
+	tk2_BitWidth     = BITWIDTH,
+	tk3_Channels     = CHANNELS,
+};
+
+#define TAG_STREAM_MFC  0xc000000b
+
+// Same enum names as TAG_DEVICE_PP_MFC_Keys
+/*enum TAG_STREAM_MFC_Keys {
+	tk1_SamplingRate = SAMPLINGRATE,
+	tk2_BitWidth     = BITWIDTH,
+	tk3_Channels     = CHANNELS,
+};*/
+
+
+#define TAG_STREAM_PLACEHOLDER_DECODER  0xc0000012
+
+enum TAG_STREAM_PLACEHOLDER_DECODER_Keys {
+	tk1_MediaFmtID = MEDIAFMTID,
+};
+
+#define TAG_STREAM_EQUALIZER  0xc0000014
+
+enum TAG_STREAM_EQUALIZER_Keys {
+	tk1_Equalizer = EQUALIZER_SWITCH,
+};
+
+#define TAG_STREAM_VIRTUALIZER  0xc0000015
+
+enum TAG_STREAM_VIRTUALIZER_Keys {
+	tk1_Virtualizer_Switch = VIRTUALIZER_SWITCH,
+};
+
+#define TAG_STREAM_REVERB  0xc0000016
+
+enum TAG_STREAM_REVERB_Keys {
+	tk1_Reverb_Switch = REVERB_SWITCH,
+};
+
+#define TAG_STREAM_PBE  0xc0000017
+
+enum TAG_STREAM_PBE_Keys {
+	tk1_PBE_Switch = PBE_SWITCH,
+};
+
+#define TAG_STREAM_BASS_BOOST  0xc0000018
+
+enum TAG_STREAM_BASS_BOOST_Keys {
+	tk1_BASS_BOOST_Switch = BASS_BOOST_SWITCH,
+};
+
+#define TAG_PSPD_MFC  0xc0000019
+
+// Same enum names as TAG_DEVICE_PP_MFC_Keys
+/*enum TAG_PSPD_MFC_Keys {
+	tk1_SamplingRate = SAMPLINGRATE,
+	tk2_BitWidth     = BITWIDTH,
+	tk3_Channels     = CHANNELS,
+};*/
+
+#define TAG_STREAM_SLOWTALK  0xc0000025
+
+enum TAG_STREAM_SLOWTALK_Keys {
+	tk1_Stream_SlowTalk = STREAM_SLOWTALK,
+};
+
+#define TAG_MODULE_CHANNELS  0xc0000026
+
+enum TAG_MODULE_CHANNELS_Keys {
+	tk1_Channels = CHANNELS,
+};
+
+#define TAG_STREAM_MUXDEMUX  0xc0000027
+
+enum TAG_STREAM_MUXDEMUX_Keys {
+	tk1_Stream_MuxDemux= STREAM_MUXDEMUX,
 };
 
 /**
