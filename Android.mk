@@ -7,7 +7,15 @@ PAL_BASE_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libarpal_headers
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/inc \
+    $(LOCAL_PATH)/stream/inc \
+    $(LOCAL_PATH)/device/inc \
+    $(LOCAL_PATH)/session/inc \
+    $(LOCAL_PATH)/resource_manager/inc \
+    $(LOCAL_PATH)/context_manager/inc \
+    $(LOCAL_PATH)/utils/inc \
+    $(LOCAL_PATH)/plugins/codecs
 
 LOCAL_VENDOR_MODULE := true
 
@@ -42,13 +50,6 @@ LOCAL_CFLAGS        += -DWSA_V883X_ADDR
 endif
 
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/stream/inc \
-    $(LOCAL_PATH)/device/inc \
-    $(LOCAL_PATH)/session/inc \
-    $(LOCAL_PATH)/resource_manager/inc \
-    $(LOCAL_PATH)/context_manager/inc \
-    $(LOCAL_PATH)/utils/inc \
-    $(LOCAL_PATH)/plugins/codecs \
     $(TOP)/system/media/audio_route/include \
     $(TOP)/system/media/audio/include
 
