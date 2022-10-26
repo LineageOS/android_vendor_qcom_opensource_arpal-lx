@@ -3615,6 +3615,47 @@ void ResourceManager::disableInternalECRefs(Stream *s)
     PAL_DBG(LOG_TAG, "Exit");
 }
 
+// NOTE: this api should be called with mActiveStreamMutex locked
+void ResourceManager::restoreInternalECRefs()
+{
+    int32_t status = 0;
+    std::shared_ptr<Device> dev = nullptr;
+    struct pal_stream_attributes sAttr;
+    std::vector<std::shared_ptr<Device>> associatedDevices;
+
+    PAL_DBG(LOG_TAG, "Enter");
+    for (auto str: mActiveStreams) {
+        associatedDevices.clear();
+        if (!str)
+            continue;
+
+        status = str->getStreamAttributes(&sAttr);
+        if (status != 0) {
+            PAL_ERR(LOG_TAG,"stream get attributes failed");
+            continue;
+        } else if (sAttr.direction != PAL_AUDIO_INPUT) {
+            continue;
+        }
+
+        status = str->getAssociatedDevices(associatedDevices);
+        if ((0 != status) || associatedDevices.empty()) {
+            PAL_ERR(LOG_TAG, "getAssociatedDevices Failed or Empty");
+            continue;
+        }
+
+        // Tx stream should have one device
+        for (int i = 0; i < associatedDevices.size(); i++) {
+            dev = associatedDevices[i];
+            mResourceManagerMutex.lock();
+            if (isDeviceActive_l(dev, str))
+                checkandEnableEC_l(dev, str, true);
+            mResourceManagerMutex.unlock();
+        }
+    }
+
+    PAL_DBG(LOG_TAG, "Exit");
+}
+
 bool ResourceManager::checkStreamMatch(Stream *target, Stream *ref) {
     int32_t status = 0;
     bool is_match = false;
