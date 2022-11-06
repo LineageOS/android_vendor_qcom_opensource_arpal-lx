@@ -6,6 +6,7 @@ LOCAL_C_INCLUDES += vendor/qcom/opensource/pal
 LOCAL_MODULE := libpalclient
 LOCAL_MODULE_OWNER := qti
 LOCAL_VENDOR_MODULE := true
+LOCAL_CFLAGS += -Wno-unused-parameter -Wno-unused-variable -Wno-format
 LOCAL_SRC_FILES := \
     src/pal_client_wrapper.cpp
 
