@@ -3602,7 +3602,7 @@ void ResourceManager::disableInternalECRefs(Stream *s)
             dev = associatedDevices[i];
             if (isExternalECSupported(dev)) {
                 rx_dev = clearInternalECRefCounts(str, dev);
-                if (rx_dev && str != s) {
+                if (rx_dev && !checkStreamMatch(str, s)) {
                     if (isDeviceSwitch)
                         status = str->setECRef_l(rx_dev, false);
                     else
@@ -3613,6 +3613,45 @@ void ResourceManager::disableInternalECRefs(Stream *s)
     }
 
     PAL_DBG(LOG_TAG, "Exit");
+}
+
+bool ResourceManager::checkStreamMatch(Stream *target, Stream *ref) {
+    int32_t status = 0;
+    bool is_match = false;
+    struct pal_stream_attributes target_attr;
+    struct pal_stream_attributes ref_attr;
+    StreamSoundTrigger *st_target = nullptr;
+    StreamSoundTrigger *st_ref = nullptr;
+
+    if (target == ref)
+        return true;
+
+    status = target->getStreamAttributes(&target_attr);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG,"stream get attributes failed");
+        goto exit;
+    }
+
+    status = ref->getStreamAttributes(&ref_attr);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG,"stream get attributes failed");
+        goto exit;
+    }
+
+    if (target_attr.type != PAL_STREAM_VOICE_UI ||
+        ref_attr.type != PAL_STREAM_VOICE_UI)
+        goto exit;
+
+    st_target = dynamic_cast<StreamSoundTrigger *>(target);
+    st_ref = dynamic_cast<StreamSoundTrigger *>(ref);
+
+    if (st_target->GetGSLEngine() == st_ref->GetGSLEngine()) {
+        PAL_DBG(LOG_TAG, "Voice UI stream match because same gsl engine used");
+        is_match = true;
+    }
+
+exit:
+    return is_match;
 }
 
 int ResourceManager::getECEnableSetting(std::shared_ptr<Device> tx_dev,
