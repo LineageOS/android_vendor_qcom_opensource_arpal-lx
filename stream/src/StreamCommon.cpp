@@ -214,13 +214,6 @@ int32_t  StreamCommon::open()
     }
 
     if (currentState == STREAM_IDLE) {
-        status = session->open(this);
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "Error:session open failed with status %d", status);
-            goto exit;
-        }
-        PAL_VERBOSE(LOG_TAG, "session open successful");
-
         for (int32_t i = 0; i < mDevices.size(); i++) {
             status = mDevices[i]->open();
             if (0 != status) {
@@ -228,6 +221,13 @@ int32_t  StreamCommon::open()
                 goto exit;
             }
         }
+
+        status = session->open(this);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "Error:session open failed with status %d", status);
+            goto exit;
+        }
+        PAL_VERBOSE(LOG_TAG, "session open successful");
         currentState = STREAM_INIT;
         PAL_DBG(LOG_TAG, "streamLL opened. state %d", currentState);
     } else if (currentState == STREAM_INIT) {
