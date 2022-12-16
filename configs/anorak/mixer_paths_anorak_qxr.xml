@@ -182,8 +182,10 @@
     <ctl name="TX SMIC MUX7" value="ZERO" />
 
     <!-- Volume controls -->
-    <ctl name="WSA_RX0 Digital Volume" value="78" />
+    <ctl name="WSA_RX0 Digital Volume" value="84" />
     <ctl name="WSA_RX1 Digital Volume" value="84" />
+    <ctl name="WSA2_RX0 Digital Volume" value="84" />
+    <ctl name="WSA2_RX1 Digital Volume" value="84" />
     <ctl name="RX_RX0 Digital Volume" value="84" />
     <ctl name="RX_RX1 Digital Volume" value="84" />
     <ctl name="RX_RX2 Digital Volume" value="84" />
@@ -427,6 +429,10 @@
         <ctl name="Spkr2Right SWR DAC_Port Switch" value="1" />
         <ctl name="Spkr2Left PBR Switch" value="1" />
         <ctl name="Spkr2Right PBR Switch" value="1" />
+        <ctl name="WSA_RX0 comp_mode" value="G_15_DB" />
+        <ctl name="WSA_RX1 comp_mode" value="G_15_DB" />
+        <ctl name="WSA2_RX0 comp_mode" value="G_15_DB" />
+        <ctl name="WSA2_RX1 comp_mode" value="G_15_DB" />
     </path>
 
     <path name="haptics-dev">
@@ -1029,6 +1035,8 @@
        <ctl name="DMIC4 ChMap" value="SWRM_TX1_CH1" />
        <ctl name="DMIC5_MIXER Switch" value="1" />
        <ctl name="DMIC4_MIXER Switch" value="1" />
+       <ctl name="TX_DEC0 Volume" value="102" />
+       <ctl name="TX_DEC1 Volume" value="102" />
     </path>
 
     <path name="dmic-endfire">
@@ -1184,6 +1192,10 @@
         <ctl name="DMIC6_MIXER Switch" value="1" />
         <ctl name="DMIC5_MIXER Switch" value="1" />
         <ctl name="DMIC4_MIXER Switch" value="1" />
+        <ctl name="TX_DEC0 Volume" value="102" />
+        <ctl name="TX_DEC1 Volume" value="102" />
+        <ctl name="TX_DEC2 Volume" value="102" />
+        <ctl name="TX_DEC3 Volume" value="102" />
     </path>
 
     <path name="speaker-qmic-liquid">
