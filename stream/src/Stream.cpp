@@ -1050,10 +1050,12 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                 goto exit;
             }
 
+            mDevices.push_back(dev);
             status = session->setupSessionDevice(this, mStreamAttr->type, dev);
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "setupSessionDevice failed:%d", status);
                 dev->close();
+                mDevices.pop_back();
                 goto exit;
             }
 
@@ -1061,9 +1063,9 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "connectSessionDevice failed:%d", status);
                 dev->close();
+                mDevices.pop_back();
                 goto exit;
             }
-            mDevices.push_back(dev);
             dev->getDeviceAttributes(&dattr, this);
             addPalDevice(this, &dattr);
         }
