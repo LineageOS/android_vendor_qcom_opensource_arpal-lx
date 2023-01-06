@@ -1322,33 +1322,6 @@ set_mixer:
                     status = -EINVAL;
                     goto exit;
                 }
-                status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
-                                                                "ZERO", RAT_RENDER, &miid);
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG, "getModuleInstanceId failed");
-                    goto exit;
-                }
-                PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
-                codecConfig.bit_width = sAttr.out_media_config.bit_width;
-                codecConfig.sample_rate = sAttr.out_media_config.sample_rate;
-                codecConfig.aud_fmt_id = sAttr.out_media_config.aud_fmt_id;
-                codecConfig.ch_info.channels = sAttr.out_media_config.ch_info.channels;
-                builder->payloadRATConfig(&payload, &payloadSize, miid, &codecConfig);
-                if (payloadSize && payload) {
-                    status = updateCustomPayload(payload, payloadSize);
-                    freeCustomPayload(&payload, &payloadSize);
-                    if (0 != status) {
-                        PAL_ERR(LOG_TAG, "updateCustomPayload Failed\n");
-                        goto exit;
-                    }
-                }
-                status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
-                                                             customPayload, customPayloadSize);
-                freeCustomPayload();
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG, "setMixerParameter failed for RAT render");
-                    goto exit;
-                }
                 goto pcm_start;
             }
             status = s->getAssociatedDevices(associatedDevices);
