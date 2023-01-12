@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 - 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1414,17 +1414,21 @@ void SpeakerProtection::updateCpsCustomPayload(int miid, uint32_t phy_add[3], in
     PayloadBuilder* builder = new PayloadBuilder();
     uint8_t* payload = NULL;
     size_t payloadSize = 0;
-    int max_channels = 0;
+    int max_channels = numberOfChannels;
+    lpass_swr_hw_reg_cfg_t *cpsRegCfg = NULL;
+    int val, ret = 0;
+
     if (numberOfChannels > 2)
         max_channels = 2;
-    else
-        max_channels = numberOfChannels;
-    lpass_swr_hw_reg_cfg_t *cpsRegCfg = NULL;
+    else if (numberOfChannels < 1) {
+        PAL_ERR(LOG_TAG,"Received invalid number of channels for CPS payload\n");
+        goto exit;
+    }
+
     pkd_reg_addr_t pkedRegAddr[max_channels];
     cps_reg_wr_values_t *cps_thrsh_values;
     param_id_cps_lpass_swr_thresholds_cfg_t *cps_thrsh_cfg;
     int dev_num;
-    int val, ret = 0;
 
     memset(&pkedRegAddr, 0, sizeof(pkd_reg_addr_t) * max_channels);
     // Payload for ParamID : PARAM_ID_CPS_LPASS_HW_INTF_CFG
