@@ -832,6 +832,8 @@ public:
     bool updateDeviceConfig(std::shared_ptr<Device> *inDev,
              struct pal_device *inDevAttr, const pal_stream_attributes* inStrAttr);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr);
+    int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr,
+                              std::vector <Stream *> prevActiveStreams);
     const std::string getPALDeviceName(const pal_device_id_t id) const;
     bool isNonALSACodec(const struct pal_device *device) const;
     bool isNLPISwitchSupported(pal_stream_type_t type);
