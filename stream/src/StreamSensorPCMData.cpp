@@ -200,6 +200,13 @@ int32_t StreamSensorPCMData::start()
             mDevices.clear();
             mDevices.push_back(device);
 
+            status = device->open();
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Error: device [%d] open failed with status %d",
+                        device->getSndDeviceId(), status);
+                goto exit;
+            }
+
             status = session->open(this);
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "Error:session open failed with status %d", status);
@@ -218,13 +225,6 @@ int32_t StreamSensorPCMData::start()
                 if (status)
                     PAL_ERR(LOG_TAG, "Error:%d Failed to start other Detection streams", status);
             }
-        }
-
-        status = device->open();
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "Error: device [%d] open failed with status %d",
-                    device->getSndDeviceId(), status);
-            goto exit;
         }
 
         status = device->start();
