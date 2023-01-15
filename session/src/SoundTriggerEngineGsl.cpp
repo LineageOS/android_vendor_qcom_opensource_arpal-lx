@@ -1009,6 +1009,10 @@ int32_t SoundTriggerEngineGsl::UpdateMergeConfLevelsPayload(
     if (!sm_merged_) {
         PAL_DBG(LOG_TAG, "Soundmodel is not merged, use source sm info");
         *eng_sm_info_ = *src_sm_info;
+        if (!eng_sm_info_->GetConfLevels()) {
+            PAL_ERR(LOG_TAG, "cf_levels_ allocation failed in assignment operator");
+            return -ENOMEM;
+        }
         for (uint32_t i = 0; i < eng_sm_info_->GetConfLevelsSize(); i++) {
             if (!set) {
                 eng_sm_info_->UpdateConfLevel(i, MAX_CONF_LEVEL_VALUE);
