@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1483,6 +1483,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         bool devReadyStatus = 0;
         uint32_t retryCnt = 20;
         uint32_t retryPeriodMs = 100;
+        pal_param_bta2dp_t* param_bt_a2dp = nullptr;
         /*
          * When A2DP, Out Proxy and DP device is disconnected the
          * music playback is paused and the policy manager sends routing=0
@@ -1506,13 +1507,42 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             rm->unlockActiveStream();
             return 0;
         }
+        /* Retry isDeviceReady check is required for BT devices only.
+        *  In case of BT disconnection event from BT stack, if stream
+        *  is still associated with BT but the BT device is not in
+        *  ready state, explicit dev switch from APM to BT keep on retrying
+        *  for 2 secs causing audioserver to stuck for processing
+        *  disconnection. Thus check for isCurDeviceA2dp and a2dp_suspended
+        *  state to avoid unnecessary sleep over 2 secs.
+        */
+        if ((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
+            (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+            (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)) {
+            dev = Device::getInstance(&newDevices[i], rm);
+            if (!dev) {
+                status = -ENODEV;
+                PAL_ERR(LOG_TAG, "failed to get a2dp/ble device object");
+                goto done;
+            }
+            dev->getDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
+                (void**)&param_bt_a2dp);
 
-        while (!devReadyStatus && --retryCnt) {
+            if (!param_bt_a2dp->a2dp_suspended) {
+                while (!devReadyStatus && --retryCnt) {
+                    devReadyStatus = rm->isDeviceReady(newDevices[i].id);
+                    if (devReadyStatus) {
+                        break;
+                    } else if (isCurDeviceA2dp) {
+                        break;
+                    }
+
+                    usleep(retryPeriodMs * 1000);
+                }
+            }
+        } else {
             devReadyStatus = rm->isDeviceReady(newDevices[i].id);
-            if (devReadyStatus)
-                break;
-            usleep(retryPeriodMs * 1000);
         }
+
         if (!devReadyStatus) {
             PAL_ERR(LOG_TAG, "Device %d is not ready", newDevices[i].id);
             if (((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
