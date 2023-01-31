@@ -8420,6 +8420,7 @@ exit:
 int32_t ResourceManager::a2dpCaptureSuspend(pal_device_id_t dev_id)
 {
     int status = 0;
+    uint32_t prio;
     std::shared_ptr<Device> a2dpDev = nullptr;
     struct pal_device a2dpDattr = {};
     struct pal_device handsetmicDattr = {};
@@ -8454,8 +8455,12 @@ int32_t ResourceManager::a2dpCaptureSuspend(pal_device_id_t dev_id)
         mActiveStreamMutex.unlock();
         goto exit;
     }
-    getActiveStream_l(activeStreams, handsetmicDev);
-    if (activeStreams.size() == 0) {
+    /* Check if any stream device attribute pair is already there for
+     * the handset and use its attributes before deciding on
+     * using default device info
+     */
+    status = handsetmicDev->getTopPriorityDeviceAttr(&handsetmicDattr, &prio);
+    if (status) {
         // No active streams on handset-mic, get default dev info
         pal_device_info devInfo;
         memset(&devInfo, 0, sizeof(pal_device_info));
@@ -8466,9 +8471,6 @@ int32_t ResourceManager::a2dpCaptureSuspend(pal_device_id_t dev_id)
                 handsetmicDattr.custom_config.custom_key, &devInfo);
             updateSndName(handsetmicDattr.id, devInfo.sndDevName);
         }
-    } else {
-        // activestream found on handset-mic
-        status = handsetmicDev->getDeviceAttributes(&handsetmicDattr);
     }
 
     for (sIter = activeA2dpStreams.begin(); sIter != activeA2dpStreams.end(); sIter++) {
