@@ -3966,10 +3966,17 @@ exit:
 
 int ResourceManager::registerDevice_l(std::shared_ptr<Device> d, Stream *s)
 {
+    int ret = 0;
     PAL_DBG(LOG_TAG, "Enter.");
-    active_devices.push_back(std::make_pair(d, s));
+
+    auto iter = std::find(active_devices.begin(),
+        active_devices.end(), std::make_pair(d, s));
+    if (iter == active_devices.end())
+        active_devices.push_back(std::make_pair(d, s));
+    else
+        ret = -EINVAL;
     PAL_DBG(LOG_TAG, "Exit.");
-    return 0;
+    return ret;
 }
 
 int ResourceManager::registerDevice(std::shared_ptr<Device> d, Stream *s)
@@ -3977,8 +3984,12 @@ int ResourceManager::registerDevice(std::shared_ptr<Device> d, Stream *s)
     PAL_DBG(LOG_TAG, "Enter. dev id: %d", d->getSndDeviceId());
 
     mResourceManagerMutex.lock();
-    registerDevice_l(d, s);
-    checkandEnableEC_l(d, s, true);
+    if (registerDevice_l(d, s)) {
+        PAL_DBG(LOG_TAG, "device %d is already registered for stream %p",
+            d->getSndDeviceId(), s);
+    } else {
+        checkandEnableEC_l(d, s, true);
+    }
     mResourceManagerMutex.unlock();
 
     PAL_DBG(LOG_TAG, "Exit.");
@@ -4005,15 +4016,18 @@ int ResourceManager::deregisterDevice_l(std::shared_ptr<Device> d, Stream *s)
 
 int ResourceManager::deregisterDevice(std::shared_ptr<Device> d, Stream *s)
 {
-    int status = 0;
     PAL_DBG(LOG_TAG, "Enter. dev id: %d", d->getSndDeviceId());
 
     mResourceManagerMutex.lock();
-    status = deregisterDevice_l(d, s);
-    checkandEnableEC_l(d, s, false);
+    if (deregisterDevice_l(d, s)) {
+        PAL_DBG(LOG_TAG, "Device %d not found for stream %p, skip EC handling",
+            d->getSndDeviceId(), s);
+    } else {
+        checkandEnableEC_l(d, s, false);
+    }
     mResourceManagerMutex.unlock();
-    PAL_DBG(LOG_TAG, "Exit. status: %d", status);
-    return status;
+    PAL_DBG(LOG_TAG, "Exit.");
+    return 0;
 }
 
 bool ResourceManager::isDeviceActive(pal_device_id_t deviceId)
@@ -4847,6 +4861,20 @@ int ResourceManager::HandleDetectionStreamAction(pal_stream_type_t type, int32_t
                         PAL_ERR(LOG_TAG, "Failed to do resume stream");
                 }
                 break;
+            case ST_CONCURRENT_PAUSE:
+                if (str != (Stream *)data) {
+                    status = str->ConcurrentPause();
+                    if (status)
+                        PAL_ERR(LOG_TAG, "Failed to pause stream");
+                }
+                break;
+            case ST_CONCURRENT_RESUME:
+                if (str != (Stream *)data) {
+                    status = str->ConcurrentResume();
+                    if (status)
+                        PAL_ERR(LOG_TAG, "Failed to do resume stream");
+                }
+                break;
             case ST_ENABLE_LPI: {
                 bool active = *(bool *)data;
                 status = str->EnableLPI(!active);
@@ -4972,13 +5000,13 @@ void ResourceManager::HandleStreamPauseResume(pal_stream_type_t st_type, bool ac
         ++(*local_dis_count);
         if (*local_dis_count == 1) {
             // pause all sva/acd streams
-            HandleDetectionStreamAction(st_type, ST_PAUSE, NULL);
+            HandleDetectionStreamAction(st_type, ST_CONCURRENT_PAUSE, NULL);
         }
     } else {
         --(*local_dis_count);
         if (*local_dis_count == 0) {
             // resume all sva/acd streams
-            HandleDetectionStreamAction(st_type, ST_RESUME, NULL);
+            HandleDetectionStreamAction(st_type, ST_CONCURRENT_RESUME, NULL);
         }
     }
 }
