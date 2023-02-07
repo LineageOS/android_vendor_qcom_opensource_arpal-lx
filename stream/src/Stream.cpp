@@ -1388,6 +1388,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
     pal_device_id_t curBtDevId;
+    pal_device_id_t newBtDevId;
+    bool isBtReady = false;
 
     rm->lockActiveStream();
     mStreamMutex.lock();
@@ -1518,6 +1520,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         if ((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
             (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
             (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)) {
+            isNewDeviceA2dp = true;
+            newBtDevId = newDevices[i].id;
             dev = Device::getInstance(&newDevices[i], rm);
             if (!dev) {
                 status = -ENODEV;
@@ -1531,6 +1535,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 while (!devReadyStatus && --retryCnt) {
                     devReadyStatus = rm->isDeviceReady(newDevices[i].id);
                     if (devReadyStatus) {
+                        isBtReady = true;
                         break;
                     } else if (isCurDeviceA2dp) {
                         break;
@@ -1559,11 +1564,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         } else {
             newDeviceSlots[connectCount] = i;
             connectCount++;
-
-            if (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP ||
-                newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
-                newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)
-                isNewDeviceA2dp = true;
         }
         /* insert current stream-device attr to Device */
         dev = Device::getInstance(&newDevices[i],rm);
@@ -1589,7 +1589,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     /* created stream device connect and disconnect list */
     streamDevDisconnect.clear();
     StreamDevConnect.clear();
-    suspendedDevIds.clear();
 
     for (int i = 0; i < connectCount; i++) {
         std::vector <Stream *> activeStreams;
@@ -1795,6 +1794,12 @@ done:
         if (volume) {
             free(volume);
         }
+    }
+    if ((numDev > 1) && isNewDeviceA2dp && !isBtReady) {
+        suspendedDevIds.clear();
+        suspendedDevIds.push_back(newBtDevId);
+        suspendedDevIds.push_back(PAL_DEVICE_OUT_SPEAKER);
+    } else {
         suspendedDevIds.clear();
     }
     mStreamMutex.unlock();
