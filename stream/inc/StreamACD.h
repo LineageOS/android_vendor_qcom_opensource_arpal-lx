@@ -130,8 +130,6 @@ class StreamACD : public Stream {
 
     int32_t Resume() override;
     int32_t Pause() override;
-    int32_t ConcurrentResume() { return Resume(); }
-    int32_t ConcurrentPause() { return Pause(); }
     int32_t HandleConcurrentStream(bool active) override;
     int32_t EnableLPI(bool is_enable) override;
 

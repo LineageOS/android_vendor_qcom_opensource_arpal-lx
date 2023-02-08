@@ -611,7 +611,8 @@ int32_t StreamPCM::start()
         rm->lockActiveStream();
         mStreamMutex.lock();
         for (int i = 0; i < mDevices.size(); i++) {
-            rm->registerDevice(mDevices[i], this);
+            if (!rm->isDeviceActive_l(mDevices[i], this))
+                rm->registerDevice(mDevices[i], this);
         }
         rm->unlockActiveStream();
         rm->checkAndSetDutyCycleParam();
@@ -651,7 +652,8 @@ int32_t StreamPCM::stop()
         mStreamMutex.lock();
         currentState = STREAM_STOPPED;
         for (int i = 0; i < mDevices.size(); i++) {
-            rm->deregisterDevice(mDevices[i], this);
+            if (rm->isDeviceActive_l(mDevices[i], this))
+                rm->deregisterDevice(mDevices[i], this);
         }
         rm->unlockActiveStream();
         switch (mStreamAttr->direction) {
@@ -1008,7 +1010,8 @@ int32_t StreamPCM::write(struct pal_buffer* buf)
             rm->lockActiveStream();
             mStreamMutex.lock();
             for (int i = 0; i < mDevices.size(); i++) {
-                rm->registerDevice(mDevices[i], this);
+                if (!rm->isDeviceActive_l(mDevices[i], this))
+                    rm->registerDevice(mDevices[i], this);
             }
             mStreamMutex.unlock();
             rm->unlockActiveStream();

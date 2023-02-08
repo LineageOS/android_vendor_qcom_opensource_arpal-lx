@@ -160,8 +160,6 @@ public:
     int32_t ConnectDevice(pal_device_id_t device_id) override;
     int32_t Resume() override;
     int32_t Pause() override;
-    int32_t ConcurrentResume() override;
-    int32_t ConcurrentPause() override;
     int32_t GetCurrentStateId();
     int32_t HandleConcurrentStream(bool active);
     int32_t EnableLPI(bool is_enable);

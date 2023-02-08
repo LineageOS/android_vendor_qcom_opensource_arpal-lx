@@ -333,7 +333,8 @@ int32_t StreamCommon::start()
         rm->lockActiveStream();
         mStreamMutex.lock();
         for (int i = 0; i < mDevices.size(); i++) {
-            rm->registerDevice(mDevices[i], this);
+            if (!rm->isDeviceActive_l(mDevices[i], this))
+                rm->registerDevice(mDevices[i], this);
         }
         rm->unlockActiveStream();
         rm->checkAndSetDutyCycleParam();
@@ -415,7 +416,8 @@ int32_t StreamCommon::stop()
         mStreamMutex.lock();
         currentState = STREAM_STOPPED;
         for (int i = 0; i < mDevices.size(); i++) {
-            rm->deregisterDevice(mDevices[i], this);
+            if (rm->isDeviceActive_l(mDevices[i], this))
+                rm->deregisterDevice(mDevices[i], this);
         }
         rm->unlockActiveStream();
         PAL_VERBOSE(LOG_TAG, "In %s, device count - %zu",
