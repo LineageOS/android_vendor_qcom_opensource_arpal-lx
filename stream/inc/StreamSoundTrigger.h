@@ -160,6 +160,8 @@ public:
     int32_t ConnectDevice(pal_device_id_t device_id) override;
     int32_t Resume() override;
     int32_t Pause() override;
+    int32_t ConcurrentResume() override;
+    int32_t ConcurrentPause() override;
     int32_t GetCurrentStateId();
     int32_t HandleConcurrentStream(bool active);
     int32_t EnableLPI(bool is_enable);
@@ -586,5 +588,7 @@ private:
     // flag to indicate whether we should update common capture profile in RM
     bool common_cp_update_disable_;
     bool second_stage_processing_;
+    // flag to indicate whether current start/stop is called by client
+    bool is_client_start_stop_;
 };
 #endif // STREAMSOUNDTRIGGER_H_
