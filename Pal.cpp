@@ -854,18 +854,34 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
     if (no_of_devices == 0 || !devices) {
         status = -EINVAL;
         PAL_ERR(LOG_TAG, "Invalid device status %d", status);
-        goto exit;
+        return status;
     }
 
     rm = ResourceManager::getInstance();
     if (!rm) {
+        status = -EINVAL;
         PAL_ERR(LOG_TAG, "Invalid resource manager");
-        goto exit;
+        return status;
+    }
+
+    rm->lockActiveStream();
+    if (!rm->isActiveStream(stream_handle)) {
+        rm->unlockActiveStream();
+        status = -EINVAL;
+        return status;
     }
 
     /* Choose best device config for this stream */
     /* TODO: Decide whether to update device config or not based on flag */
     s = reinterpret_cast<Stream *>(stream_handle);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        return status;
+    }
+    rm->unlockActiveStream();
+
     s->getStreamAttributes(&sattr);
 
     // device switch will be handled in global param setting for SVA
@@ -965,8 +981,10 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
         goto exit;
     }
 
-
 exit:
+    rm->lockActiveStream();
+    rm->decreaseStreamUserCounter(s);
+    rm->unlockActiveStream();
     if (pDevices)
         free(pDevices);
     PAL_INFO(LOG_TAG, "Exit. status %d", status);
