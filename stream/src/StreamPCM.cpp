@@ -395,6 +395,12 @@ int32_t StreamPCM::start()
              * This allows stream be played even if one of devices failed to start.
              */
             status = -EINVAL;
+            if (!mDevices.size()) {
+                PAL_ERR(LOG_TAG, "No Rx device available to start the usecase");
+                rm->unlockGraph();
+                goto exit;
+            }
+
             for (int32_t i=0; i < mDevices.size(); i++) {
                 if (((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
                      (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)) && isMMap) {
