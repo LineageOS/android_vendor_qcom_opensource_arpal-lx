@@ -925,6 +925,27 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
             if (force_switch)
                 break;
         }
+
+      /*
+       * When USB headset is disconnected the music playback pauses
+       * and the policy manager sends routing=0. But if the USB is connected
+       * back before the standby time, it can not switch device to usb hs any more
+       * because current pal device is usb hs which equals new device when resuming playback.
+       * So routing to default device first during handling routing = 0 msg will guarantee
+       * the device switch to usb can be executed once USB is connected again.
+       */
+        bool curPalDevice_usb = curPalDevices.find(PAL_DEVICE_OUT_USB_DEVICE) != curPalDevices.end() ||
+                                curPalDevices.find(PAL_DEVICE_OUT_USB_HEADSET) != curPalDevices.end();
+        bool activeDevices_usb = activeDevices.find(PAL_DEVICE_OUT_USB_DEVICE) != activeDevices.end() ||
+                                 activeDevices.find(PAL_DEVICE_OUT_USB_HEADSET) != activeDevices.end();
+        bool usb_active = rm->isDeviceAvailable(PAL_DEVICE_OUT_USB_DEVICE) ||
+                          rm->isDeviceAvailable(PAL_DEVICE_OUT_USB_HEADSET);
+        if (devices[0].id == PAL_DEVICE_NONE &&
+            curPalDevice_usb && activeDevices_usb && !usb_active)
+        {
+            devices[0].id = PAL_DEVICE_OUT_SPEAKER;
+        }
+
         if (!force_switch) {
             for (int i = 0; i < no_of_devices; i++) {
                 newDevices.insert(devices[i].id);
