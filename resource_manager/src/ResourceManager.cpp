@@ -11993,6 +11993,7 @@ int ResourceManager::setUltrasoundGain(pal_ultrasound_gain_t gain, Stream *s)
     std::vector<std::shared_ptr<Device>> activeDeviceList;
     pal_ultrasound_gain_t gain_2 = PAL_ULTRASOUND_GAIN_MUTE;
 
+    memset(&sAttr, 0, sizeof(sAttr));
     PAL_INFO(LOG_TAG, "Entered. Gain = %d", gain);
 
     if (!IsCustomGainEnabledForUPD()) {
