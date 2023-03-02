@@ -200,6 +200,9 @@ public:
     void payloadVolumeConfig(uint8_t** payload, size_t* size,
                            uint32_t miid,
                            struct pal_volume_data * data);
+    void payloadMultichVolumemConfig(uint8_t** payload, size_t* size,
+                           uint32_t miid,
+                           struct pal_volume_data * data);
     int payloadCustomParam(uint8_t **alsaPayload, size_t *size,
                             uint32_t *customayload, uint32_t customPayloadSize,
                             uint32_t moduleInstanceId, uint32_t dspParamId);
