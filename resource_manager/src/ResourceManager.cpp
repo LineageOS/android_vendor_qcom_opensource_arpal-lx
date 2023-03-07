@@ -2720,11 +2720,8 @@ int32_t ResourceManager::getDeviceConfig(struct pal_device *deviceattr,
                 getChannelMap(&(dev_ch_info.ch_map[0]), channels);
                 deviceattr->config.ch_info = dev_ch_info;
 
-                if (dp_device->isSupportedSR(NULL,
-                            sAttr->out_media_config.sample_rate)) {
-                    deviceattr->config.sample_rate =
-                            sAttr->out_media_config.sample_rate;
-                } else {
+                if (!dp_device->isSupportedSR(NULL,
+                            deviceattr->config.sample_rate)) {
                     int sr = dp_device->getHighestSupportedSR();
                     if (sAttr->out_media_config.sample_rate > sr)
                         deviceattr->config.sample_rate = sr;
@@ -2740,10 +2737,7 @@ int32_t ResourceManager::getDeviceConfig(struct pal_device *deviceattr,
                 }
 
                 if (DisplayPort::isBitWidthSupported(
-                            sAttr->out_media_config.bit_width)) {
-                    deviceattr->config.bit_width =
-                            sAttr->out_media_config.bit_width;
-                } else {
+                            deviceattr->config.bit_width) != 0) {
                     int bps = dp_device->getHighestSupportedBps();
                     if (sAttr->out_media_config.bit_width > bps)
                         deviceattr->config.bit_width = bps;
