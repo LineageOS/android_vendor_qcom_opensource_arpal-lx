@@ -290,6 +290,7 @@ exit:
 int32_t pal_stream_start(pal_stream_handle_t *stream_handle)
 {
     Stream *s = NULL;
+    struct pal_stream_attributes sAttr;
     std::shared_ptr<ResourceManager> rm = NULL;
     int status;
     if (!stream_handle) {
@@ -313,6 +314,11 @@ int32_t pal_stream_start(pal_stream_handle_t *stream_handle)
         goto exit;
     }
 
+    s = reinterpret_cast<Stream *>(stream_handle);
+    s->getStreamAttributes(&sAttr);
+    if (sAttr.type == PAL_STREAM_VOICE_UI)
+        rm->handleDeferredSwitch();
+
     rm->lockActiveStream();
     if (!rm->isActiveStream(stream_handle)) {
         rm->unlockActiveStream();
@@ -320,7 +326,6 @@ int32_t pal_stream_start(pal_stream_handle_t *stream_handle)
         goto exit;
     }
 
-    s = reinterpret_cast<Stream *>(stream_handle);
     status = rm->increaseStreamUserCounter(s);
     if (0 != status) {
         rm->unlockActiveStream();
