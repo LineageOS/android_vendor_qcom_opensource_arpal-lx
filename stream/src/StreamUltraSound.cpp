@@ -47,6 +47,7 @@ StreamUltraSound::StreamUltraSound(const struct pal_stream_attributes *sattr __u
                   StreamCommon(sattr,dattr,no_of_devices,modifiers,no_of_modifiers,rm)
 {
     session->registerCallBack((session_callback)HandleCallBack,((uint64_t) this));
+    rm->registerStream(this);
 }
 
 StreamUltraSound::~StreamUltraSound()
