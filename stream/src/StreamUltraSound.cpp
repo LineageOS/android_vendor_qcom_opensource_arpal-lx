@@ -48,6 +48,7 @@ StreamUltraSound::StreamUltraSound(const struct pal_stream_attributes *sattr __u
 {
     gain = PAL_ULTRASOUND_GAIN_MUTE;
     session->registerCallBack((session_callback)HandleCallBack,((uint64_t) this));
+    rm->registerStream(this);
 }
 
 StreamUltraSound::~StreamUltraSound()

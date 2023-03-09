@@ -61,6 +61,7 @@ StreamSensorPCMData::StreamSensorPCMData(const struct pal_stream_attributes *sat
         throw std::runtime_error("Failed to get acd platform info");
     }
 
+    rm->registerStream(this);
     /* Print the concurrency feature flags supported */
     PAL_INFO(LOG_TAG, "capture conc enable %d,voice conc enable %d,voip conc enable %d",
              acd_info_->GetConcurrentCaptureEnable(),
