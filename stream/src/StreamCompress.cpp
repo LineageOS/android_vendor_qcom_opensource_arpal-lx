@@ -920,11 +920,13 @@ int32_t StreamCompress::pause_l()
             PAL_ERR(LOG_TAG,"session setConfig for pause failed with status %d",status);
             goto exit;
         }
-        PAL_DBG(LOG_TAG, "Waiting for Pause to complete");
-        if (session->isPauseRegistrationDone)
+        if (session->isPauseRegistrationDone) {
+            PAL_DBG(LOG_TAG, "Waiting for Pause to complete from ADSP");
             cvPause.wait_for(pauseLock, std::chrono::microseconds(VOLUME_RAMP_PERIOD));
-        else
+        } else {
+            PAL_DBG(LOG_TAG, "Pause event registration not done, sleeping for %d", VOLUME_RAMP_PERIOD);
             usleep(VOLUME_RAMP_PERIOD);
+        }
         isPaused = true;
         currentState = STREAM_PAUSED;
         PAL_VERBOSE(LOG_TAG,"session pause successful, state %d", currentState);

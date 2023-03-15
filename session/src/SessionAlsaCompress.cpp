@@ -1671,7 +1671,7 @@ int SessionAlsaCompress::stop(Stream * s __unused)
                 status = SessionAlsaUtils::registerMixerEvent(mixer, compressDevIds.at(0),
                             rxAifBackEnds[0].second.data(), TAG_PAUSE, (void *)&event_cfg,
                             payload_size);
-                if (status == 0) {
+                if (status == 0 || rm->cardState == CARD_STATUS_OFFLINE) {
                     isPauseRegistrationDone = false;
                 } else {
                     // Not a fatal error

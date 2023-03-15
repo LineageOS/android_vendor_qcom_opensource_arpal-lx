@@ -1721,7 +1721,7 @@ int SessionAlsaPcm::stop(Stream * s)
                 }
             }
 
-            if (!status && isPauseRegistrationDone) {
+            if (isPauseRegistrationDone) {
                 // Stream supports Soft Pause and was registered with RM
                 // sucessfully. Thus Deregister callback for Soft Pause
                 payload_size = sizeof(struct agm_event_reg_cfg);
@@ -1739,7 +1739,7 @@ int SessionAlsaPcm::stop(Stream * s)
                 status = SessionAlsaUtils::registerMixerEvent(mixer, pcmDevIds.at(0),
                         rxAifBackEnds[0].second.data(), TAG_PAUSE, (void *)&event_cfg,
                         payload_size);
-                if (status == 0) {
+                if (status == 0 || rm->cardState == CARD_STATUS_OFFLINE) {
                     isPauseRegistrationDone = false;
                 } else {
                     // Not a fatal error
