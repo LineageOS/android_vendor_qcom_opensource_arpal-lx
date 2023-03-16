@@ -1038,6 +1038,9 @@ int Session::checkAndSetExtEC(const std::shared_ptr<ResourceManager>& rm,
 
                 rm->freeFrontEndEcTxIds(pcmDevEcTxIds);
                 pcmEcTx = NULL;
+                extECMutex.unlock();
+                rm->restoreInternalECRefs();
+                extECMutex.lock();
             }
         }
     } else {

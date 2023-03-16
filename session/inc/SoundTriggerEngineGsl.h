@@ -147,6 +147,7 @@ class SoundTriggerEngineGsl : public SoundTriggerEngine {
 
  private:
     int32_t StartBuffering(Stream *s);
+    int32_t RestartRecognition_l(Stream *s);
     int32_t UpdateSessionPayload(st_param_id_type_t param);
     void HandleSessionEvent(uint32_t event_id __unused, void *data, uint32_t size);
 

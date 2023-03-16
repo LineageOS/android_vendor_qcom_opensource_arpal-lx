@@ -54,6 +54,7 @@
 #endif
 
 #define TIMEOUT_FOR_EOS 100000
+#define MAX_MMAP_POSITION_QUERY_RETRY_CNT 5
 
 ST_DBG_DECLARE(static int dsp_output_cnt = 0);
 
@@ -105,17 +106,16 @@ void SoundTriggerEngineGsl::EventProcessingThread(
             if (gsl_engine->capture_requested_) {
                 status = gsl_engine->StartBuffering(det_str);
                 if (status < 0) {
-                    lck.unlock();
-                    gsl_engine->RestartRecognition(det_str);
-                    lck.lock();
+                    gsl_engine->RestartRecognition_l(det_str);
                 }
             } else {
-                status = gsl_engine->UpdateSessionPayload(ENGINE_RESET);
                 lck.unlock();
                 status = det_str->SetEngineDetectionState(GMM_DETECTED);
-                if (status < 0)
-                    gsl_engine->RestartRecognition(det_str);
                 lck.lock();
+                if (status < 0)
+                    gsl_engine->RestartRecognition_l(det_str);
+                else
+                    gsl_engine->UpdateSessionPayload(ENGINE_RESET);
             }
         }
         /*
@@ -150,6 +150,7 @@ int32_t SoundTriggerEngineGsl::StartBuffering(Stream *s) {
     FILE *dsp_output_fd = nullptr;
     ChronoSteadyClock_t kw_transfer_begin;
     ChronoSteadyClock_t kw_transfer_end;
+    size_t retry_cnt = 0;
 
     PAL_DBG(LOG_TAG, "Enter");
     UpdateState(ENG_BUFFERING);
@@ -233,8 +234,14 @@ int32_t SoundTriggerEngineGsl::StartBuffering(Stream *s) {
                 }
                 if (bytes_written > total_read_size) {
                     size_to_read = bytes_written - total_read_size;
+                    retry_cnt = 0;
                 } else {
-                    // TODO: add timeout check & handling
+                    retry_cnt++;
+                    if (retry_cnt > MAX_MMAP_POSITION_QUERY_RETRY_CNT) {
+                        status = -EIO;
+                        goto exit;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
                     continue;
                 }
                 if (size_to_read > (2 * mmap_buffer_size_) - read_offset) {
@@ -335,9 +342,9 @@ int32_t SoundTriggerEngineGsl::StartBuffering(Stream *s) {
                 if (s) {
                     mutex_.unlock();
                     status = s->SetEngineDetectionState(GMM_DETECTED);
-                    if (status < 0)
-                        RestartRecognition(s);
                     mutex_.lock();
+                    if (status < 0)
+                        RestartRecognition_l(s);
                 }
 
                 if (status) {
@@ -1009,6 +1016,10 @@ int32_t SoundTriggerEngineGsl::UpdateMergeConfLevelsPayload(
     if (!sm_merged_) {
         PAL_DBG(LOG_TAG, "Soundmodel is not merged, use source sm info");
         *eng_sm_info_ = *src_sm_info;
+        if (!eng_sm_info_->GetConfLevels()) {
+            PAL_ERR(LOG_TAG, "cf_levels_ allocation failed in assignment operator");
+            return -ENOMEM;
+        }
         for (uint32_t i = 0; i < eng_sm_info_->GetConfLevelsSize(); i++) {
             if (!set) {
                 eng_sm_info_->UpdateConfLevel(i, MAX_CONF_LEVEL_VALUE);
@@ -1585,12 +1596,23 @@ int32_t SoundTriggerEngineGsl::StartRecognition(Stream *s) {
 
 int32_t SoundTriggerEngineGsl::RestartRecognition(Stream *s) {
     int32_t status = 0;
+
+    PAL_VERBOSE(LOG_TAG, "Enter");
+    exit_buffering_ = true;
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    status = RestartRecognition_l(s);
+
+    PAL_VERBOSE(LOG_TAG, "Exit, status = %d", status);
+    return status;
+}
+
+int32_t SoundTriggerEngineGsl::RestartRecognition_l(Stream *s) {
+    int32_t status = 0;
     struct pal_mmap_position mmap_pos;
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
 
     PAL_DBG(LOG_TAG, "Enter");
-    exit_buffering_ = true;
-    std::lock_guard<std::mutex> lck(mutex_);
     std::unique_lock<std::mutex> lck_eos(eos_mutex_);
 
     /* If engine is not active, do not restart recognition again */

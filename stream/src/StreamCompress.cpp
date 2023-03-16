@@ -176,12 +176,6 @@ int32_t StreamCompress::open()
     }
 
     if (currentState == STREAM_IDLE) {
-        status = session->open(this);
-        if (0 != status) {
-           PAL_ERR(LOG_TAG,"session open failed with status %d", status);
-           goto exit;
-        }
-        PAL_VERBOSE(LOG_TAG, "session open successful");
         for (int32_t i=0; i < mDevices.size(); i++) {
             PAL_DBG(LOG_TAG, "device %d name %s, going to open",
                 mDevices[i]->getSndDeviceId(), mDevices[i]->getPALDeviceName().c_str());
@@ -192,6 +186,13 @@ int32_t StreamCompress::open()
                 goto exit;
              }
         }
+
+        status = session->open(this);
+        if (0 != status) {
+           PAL_ERR(LOG_TAG,"session open failed with status %d", status);
+           goto exit;
+        }
+        PAL_VERBOSE(LOG_TAG, "session open successful");
         currentState = STREAM_INIT;
         PAL_VERBOSE(LOG_TAG,"device open successful");
         PAL_VERBOSE(LOG_TAG,"exit stream compress opened, state %d", currentState);
@@ -400,6 +401,12 @@ int32_t StreamCompress::start()
              * This allows stream be played even if one of devices failed to start.
              */
             status = -EINVAL;
+            if (!mDevices.size()) {
+                PAL_ERR(LOG_TAG, "No Rx device available to start the usecase");
+                rm->unlockGraph();
+                goto exit;
+            }
+
             for (int32_t i=0; i < mDevices.size(); i++) {
                 devStatus = mDevices[i]->start();
                 if (devStatus == 0) {

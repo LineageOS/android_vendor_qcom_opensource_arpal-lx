@@ -195,6 +195,8 @@
     <!-- Volume controls -->
     <ctl name="WSA_RX0 Digital Volume" value="84" />
     <ctl name="WSA_RX1 Digital Volume" value="84" />
+    <ctl name="WSA2_RX0 Digital Volume" value="84" />
+    <ctl name="WSA2_RX1 Digital Volume" value="84" />
     <ctl name="RX_RX0 Digital Volume" value="84" />
     <ctl name="RX_RX1 Digital Volume" value="84" />
     <ctl name="RX_RX2 Digital Volume" value="84" />
@@ -328,6 +330,7 @@
         <ctl name="DMIC4 ChMap" value="SWRM_TX3_CH1" />
         <ctl name="TX_AIF1_CAP Mixer DEC0" value="1" />
         <ctl name="DMIC4_MIXER Switch" value="1" />
+        <ctl name="TX_DEC0 Volume" value="102" />
     </path>
 
     <path name="dmic5">
@@ -373,6 +376,10 @@
         <ctl name="Spkr2Right SWR DAC_Port Switch" value="1" />
         <ctl name="Spkr2Left PBR Switch" value="1" />
         <ctl name="Spkr2Right PBR Switch" value="1" />
+        <ctl name="WSA_RX0 comp_mode" value="G_15_DB" />
+        <ctl name="WSA_RX1 comp_mode" value="G_15_DB" />
+        <ctl name="WSA2_RX0 comp_mode" value="G_15_DB" />
+        <ctl name="WSA2_RX1 comp_mode" value="G_15_DB" />
     </path>
 
     <path name="haptics-dev">
@@ -471,7 +478,7 @@
 
     <path name="sidetone-handset">
         <path name="sidetone-iir" />
-        <ctl name="IIR0 INP0 Volume" value="0" />
+        <ctl name="IIR0 INP0 Volume" value="54" />
         <ctl name="IIR0 INP0 MUX" value="DEC2" />
         <ctl name="RX INT2 MIX2 INP" value="SRC0" />
         <ctl name="WSA_RX0 INT0 SIDETONE MIX" value="SRC0" />
@@ -1036,6 +1043,8 @@
        <ctl name="DMIC3 ChMap" value="SWRM_TX1_CH1" />
        <ctl name="DMIC1_MIXER Switch" value="1" />
        <ctl name="DMIC3_MIXER Switch" value="1" />
+       <ctl name="TX_DEC0 Volume" value="102" />
+       <ctl name="TX_DEC1 Volume" value="102" />
     </path>
 
     <path name="dmic-endfire">
@@ -1193,6 +1202,10 @@
        <ctl name="DMIC5_MIXER Switch" value="1" />
        <ctl name="DMIC1_MIXER Switch" value="1" />
        <ctl name="DMIC3_MIXER Switch" value="1" />
+       <ctl name="TX_DEC0 Volume" value="102" />
+       <ctl name="TX_DEC1 Volume" value="102" />
+       <ctl name="TX_DEC2 Volume" value="102" />
+       <ctl name="TX_DEC3 Volume" value="102" />
     </path>
 
     <path name="speaker-qmic-liquid">

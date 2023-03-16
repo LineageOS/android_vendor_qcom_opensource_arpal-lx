@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -28,7 +28,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1050,10 +1050,12 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                 goto exit;
             }
 
+            mDevices.push_back(dev);
             status = session->setupSessionDevice(this, mStreamAttr->type, dev);
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "setupSessionDevice failed:%d", status);
                 dev->close();
+                mDevices.pop_back();
                 goto exit;
             }
 
@@ -1061,9 +1063,10 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "connectSessionDevice failed:%d", status);
                 dev->close();
+                mDevices.pop_back();
                 goto exit;
             }
-            mDevices.push_back(dev);
+            dev->getDeviceAttributes(&dattr, this);
             addPalDevice(this, &dattr);
         }
     }
@@ -1388,6 +1391,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
     pal_device_id_t curBtDevId;
+    pal_device_id_t newBtDevId;
+    bool isBtReady = false;
 
     rm->lockActiveStream();
     mStreamMutex.lock();
@@ -1483,6 +1488,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         bool devReadyStatus = 0;
         uint32_t retryCnt = 20;
         uint32_t retryPeriodMs = 100;
+        pal_param_bta2dp_t* param_bt_a2dp = nullptr;
         /*
          * When A2DP, Out Proxy and DP device is disconnected the
          * music playback is paused and the policy manager sends routing=0
@@ -1506,13 +1512,45 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             rm->unlockActiveStream();
             return 0;
         }
+        /* Retry isDeviceReady check is required for BT devices only.
+        *  In case of BT disconnection event from BT stack, if stream
+        *  is still associated with BT but the BT device is not in
+        *  ready state, explicit dev switch from APM to BT keep on retrying
+        *  for 2 secs causing audioserver to stuck for processing
+        *  disconnection. Thus check for isCurDeviceA2dp and a2dp_suspended
+        *  state to avoid unnecessary sleep over 2 secs.
+        */
+        if ((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
+            (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+            (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)) {
+            isNewDeviceA2dp = true;
+            newBtDevId = newDevices[i].id;
+            dev = Device::getInstance(&newDevices[i], rm);
+            if (!dev) {
+                status = -ENODEV;
+                PAL_ERR(LOG_TAG, "failed to get a2dp/ble device object");
+                goto done;
+            }
+            dev->getDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
+                (void**)&param_bt_a2dp);
 
-        while (!devReadyStatus && --retryCnt) {
+            if (!param_bt_a2dp->a2dp_suspended) {
+                while (!devReadyStatus && --retryCnt) {
+                    devReadyStatus = rm->isDeviceReady(newDevices[i].id);
+                    if (devReadyStatus) {
+                        isBtReady = true;
+                        break;
+                    } else if (isCurDeviceA2dp) {
+                        break;
+                    }
+
+                    usleep(retryPeriodMs * 1000);
+                }
+            }
+        } else {
             devReadyStatus = rm->isDeviceReady(newDevices[i].id);
-            if (devReadyStatus)
-                break;
-            usleep(retryPeriodMs * 1000);
         }
+
         if (!devReadyStatus) {
             PAL_ERR(LOG_TAG, "Device %d is not ready", newDevices[i].id);
             if (((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
@@ -1529,11 +1567,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         } else {
             newDeviceSlots[connectCount] = i;
             connectCount++;
-
-            if (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP ||
-                newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
-                newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)
-                isNewDeviceA2dp = true;
         }
         /* insert current stream-device attr to Device */
         dev = Device::getInstance(&newDevices[i],rm);
@@ -1559,7 +1592,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     /* created stream device connect and disconnect list */
     streamDevDisconnect.clear();
     StreamDevConnect.clear();
-    suspendedDevIds.clear();
 
     for (int i = 0; i < connectCount; i++) {
         std::vector <Stream *> activeStreams;
@@ -1743,7 +1775,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 
 done:
     mStreamMutex.lock();
-    if (a2dpMuted && !isNewDeviceA2dp) {
+    if (a2dpMuted) {
         volume = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
                               (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
         if (!volume) {
@@ -1765,6 +1797,12 @@ done:
         if (volume) {
             free(volume);
         }
+    }
+    if ((numDev > 1) && isNewDeviceA2dp && !isBtReady) {
+        suspendedDevIds.clear();
+        suspendedDevIds.push_back(newBtDevId);
+        suspendedDevIds.push_back(PAL_DEVICE_OUT_SPEAKER);
+    } else {
         suspendedDevIds.clear();
     }
     mStreamMutex.unlock();

@@ -1412,6 +1412,7 @@ int BtA2dp::close_audio_source()
 
     if (a2dpState != A2DP_STATE_DISCONNECTED) {
         PAL_DBG(LOG_TAG, "calling BT source stream close");
+        mDeviceMutex.lock();
         if (audio_source_close_api) {
             if (audio_source_close_api(get_session_type()) == false)
                 PAL_ERR(LOG_TAG, "failed close a2dp source control path from BT library");
@@ -1419,6 +1420,7 @@ int BtA2dp::close_audio_source()
             if (audio_source_close() == false)
                 PAL_ERR(LOG_TAG, "failed close a2dp source control path from BT library");
         }
+        mDeviceMutex.unlock();
     }
     totalActiveSessionRequests = 0;
     param_bt_a2dp.a2dp_suspended = false;
@@ -1615,6 +1617,7 @@ int BtA2dp::close_audio_sink()
 
     if (a2dpState != A2DP_STATE_DISCONNECTED) {
         PAL_DBG(LOG_TAG, "calling BT sink stream close");
+        mDeviceMutex.lock();
         if (audio_sink_close_api) {
             if (audio_sink_close_api(get_session_type()) == false)
                 PAL_ERR(LOG_TAG, "failed close a2dp sink control path from BT library");
@@ -1622,6 +1625,7 @@ int BtA2dp::close_audio_sink()
             if (audio_sink_close() == false)
                 PAL_ERR(LOG_TAG, "failed close a2dp sink control path from BT library");
         }
+        mDeviceMutex.unlock();
     }
     totalActiveSessionRequests = 0;
     param_bt_a2dp.a2dp_suspended = false;
@@ -2577,7 +2581,8 @@ int BtSco::start()
     } else if (isSwbLc3Enabled) {
         codecFormat = CODEC_TYPE_LC3;
         codecInfo = (void *)&lc3CodecInfo;
-    }
+    } else
+        codecFormat = CODEC_TYPE_INVALID;
 
     updateDeviceMetadata();
     if ((codecFormat == CODEC_TYPE_APTX_AD_SPEECH) ||
