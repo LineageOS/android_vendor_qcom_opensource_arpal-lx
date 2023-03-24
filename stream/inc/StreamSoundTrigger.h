@@ -147,7 +147,7 @@ public:
                             bool enable __unused) {
         return -ENOSYS;
     }
-
+    bool isStarted();
     void SetDetectedToEngines(bool detected);
     int32_t SetEngineDetectionState(int32_t state);
 
@@ -181,7 +181,6 @@ public:
               (GetCurrentStateId() == ST_STATE_BUFFERING);
     }
     struct st_uuid GetVendorUuid();
-
     void *GetGSLEngine() {
         if (gsl_engine_)
             return (void *)gsl_engine_.get();

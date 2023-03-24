@@ -4445,7 +4445,7 @@ std::shared_ptr<CaptureProfile> ResourceManager::GetSVACaptureProfileByPriority(
          * 1. sound model loaded but not started by sthal
          * 2. stop recognition called by sthal
          */
-        if (!str->isActive())
+        if (!str->isStarted())
             continue;
 
         cap_prof = str->GetCurrentCaptureProfile();

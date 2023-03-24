@@ -1967,7 +1967,7 @@ int32_t StreamSoundTrigger::StIdle::ProcessEvent(
                     }
 
                     TransitTo(ST_STATE_LOADED);
-                    if (st_stream_.isActive()) {
+                    if (st_stream_.isStarted()) {
                         std::shared_ptr<StEventConfig> ev_cfg1(
                             new StStartRecognitionEventConfig(false));
                         status = st_stream_.ProcessInternalEvent(ev_cfg1);
@@ -2066,7 +2066,7 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
         }
         case ST_EV_RESUME: {
             st_stream_.paused_ = false;
-            if (!st_stream_.isActive()) {
+            if (!st_stream_.isStarted()) {
                 // Possible if App has stopped recognition during active
                 // concurrency.
                 break;
@@ -2287,7 +2287,7 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                 st_stream_.device_opened_ = true;
             }
 
-            if (st_stream_.isActive() && !st_stream_.paused_) {
+            if (st_stream_.isStarted() && !st_stream_.paused_) {
                 status = dev->start();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "device %d start failed with status %d",
@@ -2307,7 +2307,7 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                 st_stream_.mDevices.pop_back();
                 dev->close();
                 st_stream_.device_opened_ = false;
-            } else if (st_stream_.isActive() && !st_stream_.paused_) {
+            } else if (st_stream_.isStarted() && !st_stream_.paused_) {
                 if (!rm->isDeviceActive_l(dev, &st_stream_))
                     st_stream_.rm->registerDevice(dev, &st_stream_);
                 if (st_stream_.second_stage_processing_) {
@@ -3512,6 +3512,12 @@ int32_t StreamSoundTrigger::ssrUpHandler() {
     common_cp_update_disable_ = false;
 
     return status;
+}
+
+bool StreamSoundTrigger::isStarted() {
+    return (currentState == STREAM_STARTED ||
+            GetCurrentStateId() == ST_STATE_BUFFERING ||
+            GetCurrentStateId() == ST_STATE_DETECTED);
 }
 
 struct st_uuid StreamSoundTrigger::GetVendorUuid()
