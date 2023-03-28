@@ -2187,7 +2187,7 @@ int SessionAlsaCompress::setParameters(Stream *s __unused, int tagId, uint32_t p
                 status = SessionAlsaUtils::setMixerParameter(mixer, device,
                                                alsaParamData, alsaPayloadSize);
                 PAL_INFO(LOG_TAG, "mixer set volume config status=%d\n", status);
-                delete [] alsaParamData;
+                freeCustomPayload(&alsaParamData, &alsaPayloadSize);
                 alsaPayloadSize = 0;
             }
         }

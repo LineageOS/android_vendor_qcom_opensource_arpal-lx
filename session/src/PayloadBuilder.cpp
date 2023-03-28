@@ -1996,7 +1996,8 @@ void PayloadBuilder::payloadPcmCnvConfig(uint8_t** payload, size_t* size,
         mediaFmtPayload->alignment       = PCM_MSB_ALIGNED;
     } else {
         PAL_ERR(LOG_TAG, "invalid bit width %d", data->bit_width);
-        delete[] payloadInfo;
+        free(payloadInfo);
+        payloadInfo = NULL;
         *size = 0;
         *payload = NULL;
         return;
