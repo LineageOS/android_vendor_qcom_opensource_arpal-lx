@@ -874,8 +874,10 @@ int32_t StreamCompress::pause_l()
         PAL_INFO(LOG_TAG, "Stream is already paused");
     } else {
         //caching the volume before setting it to 0
-        voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
-                          (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+        if (mVolumeData) {
+            voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                          (sizeof(struct pal_channel_vol_kv) * (mVolumeData->no_of_volpair))));
+        }
         if (!voldata) {
             status = -ENOMEM;
             goto exit;
@@ -907,11 +909,17 @@ int32_t StreamCompress::pause_l()
         volume->volume_pair[0].channel_mask = 0x03;
         volume->volume_pair[0].vol = 0x0;
         setVolume(volume);
+        if (mVolumeData) {
+            free(mVolumeData);
+            mVolumeData = NULL;
+        }
+        mVolumeData = (struct pal_volume_data *)calloc(1, volSize);
+        if (!mVolumeData) {
+            PAL_ERR(LOG_TAG, "failed to calloc for volume data");
+            status = -ENOMEM;
+            goto exit;
+        }
         ar_mem_cpy(mVolumeData, volSize, voldata, volSize);
-        free(volume);
-        free(voldata);
-        volume = NULL;
-        voldata = NULL;
 
         status = session->setConfig(this, MODULE, PAUSE_TAG);
         if (0 != status) {
@@ -930,6 +938,15 @@ int32_t StreamCompress::pause_l()
 
 exit:
     PAL_DBG(LOG_TAG,"Exit status: %d", status);
+    if (volume) {
+         free(volume);
+         volume = NULL;
+     }
+    if (voldata) {
+         free(voldata);
+         voldata = NULL;
+    }
+
     return status;
 }
 
@@ -979,8 +996,10 @@ int32_t StreamCompress::resume_l()
     isPaused = false;
 
     //since we set the volume to 0 in pause, in resume we need to set vol back to default
-    voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
-                      (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+    if (mVolumeData) {
+        voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                      (sizeof(struct pal_channel_vol_kv) * (mVolumeData->no_of_volpair))));
+    }
     if (!voldata) {
         status = -ENOMEM;
         goto exit;

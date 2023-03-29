@@ -1776,8 +1776,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 done:
     mStreamMutex.lock();
     if (a2dpMuted) {
-        volume = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
-                              (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+        if (mVolumeData) {
+            volume = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                              (sizeof(struct pal_channel_vol_kv) * (mVolumeData->no_of_volpair))));
+        }
         if (!volume) {
             PAL_ERR(LOG_TAG, "pal_volume_data memory allocation failure");
             mStreamMutex.unlock();
