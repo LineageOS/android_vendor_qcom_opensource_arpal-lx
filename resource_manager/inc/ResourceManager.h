@@ -922,6 +922,7 @@ public:
     static bool isLpiLoggingEnabled();
     static void processConfigParams(const XML_Char **attr);
     static bool isValidDevId(int deviceId);
+    static bool isValidStreamId(int streamId);
     static bool isOutputDevId(int deviceId);
     static bool isInputDevId(int deviceId);
     static bool matchDevDir(int devId1, int devId2);
@@ -1004,6 +1005,7 @@ public:
                              struct pal_device *streamDevAttr);
     static void sendCrashSignal(int signal, pid_t pid, uid_t uid);
     void checkAndSetDutyCycleParam();
+    bool isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId);
 };
 
 #endif

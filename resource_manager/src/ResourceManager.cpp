@@ -7149,6 +7149,53 @@ void ResourceManager::getBackEndNames(
         PAL_DBG(LOG_TAG, "getBackEndNames (TX): %s", txBackEndNames[i].second.c_str());
 }
 
+bool ResourceManager::isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId)
+{
+    struct pal_stream_attributes sAttr;
+    int status;
+    bool ret = true;
+
+    if (s == NULL || !isValidDevId(newDeviceId)) {
+        PAL_ERR(LOG_TAG, "Invalid input\n");
+        return false;
+    }
+
+    status = s->getStreamAttributes(&sAttr);
+    if (status) {
+        PAL_ERR(LOG_TAG,"getStreamAttributes Failed \n");
+        return false;
+    }
+
+    switch (sAttr.type) {
+    case PAL_STREAM_ULTRASOUND:
+        switch (newDeviceId) {
+        case PAL_DEVICE_OUT_HANDSET:
+        case PAL_DEVICE_OUT_SPEAKER:
+            ret = true;
+            break;
+        default:
+            ret = false;
+            break;
+        }
+        break;
+    default:
+        if (!isValidStreamId(sAttr.type)) {
+            PAL_DBG(LOG_TAG, "Invalid stream type\n");
+            return false;
+        }
+        ret = true;
+        break;
+    }
+
+    if (!ret) {
+        PAL_DBG(LOG_TAG, "Skip switching stream %d (%s) to device %d (%s)\n",
+                sAttr.type, streamNameLUT.at(sAttr.type).c_str(),
+                newDeviceId, deviceNameLUT.at(newDeviceId).c_str());
+    }
+
+    return ret;
+}
+
 int32_t ResourceManager::streamDevDisconnect(std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnectList){
     int status = 0;
     std::vector <std::tuple<Stream *, uint32_t>>::iterator sIter;
@@ -7506,6 +7553,9 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
 
     // create dev switch vectors
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
+        if (!isValidDeviceSwitchForStream((*sIter), newDevAttr->id))
+            continue;
+
         streamDevDisconnect.push_back({(*sIter), inDev->getSndDeviceId()});
         streamDevConnect.push_back({(*sIter), newDevAttr});
     }
@@ -7548,6 +7598,9 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
     mActiveStreamMutex.lock();
     for (sIter = prevActiveStreams.begin(); sIter != prevActiveStreams.end(); sIter++) {
         if (((*sIter) != NULL) && isStreamActive((*sIter), mActiveStreams)) {
+            if (!isValidDeviceSwitchForStream((*sIter), newDevAttr->id))
+                continue;
+
             streamDevDisconnect.push_back({(*sIter), inDev->getSndDeviceId()});
             streamDevConnect.push_back({(*sIter), newDevAttr});
         }
@@ -7652,6 +7705,14 @@ bool ResourceManager::isValidDevId(int deviceId)
         return true;
 
     return false;
+}
+
+bool ResourceManager::isValidStreamId(int streamId)
+{
+    if (streamId < PAL_STREAM_LOW_LATENCY || streamId >= PAL_STREAM_MAX)
+        return false;
+
+    return true;
 }
 
 bool ResourceManager::isOutputDevId(int deviceId)
