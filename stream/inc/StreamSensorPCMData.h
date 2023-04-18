@@ -57,6 +57,8 @@ public:
     int32_t close() override;
     int32_t Resume() override;
     int32_t Pause() override;
+    int32_t ConcurrentResume() { return Resume(); }
+    int32_t ConcurrentPause() { return Pause(); }
     int32_t EnableLPI(bool is_enable) override;
     int32_t HandleConcurrentStream(bool active) override;
     int32_t DisconnectDevice(pal_device_id_t device_id) override;

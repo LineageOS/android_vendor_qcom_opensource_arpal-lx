@@ -289,8 +289,13 @@ int SessionAlsaVoice::setSessionParameters(Stream *s, int dir)
     int pcmId = 0;
 
     if (dir == RX_HOSTLESS) {
-        pcmId = pcmDevRxIds.at(0);
-
+        if (pcmDevRxIds.size()) {
+            pcmId = pcmDevRxIds.at(0);
+        } else {
+            PAL_ERR(LOG_TAG, "pcmDevRxIds is not available.");
+            status = -EINVAL;
+            goto exit;
+        }
         status = build_rx_mfc_payload(s);
         if (0 != status) {
             PAL_ERR(LOG_TAG,"populating Rx mfc payload failed :%d", status);
@@ -311,7 +316,13 @@ int SessionAlsaVoice::setSessionParameters(Stream *s, int dir)
             goto exit;
         }
     } else {
-        pcmId = pcmDevTxIds.at(0);
+        if (pcmDevTxIds.size()) {
+            pcmId = pcmDevTxIds.at(0);
+        } else {
+            PAL_ERR(LOG_TAG, "pcmDevTxIds is not available.");
+            status = -EINVAL;
+            goto exit;
+        }
         status = populate_vsid_payload(s);
         if (0 != status) {
             PAL_ERR(LOG_TAG,"populating vsid payload for TX Failed:%d", status);
@@ -593,7 +604,11 @@ int SessionAlsaVoice::populate_rx_mfc_payload(Stream *s, uint32_t rx_mfc_tag)
         PAL_ERR(LOG_TAG, "no backend specified for this stream");
         return status;
     }
-
+    if (!pcmDevRxIds.size()) {
+        PAL_ERR(LOG_TAG, "No pcmDevRxIds found");
+        status = -EINVAL;
+        goto exit;
+    }
     status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevRxIds.at(0),
                                                    rxAifBackEnds[0].second.c_str(),
                                                    rx_mfc_tag, &miid);
@@ -1041,7 +1056,7 @@ exit:
 int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __unused, void *payload)
 {
     int status = 0;
-    int device = pcmDevRxIds.at(0);
+    int device = 0;
     uint8_t* paramData = NULL;
     size_t paramSize = 0;
 
@@ -1055,7 +1070,6 @@ int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __un
     switch (static_cast<uint32_t>(tagId)) {
 
         case VOICE_VOLUME_BOOST:
-            device = pcmDevRxIds.at(0);
             volume_boost = *((bool *)PalPayload->payload);
             status = payloadCalKeys(s, &paramData, &paramSize);
             if (!paramData) {
@@ -1073,7 +1087,13 @@ int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __un
 
         case VOICE_SLOW_TALK_OFF:
         case VOICE_SLOW_TALK_ON:
-            device = pcmDevRxIds.at(0);
+            if (pcmDevRxIds.size()) {
+                device = pcmDevRxIds.at(0);
+            } else {
+                PAL_ERR(LOG_TAG, "pcmDevRxIds is not available.");
+                status = -EINVAL;
+                goto exit;
+            }
             slow_talk = *((bool *)PalPayload->payload);
             status = payloadTaged(s, MODULE, tagId, device, RX_HOSTLESS);
             if (status) {
@@ -1084,7 +1104,6 @@ int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __un
 
         case TTY_MODE:
             tty_mode = *((uint32_t *)PalPayload->payload);
-            device = pcmDevRxIds.at(0);
             status = payloadSetTTYMode(&paramData, &paramSize,
                                        tty_mode);
             status = setVoiceMixerParameter(s, mixer, paramData, paramSize,
@@ -1103,7 +1122,6 @@ int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __un
             break;
 
         case VOICE_HD_VOICE:
-            device = pcmDevRxIds.at(0);
             hd_voice = *((bool *)PalPayload->payload);
             status = payloadCalKeys(s, &paramData, &paramSize);
             if (!paramData) {
@@ -1119,20 +1137,27 @@ int SessionAlsaVoice::setParameters(Stream *s, int tagId, uint32_t param_id __un
             }
             break;
       case DEVICE_MUTE:
-          dev_mute = *((pal_device_mute_t *)PalPayload->payload);
-          if (dev_mute.dir == PAL_AUDIO_INPUT) {
-              mute_dir = TX_HOSTLESS;
-          }
-          if (dev_mute.mute == 1) {
-              mute_tag = DEVICE_MUTE;
-          }
-          PAL_DBG(LOG_TAG, "setting device mute dir %d mute flag %d", mute_dir, mute_tag);
-          status = payloadTaged(s, MODULE, mute_tag, device, mute_dir);
-          if (status) {
-              PAL_ERR(LOG_TAG, "Failed to set device mute params status = %d",
-                      status);
-          }
-          break;
+            if (pcmDevRxIds.size()) {
+                device = pcmDevRxIds.at(0);
+            } else {
+                PAL_ERR(LOG_TAG, "pcmDevRxIds is not available.");
+                status = -EINVAL;
+                goto exit;
+            }
+            dev_mute = *((pal_device_mute_t *)PalPayload->payload);
+            if (dev_mute.dir == PAL_AUDIO_INPUT) {
+                mute_dir = TX_HOSTLESS;
+            }
+            if (dev_mute.mute == 1) {
+                mute_tag = DEVICE_MUTE;
+            }
+            PAL_DBG(LOG_TAG, "setting device mute dir %d mute flag %d", mute_dir, mute_tag);
+            status = payloadTaged(s, MODULE, mute_tag, device, mute_dir);
+            if (status) {
+                PAL_ERR(LOG_TAG, "Failed to set device mute params status = %d",
+                        status);
+            }
+            break;
        default:
             PAL_ERR(LOG_TAG,"Failed unsupported tag type %d \n",
                     static_cast<uint32_t>(tagId));
@@ -1159,7 +1184,7 @@ if (paramData) {
 int SessionAlsaVoice::setConfig(Stream * s, configType type, int tag)
 {
     int status = 0;
-    int device = pcmDevRxIds.at(0);
+    int device = 0;
     uint8_t* paramData = NULL;
     size_t paramSize = 0;
 
@@ -1167,24 +1192,19 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type, int tag)
 
     switch (static_cast<uint32_t>(tag)) {
         case TAG_STREAM_VOLUME:
-            if (pcmDevRxIds.size()) {
-               device = pcmDevRxIds.at(0);
-               status = payloadCalKeys(s, &paramData, &paramSize);
-               status = SessionAlsaVoice::setVoiceMixerParameter(s, mixer,
-                                                              paramData,
-                                                              paramSize,
-                                                              RX_HOSTLESS);
-               if (status) {
-                  PAL_ERR(LOG_TAG, "Failed to set voice params status = %d",
-                        status);
-               }
-               if (!paramData) {
-                  status = -ENOMEM;
-                  PAL_ERR(LOG_TAG, "failed to get payload status %d", status);
-                  goto exit;
-               }
-            } else {
-              PAL_ERR(LOG_TAG, "pcmDevRxIds:%x is not available.",tag);
+            status = payloadCalKeys(s, &paramData, &paramSize);
+            status = SessionAlsaVoice::setVoiceMixerParameter(s, mixer,
+                                                           paramData,
+                                                           paramSize,
+                                                           RX_HOSTLESS);
+            if (status) {
+               PAL_ERR(LOG_TAG, "Failed to set voice params status = %d",
+                     status);
+            }
+            if (!paramData) {
+               status = -ENOMEM;
+               PAL_ERR(LOG_TAG, "failed to get payload status %d", status);
+               goto exit;
             }
             break;
         case MUTE_TAG:
@@ -1194,6 +1214,7 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type, int tag)
                status = payloadTaged(s, type, tag, device, TX_HOSTLESS);
             } else {
               PAL_ERR(LOG_TAG, "pcmDevTxIds:%x is not available.",tag);
+              status = -EINVAL;
             }
             break;
         case CHARGE_CONCURRENCY_ON_TAG:
@@ -1203,6 +1224,7 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type, int tag)
                status = payloadTaged(s, type, tag, device, RX_HOSTLESS);
             } else {
               PAL_ERR(LOG_TAG, "pcmDevRxIds:%x is not available.",tag);
+              status = -EINVAL;
             }
             break;
         default:
@@ -1228,7 +1250,7 @@ if (paramData) {
 int SessionAlsaVoice::setConfig(Stream * s, configType type __unused, int tag, int dir)
 {
     int status = 0;
-    int device = pcmDevRxIds.at(0);
+    int device = 0;
     uint8_t* paramData = NULL;
     size_t paramSize = 0;
 
@@ -1237,7 +1259,6 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type __unused, int tag, i
     switch (static_cast<uint32_t>(tag)) {
 
        case TAG_STREAM_VOLUME:
-            device = pcmDevRxIds.at(0);
             status = payloadCalKeys(s, &paramData, &paramSize);
             if (status || !paramData) {
                 status = -ENOMEM;
@@ -1261,12 +1282,16 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type __unused, int tag, i
 
         case MUTE_TAG:
         case UNMUTE_TAG:
-            device = pcmDevTxIds.at(0);
-            status = payloadTaged(s, type, tag, device, TX_HOSTLESS);
+            if (pcmDevTxIds.size()) {
+                device = pcmDevTxIds.at(0);
+                status = payloadTaged(s, type, tag, device, TX_HOSTLESS);
+            } else {
+                PAL_ERR(LOG_TAG, "pcmDevTxIds:%x is not available.",tag);
+                status = -EINVAL;
+            }
             break;
 
         case VSID:
-            device = pcmDevRxIds.at(0);
             status = payloadSetVSID(s);
             if (status != 0) {
                 PAL_ERR(LOG_TAG, "failed to get payload status %d", status);
@@ -1285,7 +1310,6 @@ int SessionAlsaVoice::setConfig(Stream * s, configType type __unused, int tag, i
             break;
 
         case CHANNEL_INFO:
-            device = pcmDevTxIds.at(0);
             status = payloadSetChannelInfo(s, &paramData, &paramSize);
             status = SessionAlsaVoice::setVoiceMixerParameter(s, mixer,
                                                               paramData,
@@ -2025,13 +2049,13 @@ int SessionAlsaVoice::setPopSuppressorMute(Stream *s)
     uint32_t miid = 0;
 
     if (!rxAifBackEnds.size()) {
-        PAL_ERR(LOG_TAG,"No RX backends found failed");
+        PAL_ERR(LOG_TAG, "No RX backends found");
         status = -EINVAL;
         goto exit;
     }
 
     if (!pcmDevRxIds.size()) {
-        PAL_ERR(LOG_TAG,"No pcmDevRxIds found failed");
+        PAL_ERR(LOG_TAG, "No pcmDevRxIds found");
         status = -EINVAL;
         goto exit;
     }
