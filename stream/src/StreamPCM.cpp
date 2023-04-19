@@ -1256,11 +1256,13 @@ int32_t StreamPCM::pause_l()
                     status);
            goto exit;
         }
-        PAL_DBG(LOG_TAG, "Waiting for Pause to complete");
-        if (session->isPauseRegistrationDone)
+        if (session->isPauseRegistrationDone) {
+            PAL_DBG(LOG_TAG, "Waiting for Pause to complete from ADSP");
             pauseCV.wait_for(pauseLock, std::chrono::microseconds(VOLUME_RAMP_PERIOD));
-        else
+        } else {
+            PAL_DBG(LOG_TAG, "Pause event registration not done, sleeping for %d", VOLUME_RAMP_PERIOD);
             usleep(VOLUME_RAMP_PERIOD);
+        }
         isPaused = true;
         currentState = STREAM_PAUSED;
         PAL_DBG(LOG_TAG, "session setConfig successful");
