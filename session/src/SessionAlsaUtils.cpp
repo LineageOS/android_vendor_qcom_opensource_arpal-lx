@@ -2474,9 +2474,8 @@ int SessionAlsaUtils::setupSessionDevice(Stream* streamHandle, pal_stream_type_t
         if(status) {
             PAL_ERR(LOG_TAG, "get vsid info failed");
         }
-
-        status = rmHandle->getSidetoneMode((pal_device_id_t)pcmDevIds.at(0),
-                                           sAttr.type, &sidetoneMode);
+        PAL_DBG(LOG_TAG, "Device Id : %d  Stream Type : %d passed to getSidetoneMode", dAttr.id , sAttr.type );
+        status = rmHandle->getSidetoneMode(dAttr.id, sAttr.type, &sidetoneMode);
         if(status) {
             PAL_ERR(LOG_TAG, "get sidetone mode failed");
         }
