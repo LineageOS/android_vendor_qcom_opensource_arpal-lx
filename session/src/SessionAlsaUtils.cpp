@@ -2383,6 +2383,15 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
                 goto exit;
             }
         }
+        if (sAttr.direction == PAL_AUDIO_INPUT) {
+            if (strstr(dAttr.custom_config.custom_key , "unprocessed-hdr-mic")) {
+                status = sess->setConfig(streamHandle, MODULE,  ORIENTATION_TAG);
+                if (0 != status) {
+                    PAL_ERR(LOG_TAG, "setting HDR record orientation config failed with status %d", status);
+                    goto exit;
+                }
+            }
+        }
     } else if (!(SessionAlsaUtils::isMmapUsecase(sAttr))) {
         if (sess) {
             SessionAlsaVoice *voiceSession = dynamic_cast<SessionAlsaVoice *>(sess);

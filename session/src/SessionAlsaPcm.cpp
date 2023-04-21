@@ -2178,6 +2178,9 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
     deviceToConnect->getDeviceAttributes(&dAttr);
 
     if (!rxAifBackEndsToConnect.empty()) {
+        for (const auto &elem : rxAifBackEndsToConnect)
+            rxAifBackEnds.push_back(elem);
+
         if (streamType != PAL_STREAM_ULTRASOUND &&
             streamType != PAL_STREAM_LOOPBACK)
             status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
@@ -2186,16 +2189,27 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
             status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
                      dAttr, pcmDevTxIds, pcmDevRxIds, rxAifBackEndsToConnect);
 
-        if (!status) {
-            for (const auto &elem : rxAifBackEndsToConnect)
-                rxAifBackEnds.push_back(elem);
-        } else {
+        if (status) {
             PAL_ERR(LOG_TAG, "failed to connect rxAifBackEnds: %d",
                     (pcmDevIds.size() ? pcmDevIds.at(0) : pcmDevRxIds.at(0)));
+            int cnt = 0;
+            for (const auto &elem : rxAifBackEnds) {
+                cnt++;
+                for (const auto &connectElem : rxAifBackEndsToConnect) {
+                    if (std::get<0>(elem) == std::get<0>(connectElem)) {
+                        rxAifBackEnds.erase(rxAifBackEnds.begin() + cnt - 1, rxAifBackEnds.begin() + cnt);
+                        cnt--;
+                        break;
+                    }
+                }
+            }
         }
     }
 
     if (!txAifBackEndsToConnect.empty()) {
+        for (const auto &elem : txAifBackEndsToConnect)
+            txAifBackEnds.push_back(elem);
+
         if (streamType != PAL_STREAM_LOOPBACK)
             status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
                      dAttr, (pcmDevIds.size() ? pcmDevIds : pcmDevTxIds), txAifBackEndsToConnect);
@@ -2203,12 +2217,20 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
             status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
                      dAttr, pcmDevTxIds, pcmDevRxIds, txAifBackEndsToConnect);
 
-        if (!status) {
-            for (const auto &elem : txAifBackEndsToConnect)
-                txAifBackEnds.push_back(elem);
-        } else {
+        if (status) {
+            int cnt = 0;
             PAL_ERR(LOG_TAG, "failed to connect txAifBackEnds: %d",
                     (pcmDevIds.size() ? pcmDevIds.at(0) : pcmDevTxIds.at(0)));
+            for (const auto &elem : txAifBackEnds) {
+                cnt++;
+                for (const auto &connectElem : txAifBackEndsToConnect) {
+                    if (std::get<0>(elem) == std::get<0>(connectElem)) {
+                        txAifBackEnds.erase(txAifBackEnds.begin() + cnt - 1, txAifBackEnds.begin() + cnt);
+                        cnt--;
+                        break;
+                    }
+                }
+            }
         }
     }
 
