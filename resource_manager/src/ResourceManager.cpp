@@ -2745,15 +2745,23 @@ int32_t ResourceManager::getDeviceConfig(struct pal_device *deviceattr,
                     else
                         deviceattr->config.bit_width = BITWIDTH_16;
                 }
-                if (deviceattr->config.bit_width == 32) {
-                    deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S32_LE;
-                } else if (deviceattr->config.bit_width == 24) {
-                    if (sAttr->out_media_config.aud_fmt_id == PAL_AUDIO_FMT_PCM_S24_LE)
-                        deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S24_LE;
-                    else
-                        deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S24_3LE;
+                if ((deviceattr->config.bit_width == BITWIDTH_32) &&
+                            (devinfo.bitFormatSupported != PAL_AUDIO_FMT_PCM_S32_LE)) {
+                    PAL_DBG(LOG_TAG, "32 bit is not supported; update with supported bit format");
+                    deviceattr->config.aud_fmt_id = devinfo.bitFormatSupported;
+                    deviceattr->config.bit_width =
+                            palFormatToBitwidthLookup(devinfo.bitFormatSupported);
                 } else {
-                    deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+                    if (deviceattr->config.bit_width == 32) {
+                        deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S32_LE;
+                    } else if (deviceattr->config.bit_width == 24) {
+                        if (sAttr->out_media_config.aud_fmt_id == PAL_AUDIO_FMT_PCM_S24_LE)
+                            deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S24_LE;
+                        else
+                            deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S24_3LE;
+                    } else {
+                        deviceattr->config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+                    }
                 }
 
                 PAL_DBG(LOG_TAG, "devcie %d sample rate %d bitwidth %d",
