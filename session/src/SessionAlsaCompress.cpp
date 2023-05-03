@@ -1690,7 +1690,7 @@ int SessionAlsaCompress::stop(Stream * s __unused)
                 status = SessionAlsaUtils::registerMixerEvent(mixer, compressDevIds.at(0),
                             rxAifBackEnds[0].second.data(), TAG_PAUSE, (void *)&event_cfg,
                             payload_size);
-                if (status == 0) {
+                if (status == 0 || rm->cardState == CARD_STATUS_OFFLINE) {
                     isPauseRegistrationDone = false;
                 } else {
                     // Not a fatal error
@@ -1763,7 +1763,6 @@ int SessionAlsaCompress::close(Stream * s)
                 PAL_ERR(LOG_TAG, "session alsa close failed with %d", status);
             }
             if (compress) {
-                compress_close(compress);
                 if (rm->cardState == CARD_STATUS_OFFLINE) {
                     std::shared_ptr<offload_msg> msg = std::make_shared<offload_msg>(OFFLOAD_CMD_ERROR);
                     std::lock_guard<std::mutex> lock(cv_mutex_);
@@ -1784,6 +1783,7 @@ int SessionAlsaCompress::close(Stream * s)
                 /* empty the pending messages in queue */
                 while (!msg_queue_.empty())
                     msg_queue_.pop();
+                compress_close(compress);
             }
             PAL_DBG(LOG_TAG, "out of compress close");
 
