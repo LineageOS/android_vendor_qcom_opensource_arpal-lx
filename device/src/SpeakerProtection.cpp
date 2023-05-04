@@ -2822,7 +2822,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
             tagid = MODULE_VI;
 
         status = SessionAlsaUtils::getModuleInstanceId(virtMixer, pcmDevIdTx.at(0),
-                            backendName.c_str(), MODULE_VI, &miid);
+                            backendName.c_str(), tagid, &miid);
         if (0 != status) {
             PAL_ERR(LOG_TAG, "Error: %d Failed to get tag info %x", status, MODULE_VI);
             goto exit;
@@ -2856,7 +2856,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
                     ftm_ret[i].status = ftmValue->vi_th_ftm_params[j].status;
                 }
             } else {
-                for (int i = 0, j = 0; i < ftm.num_ch; i++, j = 0) {
+                for (int i = 0, j = 0; i < ftm.num_ch; i++, j++) {
                     ftm_ret[i].ftm_rDC_q24 = ftmValue->vi_th_ftm_params[j].ftm_rDC_q24;
                     ftm_ret[i].ftm_temp_q22 = ftmValue->vi_th_ftm_params[j].ftm_temp_q22;
                     ftm_ret[i].status = ftmValue->vi_th_ftm_params[j].status;
