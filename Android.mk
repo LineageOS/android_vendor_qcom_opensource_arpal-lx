@@ -142,7 +142,6 @@ LOCAL_HEADER_LIBRARIES := \
     libcapiv2_headers \
     libagm_headers \
     libacdb_headers \
-    liblisten_headers \
     libarosal_headers \
     libvui_dmgr_headers \
     libaudiofeaturestats_headers \
