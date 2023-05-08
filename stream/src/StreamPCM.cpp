@@ -1310,6 +1310,21 @@ int32_t StreamPCM::resume_l()
         goto exit;
     }
 
+    if (mStreamAttr->direction == PAL_AUDIO_OUTPUT &&
+        (mStreamAttr->type == PAL_STREAM_LOW_LATENCY ||
+         mStreamAttr->type == PAL_STREAM_PCM_OFFLOAD ||
+         mStreamAttr->type == PAL_STREAM_DEEP_BUFFER)) {
+            pal_param_device_rotation_t rotation;
+            rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                    PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+            status = session->setParameters(this, 0, PAL_PARAM_ID_DEVICE_ROTATION, &rotation);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "session setParameters for rotation failed with status %d",
+                        status);
+                goto exit;
+            }
+        }
+
     /* set ramp period to default */
     if (volRampPeriodms == 0) {
         ramp_param.ramp_period_ms = 0x28;

@@ -1619,11 +1619,23 @@ int SessionAlsaCompress::start(Stream * s)
         }
     }
     //Setting the device orientation during stream open
-    if (PAL_DEVICE_OUT_SPEAKER == dAttr.id && !strcmp(dAttr.custom_config.custom_key, "mspp")) {
+    if (PAL_DEVICE_OUT_SPEAKER == dAttr.id) {
         PAL_DBG(LOG_TAG,"set device orientation %d", rm->mOrientation);
-        s->setOrientation(rm->mOrientation);
-        if (setConfig(s, MODULE, ORIENTATION_TAG) != 0) {
-            PAL_ERR(LOG_TAG,"Setting device orientation failed");
+        if (!strcmp(dAttr.custom_config.custom_key, "mspp")) {
+            s->setOrientation(rm->mOrientation);
+            if (setConfig(s, MODULE, ORIENTATION_TAG) != 0) {
+                PAL_ERR(LOG_TAG,"Setting device orientation failed");
+            }
+        } else {
+            pal_param_device_rotation_t rotation;
+            rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                    PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+            status = handleDeviceRotation(s, rotation.rotation_type, compressDevIds.at(0), mixer,
+                                          builder, rxAifBackEnds);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG,"handleDeviceRotation failed\n");
+                goto exit;
+            }
         }
     }
 exit:
