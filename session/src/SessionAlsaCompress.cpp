@@ -58,6 +58,11 @@
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: SessionAlsaCompress"
@@ -1327,6 +1332,11 @@ int SessionAlsaCompress::start(Stream * s)
 
     switch (sAttr.direction) {
         case PAL_AUDIO_OUTPUT:
+            if (!compressDevIds.size()) {
+                PAL_ERR(LOG_TAG, "frontendIDs are not available");
+                status = -EINVAL;
+                goto exit;
+            }
             /** create an offload thread for posting callbacks */
             worker_thread = std::make_unique<std::thread>(offloadThreadLoop, this);
 
@@ -1512,6 +1522,11 @@ int SessionAlsaCompress::start(Stream * s)
             }
             break;
         case PAL_AUDIO_INPUT:
+            if (!compressDevIds.size()) {
+                PAL_ERR(LOG_TAG, "frontendIDs are not available");
+                status = -EINVAL;
+                goto exit;
+            }
             compress_cap_buf_size = in_buf_size;
             compress_config.fragment_size = in_buf_size;
             compress_config.fragments = in_buf_count;
@@ -1699,6 +1714,16 @@ int SessionAlsaCompress::stop(Stream * s __unused)
                 event_cfg.event_id = EVENT_ID_SOFT_PAUSE_PAUSE_COMPLETE;
                 event_cfg.event_config_payload_size = 0;
                 event_cfg.is_register = 0;
+                if (!compressDevIds.size()) {
+                    PAL_ERR(LOG_TAG, "frontendIDs are not available");
+                    status = -EINVAL;
+                    goto exit;
+                }
+                if (!rxAifBackEnds.size()) {
+                    PAL_ERR(LOG_TAG, "rxAifBackEnds are not available");
+                    status = -EINVAL;
+                    goto exit;
+                }
                 status = SessionAlsaUtils::registerMixerEvent(mixer, compressDevIds.at(0),
                             rxAifBackEnds[0].second.data(), TAG_PAUSE, (void *)&event_cfg,
                             payload_size);
@@ -1730,6 +1755,7 @@ int SessionAlsaCompress::stop(Stream * s __unused)
         case PAL_AUDIO_INPUT_OUTPUT:
             break;
     }
+exit:
     rm->voteSleepMonitor(s, false);
     PAL_DBG(LOG_TAG, "Exit status: %d", status);
     return status;
