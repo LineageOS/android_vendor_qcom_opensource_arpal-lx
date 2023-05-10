@@ -1646,6 +1646,43 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                     matchFound = false;
                 }
             }
+            /*In case of SWB-->WB/NB SCO voip SHO, APM sends explicit routing separately
+            * for RX and TX path, it causes ar_osal timewait crash at the DSP to
+            * route just one RX/TX path with new GKV and add graph for feedback path
+            * since other TX/RX path still intact with SWB codec. Thus, forcedly route
+            * other path also to WB/NB if it's active on SCO device.
+            */
+            if (matchFound && ((strAttr.type == PAL_STREAM_VOIP_RX &&
+                newDeviceId == PAL_DEVICE_OUT_BLUETOOTH_SCO &&
+                rm->isDeviceActive(PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) ||
+                (strAttr.type == PAL_STREAM_VOIP_TX &&
+                    newDeviceId == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET &&
+                    rm->isDeviceActive(PAL_DEVICE_OUT_BLUETOOTH_SCO)))) {
+                struct pal_device sco_Dattr = {};
+                std::shared_ptr<Device> scoDev = nullptr;
+                std::vector <Stream*> activeStreams;
+                if (newDeviceId == PAL_DEVICE_OUT_BLUETOOTH_SCO) {
+                    sco_Dattr.id = PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
+                } else {
+                    sco_Dattr.id = PAL_DEVICE_OUT_BLUETOOTH_SCO;
+                }
+                scoDev = Device::getInstance(&sco_Dattr, rm);
+                status = rm->getDeviceConfig(&sco_Dattr, NULL);
+                if (status) {
+                    PAL_ERR(LOG_TAG, "getDeviceConfig for bt-sco failed");
+                    mStreamMutex.unlock();
+                    rm->unlockActiveStream();
+                    return 0;
+                }
+
+                rm->getActiveStream_l(activeStreams, scoDev);
+                for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
+                    (*sIter)->lockStreamMutex();
+                    streamDevDisconnect.push_back({ (*sIter), sco_Dattr.id });
+                    StreamDevConnect.push_back({ (*sIter), &sco_Dattr });
+                    (*sIter)->unlockStreamMutex();
+                }
+            }
         } else {
             rm->updateSndName(newDeviceId, deviceInfo.sndDevName);
             matchFound = true;
