@@ -4856,20 +4856,6 @@ int ResourceManager::HandleDetectionStreamAction(pal_stream_type_t type, int32_t
                         PAL_ERR(LOG_TAG, "Failed to do resume stream");
                 }
                 break;
-            case ST_CONCURRENT_PAUSE:
-                if (str != (Stream *)data) {
-                    status = str->ConcurrentPause();
-                    if (status)
-                        PAL_ERR(LOG_TAG, "Failed to pause stream");
-                }
-                break;
-            case ST_CONCURRENT_RESUME:
-                if (str != (Stream *)data) {
-                    status = str->ConcurrentResume();
-                    if (status)
-                        PAL_ERR(LOG_TAG, "Failed to do resume stream");
-                }
-                break;
             case ST_ENABLE_LPI: {
                 bool active = *(bool *)data;
                 status = str->EnableLPI(!active);
@@ -4995,13 +4981,13 @@ void ResourceManager::HandleStreamPauseResume(pal_stream_type_t st_type, bool ac
         ++(*local_dis_count);
         if (*local_dis_count == 1) {
             // pause all sva/acd streams
-            HandleDetectionStreamAction(st_type, ST_CONCURRENT_PAUSE, NULL);
+            HandleDetectionStreamAction(st_type, ST_PAUSE, NULL);
         }
     } else {
         --(*local_dis_count);
         if (*local_dis_count == 0) {
             // resume all sva/acd streams
-            HandleDetectionStreamAction(st_type, ST_CONCURRENT_RESUME, NULL);
+            HandleDetectionStreamAction(st_type, ST_RESUME, NULL);
         }
     }
 }
