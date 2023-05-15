@@ -9356,18 +9356,13 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
             if (param_bt_a2dp->dev_id == PAL_DEVICE_OUT_BLUETOOTH_A2DP)
                 a2dp_suspended = param_bt_a2dp->a2dp_suspended;
 
-            if (param_bt_a2dp->a2dp_suspended == true) {
-                //TODO:Need to check for Broadcast and BLE unicast concurrency UC
-                if (isDeviceAvailable(param_bt_a2dp->dev_id)) {
-                    a2dp_dattr.id = param_bt_a2dp->dev_id;
-                } else {
-                    PAL_ERR(LOG_TAG, "a2dp/ble device %d is unavailable, set param %d failed",
-                        param_bt_a2dp->dev_id, param_id);
-                    status = -EIO;
-                    goto exit_no_unlock;
-                }
-            } else {
+            if (isDeviceAvailable(param_bt_a2dp->dev_id)) {
                 a2dp_dattr.id = param_bt_a2dp->dev_id;
+            } else {
+                PAL_ERR(LOG_TAG, "a2dp/ble device %d is unavailable, set param %d failed",
+                    param_bt_a2dp->dev_id, param_id);
+                status = -EIO;
+                goto exit_no_unlock;
             }
 
             a2dp_dev = Device::getInstance(&a2dp_dattr , rm);
