@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1019,6 +1019,7 @@ Return<void> PAL::ipc_pal_get_param(uint32_t paramId,
     ret = pal_get_param(paramId, &payLoad, &sz, NULL);
     if (!payLoad) {
         ALOGE("Not enough memory for payLoad");
+        _hidl_cb(ret, payload_hidl, sz);
         return Void();
     }
     payload_hidl.resize(sz);

@@ -5069,9 +5069,19 @@ bool ResourceManager::checkAndUpdateDeferSwitchState(bool stream_active)
 
 void ResourceManager::handleDeferredSwitch()
 {
+    int32_t status = 0;
     bool active = false;
     std::vector<pal_stream_type_t> st_streams;
-    mActiveStreamMutex.lock();
+    do {
+        status = mActiveStreamMutex.try_lock();
+    } while (!status && cardState == CARD_STATUS_ONLINE);
+
+    if (cardState != CARD_STATUS_ONLINE) {
+        if (status)
+            mActiveStreamMutex.unlock();
+        PAL_DBG(LOG_TAG, "Sound card is offline");
+        return;
+    }
 
     PAL_DBG(LOG_TAG, "enter, isAnyVUIStreambuffering:%d deferred state:%d",
         isAnyVUIStreamBuffering(), deferredSwitchState);

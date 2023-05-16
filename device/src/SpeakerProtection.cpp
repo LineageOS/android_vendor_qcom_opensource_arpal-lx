@@ -450,6 +450,7 @@ int SpeakerProtection::spkrStartCalibration()
     FILE *fp = NULL;
     struct pal_device device, deviceRx;
     struct pal_channel_info ch_info;
+    struct pal_device_info deviceRxSpkr;
     struct pal_stream_attributes sAttr;
     struct pcm_config config;
     struct mixer_ctl *connectCtrl = NULL;
@@ -513,6 +514,8 @@ int SpeakerProtection::spkrStartCalibration()
         goto exit;
     }
 
+    rm->getDeviceInfo(PAL_DEVICE_IN_VI_FEEDBACK, PAL_STREAM_PROXY, "", &vi_device);
+
     // Configure device attribute
     rm->getChannelMap(&(ch_info.ch_map[0]), vi_device.channels);
     switch (vi_device.channels) {
@@ -544,12 +547,7 @@ int SpeakerProtection::spkrStartCalibration()
     }
 
     device.id = PAL_DEVICE_IN_VI_FEEDBACK;
-    ret = rm->getSndDeviceName(device.id , mSndDeviceName_vi);
-    if (0 != ret) {
-        PAL_ERR(LOG_TAG, "Failed to obtain tx snd device name for %d", device.id);
-        goto exit;
-    }
-
+    strlcpy(mSndDeviceName_vi, vi_device.sndDevName.c_str(), DEVICE_NAME_MAX_SIZE);
     PAL_DBG(LOG_TAG, "got the audio_route name %s", mSndDeviceName_vi);
 
     rm->getBackendName(device.id, backEndNameTx);
@@ -843,12 +841,8 @@ int SpeakerProtection::spkrStartCalibration()
 
     // Setup RX path
     deviceRx.id = PAL_DEVICE_OUT_SPEAKER;
-    ret = rm->getSndDeviceName(deviceRx.id, mSndDeviceName_rx);
-    if (0 != ret) {
-        PAL_ERR(LOG_TAG, "Failed to obtain the rx snd device name");
-        goto err_pcm_open;
-    }
-
+    rm->getDeviceInfo(deviceRx.id, PAL_STREAM_PROXY, "", &deviceRxSpkr);
+    strlcpy(mSndDeviceName_rx, deviceRxSpkr.sndDevName.c_str(), DEVICE_NAME_MAX_SIZE);
     rm->getChannelMap(&(deviceRx.config.ch_info.ch_map[0]), numberOfChannels);
 
     switch (numberOfChannels) {
@@ -2822,7 +2816,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
             tagid = MODULE_VI;
 
         status = SessionAlsaUtils::getModuleInstanceId(virtMixer, pcmDevIdTx.at(0),
-                            backendName.c_str(), MODULE_VI, &miid);
+                            backendName.c_str(), tagid, &miid);
         if (0 != status) {
             PAL_ERR(LOG_TAG, "Error: %d Failed to get tag info %x", status, MODULE_VI);
             goto exit;
@@ -2856,7 +2850,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
                     ftm_ret[i].status = ftmValue->vi_th_ftm_params[j].status;
                 }
             } else {
-                for (int i = 0, j = 0; i < ftm.num_ch; i++, j = 0) {
+                for (int i = 0, j = 0; i < ftm.num_ch; i++, j++) {
                     ftm_ret[i].ftm_rDC_q24 = ftmValue->vi_th_ftm_params[j].ftm_rDC_q24;
                     ftm_ret[i].ftm_temp_q22 = ftmValue->vi_th_ftm_params[j].ftm_temp_q22;
                     ftm_ret[i].status = ftmValue->vi_th_ftm_params[j].status;
