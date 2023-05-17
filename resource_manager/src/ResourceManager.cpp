@@ -5123,6 +5123,12 @@ void ResourceManager::HandleConcurrencyForSoundTriggerStreams(pal_stream_type_t 
     mActiveStreamMutex.lock();
     PAL_DBG(LOG_TAG, "Enter, stream type %d, direction %d, active %d", type, dir, active);
 
+    if (deferredSwitchState == DEFER_LPI_NLPI_SWITCH) {
+        use_lpi_temp = false;
+    } else if (deferredSwitchState == DEFER_NLPI_LPI_SWITCH) {
+        use_lpi_temp = true;
+    }
+
     st_streams.push_back(PAL_STREAM_VOICE_UI);
     st_streams.push_back(PAL_STREAM_ACD);
     st_streams.push_back(PAL_STREAM_SENSOR_PCM_DATA);
