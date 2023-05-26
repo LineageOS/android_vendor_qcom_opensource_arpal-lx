@@ -2064,7 +2064,7 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
             goto exit;
         }
     }
-    if (streamType == PAL_STREAM_ULTRA_LOW_LATENCY) {
+    if (sAttr.direction == PAL_AUDIO_INPUT && streamType == PAL_STREAM_ULTRA_LOW_LATENCY) {
         status = SessionAlsaUtils::getModuleInstanceId(mixerHandle, pcmDevIds.at(0),
                                            aifBackEndsToConnect[0].second.data(),
                                            TAG_STREAM_MFC_SR, &miid);
@@ -2074,7 +2074,8 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
         }
         PAL_DBG(LOG_TAG, "ULL record, miid : %x id = %d\n", miid, pcmDevIds.at(0));
         if (isPalPCMFormat(sAttr.in_media_config.aud_fmt_id))
-            streamData.bitWidth = ResourceManager::palFormatToBitwidthLookup(sAttr.in_media_config.aud_fmt_id);
+            streamData.bitWidth = ResourceManager::palFormatToBitwidthLookup(
+                                                   sAttr.in_media_config.aud_fmt_id);
         else
             streamData.bitWidth = sAttr.in_media_config.bit_width;
         streamData.sampleRate = sAttr.in_media_config.sample_rate;
