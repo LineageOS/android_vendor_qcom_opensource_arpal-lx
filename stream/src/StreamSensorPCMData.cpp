@@ -196,16 +196,16 @@ int32_t StreamSensorPCMData::start()
             goto exit;
         }
 
+        status = device->open();
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "Error: device [%d] open failed with status %d",
+                    device->getSndDeviceId(), status);
+            goto exit;
+        }
+
         if (currentState != STREAM_PAUSED) {
             mDevices.clear();
             mDevices.push_back(device);
-
-            status = device->open();
-            if (0 != status) {
-                PAL_ERR(LOG_TAG, "Error: device [%d] open failed with status %d",
-                        device->getSndDeviceId(), status);
-                goto exit;
-            }
 
             status = session->open(this);
             if (0 != status) {
