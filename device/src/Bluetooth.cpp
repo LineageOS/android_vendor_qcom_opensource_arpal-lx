@@ -1227,6 +1227,7 @@ void Bluetooth::stopAbr()
         if ((fbDev->deviceStartStopCount > 0) &&
             (--fbDev->deviceStartStopCount == 0)) {
             fbDev->isConfigured = false;
+            fbDev->isAbrEnabled = false;
         }
         if (fbDev->deviceCount > 0)
             fbDev->deviceCount--;
@@ -1241,6 +1242,7 @@ void Bluetooth::stopAbr()
         if ((fbDev->deviceStartStopCount > 0) &&
             (--fbDev->deviceStartStopCount == 0)) {
             fbDev->isConfigured = false;
+            fbDev->isAbrEnabled = false;
         }
         if (fbDev->deviceCount > 0)
             fbDev->deviceCount--;
