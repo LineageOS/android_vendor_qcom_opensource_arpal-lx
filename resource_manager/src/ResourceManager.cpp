@@ -9685,7 +9685,9 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     goto exit;
                 }
                 PAL_INFO(LOG_TAG,"PAL_PARAM_ID_SET_SOURCE_METADATA device setparam");
+                mResourceManagerMutex.unlock();
                 dev->setDeviceParameter(param_id, param_payload);
+                mResourceManagerMutex.lock();
             }
         }
         break;
@@ -9701,7 +9703,9 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     goto exit;
                 }
                 PAL_INFO(LOG_TAG, "PAL_PARAM_ID_SET_SINK_METADATA device setparam");
+                mResourceManagerMutex.unlock();
                 dev->setDeviceParameter(param_id, param_payload);
+                mResourceManagerMutex.lock();
             }
         }
         break;
