@@ -118,7 +118,6 @@ StreamSoundTrigger::StreamSoundTrigger(struct pal_stream_attributes *sattr,
     mutex_unlocked_after_cb_ = false;
     common_cp_update_disable_ = false;
     second_stage_processing_ = false;
-    is_client_start_stop_ = false;
     gsl_engine_model_ = nullptr;
     gsl_conf_levels_ = nullptr;
     gsl_engine_ = nullptr;
@@ -330,16 +329,27 @@ int32_t StreamSoundTrigger::start() {
     int32_t status = 0;
     stream_state_t prev_state;
 
+    /*
+     * Guard with mActiveStreamMutex to avoid concurrent
+     * RX stream getting released during EC enable
+     */
+    rm->lockActiveStream();
     PAL_DBG(LOG_TAG, "Enter, stream direction %d", mStreamAttr->direction);
 
     std::lock_guard<std::mutex> lck(mStreamMutex);
+    // cache current state after mutex locked
+    prev_state = currentState;
+    currentState = STREAM_STARTED;
 
-    is_client_start_stop_ = true;
     rejection_notified_ = false;
     std::shared_ptr<StEventConfig> ev_cfg(
        new StStartRecognitionEventConfig(false));
     status = cur_state_->ProcessEvent(ev_cfg);
+    // restore cached state if start fails
+    if (status)
+        currentState = prev_state;
 
+    rm->unlockActiveStream();
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
     return status;
 }
@@ -347,15 +357,21 @@ int32_t StreamSoundTrigger::start() {
 int32_t StreamSoundTrigger::stop() {
     int32_t status = 0;
 
+    /*
+     * Guard with mActiveStreamMutex to avoid concurrent
+     * RX stream getting released during EC disable
+     */
+    rm->lockActiveStream();
     PAL_DBG(LOG_TAG, "Enter, stream direction %d", mStreamAttr->direction);
 
     std::lock_guard<std::mutex> lck(mStreamMutex);
+    currentState = STREAM_STOPPED;
 
-    is_client_start_stop_ = true;
     std::shared_ptr<StEventConfig> ev_cfg(
        new StStopRecognitionEventConfig(false));
     status = cur_state_->ProcessEvent(ev_cfg);
 
+    rm->unlockActiveStream();
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
     return status;
 }
@@ -734,40 +750,6 @@ int32_t StreamSoundTrigger::Pause() {
     std::lock_guard<std::mutex> lck(mStreamMutex);
     std::shared_ptr<StEventConfig> ev_cfg(new StPauseEventConfig());
     status = cur_state_->ProcessEvent(ev_cfg);
-    if (status) {
-        PAL_ERR(LOG_TAG, "Pause failed");
-    }
-    PAL_DBG(LOG_TAG, "Exit, status %d", status);
-
-    return status;
-}
-
-int32_t StreamSoundTrigger::ConcurrentResume() {
-    int32_t status = 0;
-
-    PAL_DBG(LOG_TAG, "Enter");
-    std::lock_guard<std::mutex> lck(mStreamMutex);
-    std::shared_ptr<StEventConfig> ev_cfg(new StResumeEventConfig());
-    common_cp_update_disable_ = true;
-    status = cur_state_->ProcessEvent(ev_cfg);
-    common_cp_update_disable_ = false;
-    if (status) {
-        PAL_ERR(LOG_TAG, "Resume failed");
-    }
-    PAL_DBG(LOG_TAG, "Exit, status %d", status);
-
-    return status;
-}
-
-int32_t StreamSoundTrigger::ConcurrentPause() {
-    int32_t status = 0;
-
-    PAL_DBG(LOG_TAG, "Enter");
-    std::lock_guard<std::mutex> lck(mStreamMutex);
-    std::shared_ptr<StEventConfig> ev_cfg(new StPauseEventConfig());
-    common_cp_update_disable_ = true;
-    status = cur_state_->ProcessEvent(ev_cfg);
-    common_cp_update_disable_ = false;
     if (status) {
         PAL_ERR(LOG_TAG, "Pause failed");
     }
@@ -2105,39 +2087,12 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
             if (st_stream_.paused_) {
                break; // Concurrency is active, start later.
             }
-            stream_state_t prev_state;
-            bool is_client_start = false;
-
-            // update flag to local variable as we may unlock stream mutex below
-            if (ev_cfg->id_ == ST_EV_START_RECOGNITION &&
-                st_stream_.is_client_start_stop_) {
-                is_client_start = st_stream_.is_client_start_stop_;
-                st_stream_.is_client_start_stop_ = false;
-            }
-
             StStartRecognitionEventConfigData *data =
                 (StStartRecognitionEventConfigData *)ev_cfg->data_.get();
             if (!st_stream_.rec_config_) {
                 PAL_ERR(LOG_TAG, "Recognition config not set %d", data->restart_);
                 status = -EINVAL;
                 break;
-            }
-
-            if (!st_stream_.common_cp_update_disable_) {
-                /*
-                 * common_cp_update_disable_ is true for following cases
-                 * 1. Concurrency stream handling
-                 * 2. SSR Up/Down handling
-                 * in these cases active stream mutex is already locked.
-                 */
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
-            if (is_client_start) {
-                // cache current state after mutex locked
-                prev_state = st_stream_.currentState;
-                st_stream_.currentState = STREAM_STARTED;
             }
 
             /* Update cap dev based on mode and configuration and start it */
@@ -2177,8 +2132,6 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                 cap_prof = st_stream_.rm->GetSoundTriggerCaptureProfile();
                 if (!cap_prof) {
                     PAL_ERR(LOG_TAG, "Invalid capture profile");
-                    if (!st_stream_.common_cp_update_disable_)
-                        st_stream_.rm->unlockActiveStream();
                     goto err_exit;
                 }
 
@@ -2192,9 +2145,7 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                     status = dev->open();
                     if (0 != status) {
                         PAL_ERR(LOG_TAG, "Device open failed, status %d", status);
-                        if (!st_stream_.common_cp_update_disable_)
-                            st_stream_.rm->unlockActiveStream();
-                        goto err_exit;
+                        break;
                     }
                     st_stream_.device_opened_ = true;
                 }
@@ -2207,21 +2158,11 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                     PAL_ERR(LOG_TAG, "Device start failed, status %d", status);
                     dev->close();
                     st_stream_.device_opened_ = false;
-                    if (!st_stream_.common_cp_update_disable_)
-                        st_stream_.rm->unlockActiveStream();
-                    goto err_exit;
-                } else {
+                    break;
+                } else if (!rm->isDeviceActive_l(dev, &st_stream_)) {
                     st_stream_.rm->registerDevice(dev, &st_stream_);
-                    if (!st_stream_.common_cp_update_disable_)
-                        st_stream_.rm->unlockActiveStream();
                 }
                 PAL_DBG(LOG_TAG, "device started");
-            } else {
-                status = -EINVAL;
-                PAL_ERR(LOG_TAG, "no device attached");
-                if (!st_stream_.common_cp_update_disable_)
-                    st_stream_.rm->unlockActiveStream();
-                goto err_exit;
             }
 
             /* Start the engines */
@@ -2231,7 +2172,7 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "Start st engine %d failed, status %d",
                             eng->GetEngineId(), status);
-                    goto err_start_exit;
+                    goto err_exit;
                 } else {
                     tmp_engines.push_back(eng->GetEngine());
                 }
@@ -2243,31 +2184,16 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
             TransitTo(ST_STATE_ACTIVE);
             break;
 
-        err_start_exit:
+        err_exit:
             for (auto& eng: tmp_engines)
                 eng->StopRecognition(&st_stream_);
 
             if (st_stream_.mDevices.size() > 0) {
-                if (!st_stream_.common_cp_update_disable_) {
-                    st_stream_.mStreamMutex.unlock();
-                    st_stream_.rm->lockActiveStream();
-                    st_stream_.mStreamMutex.lock();
-                    st_stream_.rm->deregisterDevice(
-                        st_stream_.mDevices[0], &st_stream_);
-                    st_stream_.rm->unlockActiveStream();
-                } else {
-                    st_stream_.rm->deregisterDevice(
-                        st_stream_.mDevices[0], &st_stream_);
-                }
+                if (rm->isDeviceActive_l(st_stream_.mDevices[0], &st_stream_))
+                    st_stream_.rm->deregisterDevice(st_stream_.mDevices[0], &st_stream_);
                 st_stream_.mDevices[0]->stop();
                 st_stream_.mDevices[0]->close();
                 st_stream_.device_opened_ = false;
-            }
-        err_exit:
-            if (is_client_start) {
-                // restore cached state if start fails
-                st_stream_.currentState = prev_state;
-                PAL_INFO(LOG_TAG, "Current state %d", st_stream_.currentState);
             }
 
             break;
@@ -2382,7 +2308,8 @@ int32_t StreamSoundTrigger::StLoaded::ProcessEvent(
                 dev->close();
                 st_stream_.device_opened_ = false;
             } else if (st_stream_.isActive() && !st_stream_.paused_) {
-                st_stream_.rm->registerDevice(dev, &st_stream_);
+                if (!rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->registerDevice(dev, &st_stream_);
                 if (st_stream_.second_stage_processing_) {
                     /* Start the engines */
                     for (auto& eng: st_stream_.engines_) {
@@ -2559,23 +2486,6 @@ int32_t StreamSoundTrigger::StActive::ProcessEvent(
         case ST_EV_STOP_RECOGNITION: {
             // Do not update capture profile when pausing stream
             bool backend_update = false;
-            bool is_client_stop = false;
-
-            if (ev_cfg->id_ == ST_EV_STOP_RECOGNITION &&
-                st_stream_.is_client_start_stop_) {
-                is_client_stop = st_stream_.is_client_start_stop_;
-                st_stream_.is_client_start_stop_ = false;
-            }
-
-            if (!st_stream_.common_cp_update_disable_) {
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
-
-            if (is_client_stop)
-                st_stream_.currentState = STREAM_STOPPED;
-
             if (!st_stream_.common_cp_update_disable_ &&
                 (ev_cfg->id_ == ST_EV_STOP_RECOGNITION ||
                 ev_cfg->id_ == ST_EV_UNLOAD_SOUND_MODEL)) {
@@ -2593,10 +2503,9 @@ int32_t StreamSoundTrigger::StActive::ProcessEvent(
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
-            if (!st_stream_.common_cp_update_disable_)
-                st_stream_.rm->unlockActiveStream();
             for (auto& eng: st_stream_.engines_) {
                 PAL_VERBOSE(LOG_TAG, "Stop engine %d", eng->GetEngineId());
                 status = eng->GetEngine()->StopRecognition(&st_stream_);
@@ -2671,7 +2580,8 @@ int32_t StreamSoundTrigger::StActive::ProcessEvent(
                 }
             }
             for (auto& device: st_stream_.mDevices) {
-                st_stream_.rm->deregisterDevice(device, &st_stream_);
+                if (rm->isDeviceActive_l(device, &st_stream_))
+                    st_stream_.rm->deregisterDevice(device, &st_stream_);
                 st_stream_.gsl_engine_->DisconnectSessionDevice(&st_stream_,
                     st_stream_.mStreamAttr->type, device);
 
@@ -2756,7 +2666,7 @@ int32_t StreamSoundTrigger::StActive::ProcessEvent(
                 st_stream_.mDevices.pop_back();
                 dev->close();
                 st_stream_.device_opened_ = false;
-            } else {
+            } else if (!rm->isDeviceActive_l(dev, &st_stream_)) {
                 st_stream_.rm->registerDevice(dev, &st_stream_);
             }
         connect_err:
@@ -2841,13 +2751,6 @@ int32_t StreamSoundTrigger::StDetected::ProcessEvent(
 
     switch (ev_cfg->id_) {
         case ST_EV_START_RECOGNITION: {
-            stream_state_t prev_state;
-            if (st_stream_.is_client_start_stop_) {
-                // cache current state after mutex locked
-                prev_state = st_stream_.currentState;
-                st_stream_.currentState = STREAM_STARTED;
-            }
-
             // Client restarts next recognition without config changed.
             st_stream_.CancelDelayedStop();
 
@@ -2865,12 +2768,7 @@ int32_t StreamSoundTrigger::StDetected::ProcessEvent(
                 TransitTo(ST_STATE_ACTIVE);
             } else {
                 TransitTo(ST_STATE_LOADED);
-                if (st_stream_.is_client_start_stop_) {
-                    // restore cached state if start fails
-                    st_stream_.currentState = prev_state;
-                }
             }
-            st_stream_.is_client_start_stop_ = false;
             rm->releaseWakeLock();
             break;
         }
@@ -2882,30 +2780,14 @@ int32_t StreamSoundTrigger::StDetected::ProcessEvent(
         }
         case ST_EV_UNLOAD_SOUND_MODEL:
         case ST_EV_STOP_RECOGNITION: {
-            bool is_client_stop = false;
-            if (ev_cfg->id_ == ST_EV_STOP_RECOGNITION &&
-                st_stream_.is_client_start_stop_) {
-                is_client_stop = st_stream_.is_client_start_stop_;
-                st_stream_.is_client_start_stop_ = false;
-            }
-
-            if (!st_stream_.common_cp_update_disable_) {
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
-
-            if (is_client_stop)
-                st_stream_.currentState = STREAM_STOPPED;
-
             if (st_stream_.mDevices.size() > 0) {
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
-            if (!st_stream_.common_cp_update_disable_)
-                st_stream_.rm->unlockActiveStream();
+
             st_stream_.CancelDelayedStop();
             for (auto& eng: st_stream_.engines_) {
                 PAL_VERBOSE(LOG_TAG, "Stop engine %d", eng->GetEngineId());
@@ -2948,19 +2830,13 @@ int32_t StreamSoundTrigger::StDetected::ProcessEvent(
                 PAL_DBG(LOG_TAG, "Same recognition config, skip update");
                 break;
             }
-            if (!st_stream_.common_cp_update_disable_) {
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
             if (st_stream_.mDevices.size() > 0) {
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
-            if (!st_stream_.common_cp_update_disable_)
-                st_stream_.rm->unlockActiveStream();
             /*
              * Client can update config for next recognition.
              * Get to loaded state as START event will start recognition.
@@ -3009,7 +2885,8 @@ int32_t StreamSoundTrigger::StDetected::ProcessEvent(
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
 
             st_stream_.CancelDelayedStop();
@@ -3118,12 +2995,6 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
             break;
         }
         case ST_EV_START_RECOGNITION: {
-            stream_state_t prev_state;
-            if (st_stream_.is_client_start_stop_) {
-                // cache current state after mutex locked
-                prev_state = st_stream_.currentState;
-                st_stream_.currentState = STREAM_STARTED;
-            }
             /*
              * Can happen if client requests next recognition without any config
              * change with/without reading buffers after sending detection event.
@@ -3153,12 +3024,7 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 TransitTo(ST_STATE_ACTIVE);
             } else {
                 TransitTo(ST_STATE_LOADED);
-                if (st_stream_.is_client_start_stop_) {
-                    // restore cached state if start fails
-                    st_stream_.currentState = prev_state;
-                }
             }
-            st_stream_.is_client_start_stop_ = false;
             rm->releaseWakeLock();
             break;
         }
@@ -3170,20 +3036,13 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 PAL_DBG(LOG_TAG, "Same recognition config, skip update");
                 break;
             }
-            if (!st_stream_.common_cp_update_disable_) {
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
-
             if (st_stream_.mDevices.size() > 0) {
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
-            if (!st_stream_.common_cp_update_disable_)
-                st_stream_.rm->unlockActiveStream();
 
             /*
              * Can happen if client doesn't read buffers after sending detection
@@ -3237,31 +3096,14 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
             [[fallthrough]];
         }
         case ST_EV_UNLOAD_SOUND_MODEL:
-        case ST_EV_STOP_RECOGNITION: {
-            bool is_client_stop = false;
-            if (ev_cfg->id_ == ST_EV_STOP_RECOGNITION &&
-                st_stream_.is_client_start_stop_) {
-                is_client_stop = st_stream_.is_client_start_stop_;
-                st_stream_.is_client_start_stop_ = false;
-            }
-
-            if (!st_stream_.common_cp_update_disable_) {
-                st_stream_.mStreamMutex.unlock();
-                st_stream_.rm->lockActiveStream();
-                st_stream_.mStreamMutex.lock();
-            }
-
-            if (is_client_stop)
-                st_stream_.currentState = STREAM_STOPPED;
-
+        case ST_EV_STOP_RECOGNITION:  {
             if (st_stream_.mDevices.size() > 0) {
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
-            if (!st_stream_.common_cp_update_disable_)
-                st_stream_.rm->unlockActiveStream();
 
             // Possible with deffered stop if client doesn't start next recognition.
             if (st_stream_.force_nlpi_vote) {
@@ -3402,7 +3244,8 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 auto& dev = st_stream_.mDevices[0];
                 PAL_VERBOSE(LOG_TAG, "Deregister device %d-%s", dev->getSndDeviceId(),
                     dev->getPALDeviceName().c_str());
-                st_stream_.rm->deregisterDevice(dev, &st_stream_);
+                if (rm->isDeviceActive_l(dev, &st_stream_))
+                    st_stream_.rm->deregisterDevice(dev, &st_stream_);
             }
 
             st_stream_.CancelDelayedStop();
@@ -3597,12 +3440,6 @@ int32_t StreamSoundTrigger::StSSR::ProcessEvent(
             break;
         }
         case ST_EV_START_RECOGNITION: {
-            stream_state_t prev_state;
-            if (st_stream_.is_client_start_stop_) {
-                // cache current state after mutex locked
-                prev_state = st_stream_.currentState;
-                st_stream_.currentState = STREAM_STARTED;
-            }
             if (st_stream_.state_for_restore_ != ST_STATE_LOADED) {
                 PAL_ERR(LOG_TAG, "Invalid operation, client state = %d now",
                     st_stream_.state_for_restore_);
@@ -3613,21 +3450,13 @@ int32_t StreamSoundTrigger::StSSR::ProcessEvent(
                 if (!st_stream_.rec_config_) {
                     PAL_ERR(LOG_TAG, "Recognition config not set %d", data->restart_);
                     status = -EINVAL;
-                } else {
-                    st_stream_.state_for_restore_ = ST_STATE_ACTIVE;
+                    break;
                 }
+                st_stream_.state_for_restore_ = ST_STATE_ACTIVE;
             }
-            if (status && st_stream_.is_client_start_stop_) {
-                // restore cached state if start fails
-                st_stream_.currentState = prev_state;
-            }
-            st_stream_.is_client_start_stop_ = false;
             break;
         }
         case ST_EV_STOP_RECOGNITION: {
-            if (st_stream_.is_client_start_stop_)
-                st_stream_.currentState = STREAM_STOPPED;
-
             if (st_stream_.state_for_restore_ != ST_STATE_ACTIVE) {
                 PAL_ERR(LOG_TAG, "Invalid operation, client state = %d now",
                     st_stream_.state_for_restore_);
@@ -3635,7 +3464,6 @@ int32_t StreamSoundTrigger::StSSR::ProcessEvent(
             } else {
                 st_stream_.state_for_restore_ = ST_STATE_LOADED;
             }
-            st_stream_.is_client_start_stop_ = false;
             break;
         }
         case ST_EV_PAUSE: {
