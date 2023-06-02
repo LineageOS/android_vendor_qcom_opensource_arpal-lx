@@ -8204,8 +8204,10 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                            if (device_connection->connection_state) {
                                param_bt_a2dp.a2dp_suspended = true;
                                PAL_DBG(LOG_TAG, "Applying cached a2dp_suspended true param");
+                               mResourceManagerMutex.unlock();
                                status = dev->setDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
                                                                 &param_bt_a2dp);
+                               mResourceManagerMutex.lock();
                            } else {
                                a2dp_suspended = false;
                            }
