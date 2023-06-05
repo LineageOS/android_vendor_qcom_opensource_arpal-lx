@@ -5246,6 +5246,7 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
         struct pal_device *curDevAttr)
 {
     std::vector <std::tuple<Stream *, uint32_t>> sharedBEStreamDev;
+    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect;
     std::vector <Stream *> activeHapticsStreams;
 
     if (!deviceattr) {
@@ -5276,11 +5277,15 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
                 deviceattr->config.aud_fmt_id =  bitWidthToFormat.at(deviceattr->config.bit_width);
                 PAL_DBG(LOG_TAG, "headset is coming, update headset to sr: %d bw: %d ",
                     deviceattr->config.sample_rate, deviceattr->config.bit_width);
+
             }
         }
     } else if (deviceattr->id == PAL_DEVICE_OUT_HAPTICS_DEVICE) {
         // if haptics is coming, update headset sample rate if needed
         getSharedBEActiveStreamDevs(sharedBEStreamDev, PAL_DEVICE_OUT_WIRED_HEADSET);
+        if(sharedBEStreamDev.size() == 0){
+            getSharedBEActiveStreamDevs(sharedBEStreamDev, PAL_DEVICE_OUT_WIRED_HEADPHONE);
+        }
         if (sharedBEStreamDev.size() > 0) {
             for (const auto &elem : sharedBEStreamDev) {
                 bool switchNeeded = false;
@@ -5299,13 +5304,26 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
                 curDev->getDeviceAttributes(curDevAttr);
                 if ((curDevAttr->config.sample_rate % SAMPLINGRATE_44K == 0) &&
                     (sAttr->out_media_config.sample_rate % SAMPLINGRATE_44K != 0)) {
-                    curDevAttr->config.sample_rate = sAttr->out_media_config.sample_rate;
-                    curDevAttr->config.bit_width = sAttr->out_media_config.bit_width;
-                    curDevAttr->config.aud_fmt_id = bitWidthToFormat.at(deviceattr->config.bit_width);
                     switchNeeded = true;
-                    streamsToSwitch.push_back(sharedStream);
-                    PAL_DBG(LOG_TAG, "haptics is coming, update headset to sr: %d bw: %d ",
-                        curDevAttr->config.sample_rate, curDevAttr->config.bit_width);
+                    if(!isDeviceAvailable(PAL_DEVICE_OUT_WIRED_HEADSET) && !isDeviceAvailable(PAL_DEVICE_OUT_WIRED_HEADPHONE)) {
+                        PAL_DBG(LOG_TAG, "WHS Device not available, disconnect stream");
+                        streamDevDisconnect.push_back(elem);
+                        int status = 0;
+                        status = streamDevDisconnect_l(streamDevDisconnect);
+                        if (status) {
+                            PAL_ERR(LOG_TAG, "disconnect failed");
+                        }
+                        switchNeeded = false;
+                    }
+
+                    if (switchNeeded) {
+                        curDevAttr->config.sample_rate = sAttr->out_media_config.sample_rate;
+                        curDevAttr->config.bit_width = sAttr->out_media_config.bit_width;
+                        curDevAttr->config.aud_fmt_id = bitWidthToFormat.at(deviceattr->config.bit_width);
+                        streamsToSwitch.push_back(sharedStream);
+                        PAL_DBG(LOG_TAG, "haptics is coming, update headset to sr: %d bw: %d ",
+                            curDevAttr->config.sample_rate, curDevAttr->config.bit_width);
+                   }
                 }
             }
         }
