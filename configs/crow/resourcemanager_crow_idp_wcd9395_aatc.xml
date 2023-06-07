@@ -679,9 +679,9 @@
             <id>PAL_DEVICE_OUT_SPEAKER</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-RX-0</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>48000</samplerate>
-            <snd_device_name>speaker</snd_device_name>
+            <snd_device_name>speaker-mono-2</snd_device_name>
             <speaker_protection_enabled>1</speaker_protection_enabled>
             <fractional_sr>0</fractional_sr>
             <!-- To enable external EC reference the flag extec_ref_enabled must be added as 1 -->
@@ -691,7 +691,7 @@
                          CPS streaming: 1
                          ADSP control mode: 2
             -->
-            <cps_mode>1</cps_mode>
+            <cps_mode>0</cps_mode>
             <vbat_enabled>1</vbat_enabled>
             <wsa2_enable>0</wsa2_enable>
             <!--wsa registers physical addresses in decimal notation -->

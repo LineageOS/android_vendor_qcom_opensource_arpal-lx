@@ -691,7 +691,7 @@
                          CPS streaming: 1
                          ADSP control mode: 2
             -->
-            <cps_mode>1</cps_mode>
+            <cps_mode>0</cps_mode>
             <vbat_enabled>1</vbat_enabled>
             <wsa2_enable>0</wsa2_enable>
             <!--wsa registers physical addresses in decimal notation -->
