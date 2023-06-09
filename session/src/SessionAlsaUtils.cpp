@@ -2085,6 +2085,7 @@ int SessionAlsaUtils::disconnectSessionDevice(Stream* streamHandle, pal_stream_t
     std::shared_ptr<Device> dev = nullptr;
     int sub = 1;
     uint32_t i;
+    int devCount = 0;
 
     switch (streamType) {
         case PAL_STREAM_COMPRESSED:
@@ -2162,7 +2163,25 @@ int SessionAlsaUtils::disconnectSessionDevice(Stream* streamHandle, pal_stream_t
         goto freeMetaData;
     }
 
-    if (dev->getDeviceCount() > 1) {
+    devCount = dev->getDeviceCount();
+
+    // Do not clear device metadata for A2DP device if SCO device is active
+    if ((devCount == 1) && rm->isBtDevice(dAttr.id) && !rm->isBtScoDevice(dAttr.id)) {
+        dev = nullptr;
+        struct pal_device scoDAttr;
+        scoDAttr.id = PAL_DEVICE_OUT_BLUETOOTH_SCO;
+
+        dev = Device::getInstance(&scoDAttr, rm);
+        if (dev == 0) {
+            PAL_ERR(LOG_TAG, "device_id[%d] Instance query failed", dAttr.id );
+            status = -EINVAL;
+            goto freeMetaData;
+        }
+
+        devCount += dev->getDeviceCount();
+    }
+
+    if (devCount > 1) {
         PAL_INFO(LOG_TAG, "No need to free device metadata since active streams present on device");
     } else {
         mixer_ctl_set_array(beMetaDataMixerCtrl, (void*)deviceMetaData.buf,
@@ -2244,6 +2263,9 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
     uint8_t* payload = NULL;
     size_t payloadSize = 0;
     int sub = 1;
+    uint32_t miid;
+    struct sessionToPayloadParam streamData = {};
+    PayloadBuilder* builder = new PayloadBuilder();
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
 
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
@@ -2324,6 +2346,35 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
             goto exit;
         }
     }
+    if (sAttr.direction == PAL_AUDIO_INPUT && streamType == PAL_STREAM_ULTRA_LOW_LATENCY) {
+        status = SessionAlsaUtils::getModuleInstanceId(mixerHandle, pcmDevIds.at(0),
+                                           aifBackEndsToConnect[0].second.data(),
+                                           TAG_STREAM_MFC_SR, &miid);
+        if (status != 0) {
+            PAL_ERR(LOG_TAG, "getModuleInstanceId failed\n");
+            goto exit;
+        }
+        PAL_DBG(LOG_TAG, "ULL record, miid : %x id = %d\n", miid, pcmDevIds.at(0));
+        if (isPalPCMFormat(sAttr.in_media_config.aud_fmt_id))
+            streamData.bitWidth = ResourceManager::palFormatToBitwidthLookup(
+                                                   sAttr.in_media_config.aud_fmt_id);
+        else
+            streamData.bitWidth = sAttr.in_media_config.bit_width;
+        streamData.sampleRate = sAttr.in_media_config.sample_rate;
+        streamData.numChannel = sAttr.in_media_config.ch_info.channels;
+        streamData.ch_info = nullptr;
+        builder->payloadMFCConfig(&payload, &payloadSize, miid, &streamData);
+        if (payloadSize && payload) {
+            sess->getCustomPayload(&payload, &payloadSize);
+        }
+        status = SessionAlsaUtils::setMixerParameter(mixerHandle, pcmDevIds.at(0),
+                                                    payload, payloadSize);
+        sess->freeCustomPayload();
+        if (status != 0) {
+            PAL_ERR(LOG_TAG, "setMixerParameter failed");
+            goto exit;
+         }
+    }
 
     connectCtrl = mixer_get_ctl_by_name(mixerHandle, connectCtrlName.str().data());
     if (!connectCtrl) {
@@ -2334,6 +2385,10 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
     status = mixer_ctl_set_enum_by_string(connectCtrl, aifBackEndsToConnect[0].second.data());
 
 exit:
+    if(builder) {
+       delete builder;
+       builder = NULL;
+    }
     return status;
 }
 

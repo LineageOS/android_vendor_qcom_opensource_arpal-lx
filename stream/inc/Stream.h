@@ -306,8 +306,6 @@ public:
     /* Detection stream related APIs */
     virtual int32_t Resume() { return 0; }
     virtual int32_t Pause() { return 0; }
-    virtual int32_t ConcurrentPause() { return 0; }
-    virtual int32_t ConcurrentResume() { return 0; }
     virtual int32_t EnableLPI(bool is_enable) { return 0; }
     virtual int32_t HandleConcurrentStream(bool active) { return 0; }
     virtual int32_t DisconnectDevice(pal_device_id_t device_id) { return 0; }

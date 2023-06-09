@@ -2591,8 +2591,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getStreamSelector()));
+                if (s->getStreamSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getStreamSelector()));
+
                 PAL_INFO(LOG_TAG, "VUI module type:%s", s->getStreamSelector().c_str());
                 break;
             case ACD_MODULE_TYPE_SEL:
@@ -2601,8 +2603,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getStreamSelector()));
+                if (s->getStreamSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getStreamSelector()));
+
                 PAL_INFO(LOG_TAG, "ACD module type:%s", s->getStreamSelector().c_str());
                 break;
             case DEVICEPP_TYPE_SEL:
@@ -2611,8 +2615,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getDevicePPSelector()));
+                if (s->getDevicePPSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getDevicePPSelector()));
+
                 PAL_INFO(LOG_TAG, "devicePP_type:%s", s->getDevicePPSelector().c_str());
                 break;
             case STREAM_TYPE_SEL:

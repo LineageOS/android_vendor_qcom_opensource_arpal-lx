@@ -1255,47 +1255,36 @@ set_mixer:
                     PAL_INFO(LOG_TAG, "eventPayload is NULL");
                 }
             } else if (sAttr.type == PAL_STREAM_ULTRA_LOW_LATENCY) {
-                status = s->getAssociatedDevices(associatedDevices);
-                for (int i = 0; i < associatedDevices.size(); i++) {
-                    status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+                status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
+                                                txAifBackEnds[0].second.data(),
+                                                TAG_STREAM_MFC_SR, &miid);
+                if (status != 0) {
+                    PAL_ERR(LOG_TAG, "getModuleInstanceId failed\n");
+                    goto exit;
+                }
+                PAL_DBG(LOG_TAG, "ULL record, miid : %x id = %d\n", miid, pcmDevIds.at(0));
+                if (isPalPCMFormat(sAttr.in_media_config.aud_fmt_id))
+                    streamData.bitWidth = ResourceManager::palFormatToBitwidthLookup(sAttr.in_media_config.aud_fmt_id);
+                else
+                    streamData.bitWidth = sAttr.in_media_config.bit_width;
+                streamData.sampleRate = sAttr.in_media_config.sample_rate;
+                streamData.numChannel = sAttr.in_media_config.ch_info.channels;
+                streamData.ch_info = nullptr;
+                builder->payloadMFCConfig(&payload, &payloadSize, miid, &streamData);
+                if (payloadSize && payload) {
+                    status = updateCustomPayload(payload, payloadSize);
+                    freeCustomPayload(&payload, &payloadSize);
                     if (0 != status) {
-                        PAL_ERR(LOG_TAG, "get Device Attributes Failed\n");
-                        continue;
+                        PAL_ERR(LOG_TAG, "updateCustomPayload Failed\n");
+                        goto exit;
                     }
-                    if ((dAttr.id == PAL_DEVICE_IN_USB_DEVICE) ||
-                        (dAttr.id == PAL_DEVICE_IN_USB_HEADSET)) {
-                        status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
-                                                    txAifBackEnds[0].second.data(),
-                                                    TAG_STREAM_MFC_SR, &miid);
-                        if (status != 0) {
-                            PAL_ERR(LOG_TAG, "getModuleInstanceId failed\n");
-                            continue;
-                        }
-                        PAL_DBG(LOG_TAG, "ULL record, miid : %x id = %d\n", miid, pcmDevIds.at(0));
-                        if (isPalPCMFormat(sAttr.in_media_config.aud_fmt_id))
-                            streamData.bitWidth = ResourceManager::palFormatToBitwidthLookup(sAttr.in_media_config.aud_fmt_id);
-                        else
-                            streamData.bitWidth = sAttr.in_media_config.bit_width;
-                        streamData.sampleRate = sAttr.in_media_config.sample_rate;
-                        streamData.numChannel = sAttr.in_media_config.ch_info.channels;
-                        streamData.ch_info = nullptr;
-                        builder->payloadMFCConfig(&payload, &payloadSize, miid, &streamData);
-                        if (payloadSize && payload) {
-                            status = updateCustomPayload(payload, payloadSize);
-                            freeCustomPayload(&payload, &payloadSize);
-                            if (0 != status) {
-                                PAL_ERR(LOG_TAG, "updateCustomPayload Failed\n");
-                                continue;
-                            }
-                        }
-                        status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
+                }
+                status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
                                                          customPayload, customPayloadSize);
-                        freeCustomPayload();
-                        if (status != 0) {
-                            PAL_ERR(LOG_TAG, "setMixerParameter failed");
-                            continue;
-                        }
-                    }
+                freeCustomPayload();
+                if (status != 0) {
+                    PAL_ERR(LOG_TAG, "setMixerParameter failed");
+                    goto exit;
                 }
             }
             if (ResourceManager::isLpiLoggingEnabled()) {
@@ -1376,69 +1365,89 @@ set_mixer:
                     status = 0;
                 }
             }
-            // Set MSPP volume during initlization.
-            if ((PAL_DEVICE_OUT_SPEAKER == dAttr.id &&
-                !strcmp(dAttr.custom_config.custom_key, "mspp"))&&
+
+            if (PAL_DEVICE_OUT_SPEAKER == dAttr.id &&
                 ((sAttr.type == PAL_STREAM_LOW_LATENCY) ||
                 (sAttr.type == PAL_STREAM_PCM_OFFLOAD) ||
                 (sAttr.type == PAL_STREAM_DEEP_BUFFER))) {
-
-                status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
-                                                                rxAifBackEnds[0].second.data(), TAG_MODULE_MSPP, &miid);
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG,"get MSPP ModuleInstanceId failed");
-                    goto pcm_start;
-                }
-                PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
-
-                builder->payloadMSPPConfig(&payload, &payloadSize, miid, rm->linear_gain.gain);
-                if (payloadSize && payload) {
-                    status = updateCustomPayload(payload, payloadSize);
-                    free(payload);
-                    if (0 != status) {
-                        PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
+                // Set MSPP volume during initlization.
+                if (!strcmp(dAttr.custom_config.custom_key, "mspp")) {
+                    status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
+                                rxAifBackEnds[0].second.data(), TAG_MODULE_MSPP, &miid);
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"get MSPP ModuleInstanceId failed");
                         goto pcm_start;
                     }
-                }
-                status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
-                                                             customPayload, customPayloadSize);
-                if (customPayload) {
-                    free(customPayload);
-                    customPayload = NULL;
-                    customPayloadSize = 0;
-                }
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG,"setMixerParameter failed for MSPP module");
-                    goto pcm_start;
-                }
+                    PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
 
-                status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
-                                                                rxAifBackEnds[0].second.data(), TAG_PAUSE, &miid);
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG,"get Soft Pause ModuleInstanceId failed");
-                    goto pcm_start;
-                }
-                PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
-
-                builder->payloadSoftPauseConfig(&payload, &payloadSize, miid, MSPP_SOFT_PAUSE_DELAY);
-                if (payloadSize && payload) {
-                    status = updateCustomPayload(payload, payloadSize);
-                    free(payload);
-                    if (0 != status) {
-                        PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
+                    builder->payloadMSPPConfig(&payload, &payloadSize, miid, rm->linear_gain.gain);
+                    if (payloadSize && payload) {
+                        status = updateCustomPayload(payload, payloadSize);
+                        free(payload);
+                        if (0 != status) {
+                            PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
+                            goto pcm_start;
+                        }
+                    }
+                    status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
+                                                                 customPayload, customPayloadSize);
+                    if (customPayload) {
+                        free(customPayload);
+                        customPayload = NULL;
+                        customPayloadSize = 0;
+                    }
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"setMixerParameter failed for MSPP module");
                         goto pcm_start;
                     }
-                }
-                status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
-                                                             customPayload, customPayloadSize);
-                if (customPayload) {
-                    free(customPayload);
-                    customPayload = NULL;
-                    customPayloadSize = 0;
-                }
-                if (status != 0) {
-                    PAL_ERR(LOG_TAG,"setMixerParameter failed for soft Pause module");
-                    goto pcm_start;
+
+                    status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
+                                            rxAifBackEnds[0].second.data(), TAG_PAUSE, &miid);
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"get Soft Pause ModuleInstanceId failed");
+                        goto pcm_start;
+                    }
+                    PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
+
+                    builder->payloadSoftPauseConfig(&payload, &payloadSize, miid,
+                                                            MSPP_SOFT_PAUSE_DELAY);
+                    if (payloadSize && payload) {
+                        status = updateCustomPayload(payload, payloadSize);
+                        free(payload);
+                        if (0 != status) {
+                            PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
+                            goto pcm_start;
+                        }
+                    }
+                    status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0),
+                                                                 customPayload, customPayloadSize);
+                    if (customPayload) {
+                        free(customPayload);
+                        customPayload = NULL;
+                        customPayloadSize = 0;
+                    }
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"setMixerParameter failed for soft Pause module");
+                        goto pcm_start;
+                    }
+
+                    s->setOrientation(rm->mOrientation);
+                    PAL_DBG(LOG_TAG,"MSPP set device orientation %d", s->getOrientation());
+
+                    if (setConfig(s, MODULE, ORIENTATION_TAG) != 0) {
+                        PAL_DBG(LOG_TAG,"MSPP setting device orientation failed");
+                    }
+                } else {
+                    pal_param_device_rotation_t rotation;
+                    rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                            PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+                    status = handleDeviceRotation(s, rotation.rotation_type, pcmDevIds.at(0),
+                                                    mixer, builder, rxAifBackEnds);
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"handleDeviceRotation failed\n");
+                        status = 0;
+                        goto pcm_start;
+                    }
                 }
             }
             //set voip_rx ec ref MFC config to match with rx stream
