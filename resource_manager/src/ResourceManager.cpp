@@ -9241,8 +9241,7 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                             }
                             dAttr.id = (pal_device_id_t)associatedDevices[i]->getSndDeviceId();
                             dev = Device::getInstance(&dAttr, rm);
-                            if (dev && (!isBtScoDevice(dAttr.id)) &&
-                                (dAttr.id != PAL_DEVICE_OUT_PROXY) &&
+                            if (dev && (dAttr.id != PAL_DEVICE_OUT_PROXY) &&
                                 isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_SCO)) {
                                 rxDevices.push_back(dev);
                             }
@@ -9258,8 +9257,7 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                             }
                             dAttr.id = (pal_device_id_t)associatedDevices[i]->getSndDeviceId();
                             dev = Device::getInstance(&dAttr, rm);
-                            if (dev && (!isBtScoDevice(dAttr.id)) &&
-                                    isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
+                            if (dev && isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
                                 txDevices.push_back(dev);
                             }
                         }
