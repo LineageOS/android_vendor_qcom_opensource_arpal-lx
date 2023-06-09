@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: StreamUltraSound"
@@ -42,6 +46,7 @@ StreamUltraSound::StreamUltraSound(const struct pal_stream_attributes *sattr __u
                     const uint32_t no_of_modifiers __unused, const std::shared_ptr<ResourceManager> rm):
                   StreamCommon(sattr,dattr,no_of_devices,modifiers,no_of_modifiers,rm)
 {
+    gain = PAL_ULTRASOUND_GAIN_MUTE;
     session->registerCallBack((session_callback)HandleCallBack,((uint64_t) this));
     rm->registerStream(this);
 }
@@ -52,60 +57,88 @@ StreamUltraSound::~StreamUltraSound()
     rm->deregisterStream(this);
 }
 
-int32_t StreamUltraSound::stop()
+int32_t StreamUltraSound::start()
 {
     int32_t status = 0;
+    struct pal_device dAttr;
+    pal_ultrasound_gain_t gain = PAL_ULTRASOUND_GAIN_LOW;
+    std::vector<std::shared_ptr<Device>> activeDeviceList;
+
+    PAL_DBG(LOG_TAG, "Enter");
+
+    status = StreamCommon::start();
+    if (0 != status) {
+        PAL_ERR(LOG_TAG, "StreamCommon::start() failed, status = %d", status);
+        return status;
+    }
+
+    if (!rm->IsCustomGainEnabledForUPD())
+        goto skip_upd_set_gain;
+
+    /* Set Ultrasound Gain based on currently active devices */
+    rm->getActiveDevices(activeDeviceList);
+    if (0 == activeDeviceList.size()) {
+        PAL_DBG(LOG_TAG, "Did not find any active device, skip setting Ultrasound gain");
+        goto skip_upd_set_gain;
+    }
+
+    for (int i = 0; i < activeDeviceList.size(); i++) {
+        status = activeDeviceList[i]->getDeviceAttributes(&dAttr);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "Fail to get device attribute for device %p, status = %d",
+                    &activeDeviceList[i], status);
+            continue;
+        }
+        if (PAL_DEVICE_OUT_SPEAKER == dAttr.id) {
+            gain = PAL_ULTRASOUND_GAIN_HIGH;
+        }
+    }
 
     mStreamMutex.lock();
-    PAL_DBG(LOG_TAG, "Enter. session handle - %pK mStreamAttr->direction - %d state %d",
-                session, mStreamAttr->direction, currentState);
-
-    if (currentState == STREAM_STARTED || currentState == STREAM_PAUSED) {
-
-        status = session->setParameters(this, DEVICE_POP_SUPPRESSOR,
-                                            PAL_PARAM_ID_ULTRASOUND_RAMPDOWN, NULL);
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "SetParameters failed for Rampdown, status = %d", status);
-        }
-        /* Adjust the delay based on requirement */
-        usleep(20000);
-
-        for (int i = 0; i < mDevices.size(); i++) {
-            rm->deregisterDevice(mDevices[i], this);
-        }
-        PAL_VERBOSE(LOG_TAG, "In %s, device count - %zu",
-                    GET_DIR_STR(mStreamAttr->direction), mDevices.size());
-
-        rm->lockGraph();
-        status = session->stop(this);
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "Error:%s session stop failed with status %d",
-                    GET_DIR_STR(mStreamAttr->direction), status);
-        }
-        PAL_VERBOSE(LOG_TAG, "session stop successful");
-        for (int32_t i=0; i < mDevices.size(); i++) {
-             status = mDevices[i]->stop();
-             if (0 != status) {
-                 PAL_ERR(LOG_TAG, "Error:%s device stop failed with status %d",
-                         GET_DIR_STR(mStreamAttr->direction), status);
-             }
-        }
-        rm->unlockGraph();
-        PAL_VERBOSE(LOG_TAG, "devices stop successful");
-        currentState = STREAM_STOPPED;
-    } else if (currentState == STREAM_STOPPED || currentState == STREAM_IDLE) {
-        PAL_INFO(LOG_TAG, "Stream is already in Stopped state %d", currentState);
-    } else {
-        PAL_ERR(LOG_TAG, "Error:Stream should be in start/pause state, %d", currentState);
-        status = -EINVAL;
+    status = setUltraSoundGain_l(gain);
+    if (0 != status) {
+        mStreamMutex.unlock();
+        PAL_ERR(LOG_TAG, "Ultrasound set gain failed, status = %d", status);
+        goto skip_upd_set_gain;
     }
-    PAL_DBG(LOG_TAG, "Exit. status %d, state %d", status, currentState);
-
     mStreamMutex.unlock();
+    PAL_INFO(LOG_TAG, "Ultrasound gain(%d) set sucessfully", gain);
+
+skip_upd_set_gain:
+    PAL_DBG(LOG_TAG, "Exit status: %d", status);
     return status;
 }
 
 
+int32_t StreamUltraSound::stop()
+{
+    int32_t status = 0;
+    pal_ultrasound_gain_t gain = PAL_ULTRASOUND_GAIN_MUTE;
+
+    PAL_DBG(LOG_TAG, "Enter");
+
+    if (rm->IsCustomGainEnabledForUPD()) {
+        mStreamMutex.lock();
+        if (currentState == STREAM_STARTED || currentState == STREAM_PAUSED) {
+
+            status = setUltraSoundGain_l(PAL_ULTRASOUND_GAIN_MUTE);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Ultrasound set gain failed, status = %d", status);
+            }
+            /* Currently configured value is 20ms which allows 3 to 4 process call
+             * to handle this value at ADSP side.
+             * Increase or decrease this dealy based on requirements */
+            usleep(20000);
+        }
+        mStreamMutex.unlock();
+    }
+
+    status = StreamCommon::stop();
+    if (0 != status)
+        PAL_ERR(LOG_TAG, "StreamCommon::stop() failed, status = %d", status);
+
+    return status;
+}
 
 int32_t  StreamUltraSound::setParameters(uint32_t param_id, void *payload)
 {
@@ -173,4 +206,71 @@ void StreamUltraSound::HandleCallBack(uint64_t hdl, uint32_t event_id,
         StreamUPD->HandleEvent(event_id, data, event_size);
     }
     PAL_DBG(LOG_TAG, "Exit");
+}
+
+int32_t StreamUltraSound::setUltraSoundGain(pal_ultrasound_gain_t new_gain)
+{
+    int32_t status = 0;
+    PAL_INFO(LOG_TAG, "Entered, gain %d", new_gain);
+
+    if (!rm->IsCustomGainEnabledForUPD()) {
+        PAL_ERR(LOG_TAG,"Custom Gain not enabled for UPD, returning");
+        return status;
+    }
+
+    mStreamMutex.lock();
+    if (STREAM_STARTED == currentState)
+        status = setUltraSoundGain_l(new_gain);
+    else
+        status = -EINVAL;
+    mStreamMutex.unlock();
+
+    return status;
+}
+
+int32_t StreamUltraSound::setUltraSoundGain_l(pal_ultrasound_gain_t new_gain)
+{
+    int32_t status = 0;
+    pal_ultrasound_gain_t mute = PAL_ULTRASOUND_GAIN_MUTE;
+
+    if (!rm->IsCustomGainEnabledForUPD()) {
+        PAL_ERR(LOG_TAG,"Custom Gain not enabled for UPD, returning");
+        return status;
+    }
+
+    PAL_DBG(LOG_TAG, "Received request to set Ultrasound gain(%d)", new_gain);
+
+    if (gain != new_gain) {
+
+        if ((gain != PAL_ULTRASOUND_GAIN_MUTE) && (new_gain != PAL_ULTRASOUND_GAIN_MUTE)) {
+            /* For scanarios cases like, UPD followed by Music/Audio Playback,
+             * in order to avoid sending gain LOW follwed by HIGH directly,
+             * here we will send MUTE followed by some delay so module can rampdown
+             * previous gain first before applying new gain */
+            status = session->setParameters(this, TAG_ULTRASOUND_GAIN,
+                            PAL_PARAM_ID_ULTRASOUND_SET_GAIN, &mute);
+            if (status) {
+                PAL_ERR(LOG_TAG, "Error:%d, Failed to setParam for Ultrasound set gain",
+                        status);
+            }
+            gain = mute;
+            PAL_DBG(LOG_TAG, "Ultrasound gain(%d), configured successfully", gain);
+
+            /* Currently configured value is 20ms which allows 3 to 4 process call
+             * to handle this value at ADSP side.
+             * Increase or decrease this dealy based on requirements */
+            usleep(20000);
+        }
+
+        status = session->setParameters(this, TAG_ULTRASOUND_GAIN, PAL_PARAM_ID_ULTRASOUND_SET_GAIN, &new_gain);
+        if (status) {
+            PAL_ERR(LOG_TAG, "Error:%d, Failed to setParam for Ultrasound set gain",
+                    status);
+        }
+        gain = new_gain;
+        PAL_DBG(LOG_TAG, "Ultrasound gain(%d), configured successfully", gain);
+    } else {
+        PAL_DBG(LOG_TAG, "Ultrasound gain(%d), already configured", gain);
+    }
+    return status;
 }

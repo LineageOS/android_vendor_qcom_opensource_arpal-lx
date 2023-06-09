@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef STREAMULTRASOUND_H_
@@ -44,8 +48,12 @@ public:
     ~StreamUltraSound();
    int32_t setVolume( struct pal_volume_data *volume __unused) {return 0;}
    int32_t setParameters(uint32_t param_id, void *payload);
+   int32_t start();
    int32_t stop();
+   int32_t setUltraSoundGain_l(pal_ultrasound_gain_t new_gain);
+   int32_t setUltraSoundGain(pal_ultrasound_gain_t new_gain);
 private:
+    pal_ultrasound_gain_t gain;
     static void HandleCallBack(uint64_t hdl, uint32_t event_id,
                                void *data, uint32_t event_size, uint32_t miid);
     void HandleEvent(uint32_t event_id, void *data, uint32_t event_size);
