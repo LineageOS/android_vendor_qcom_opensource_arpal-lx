@@ -75,8 +75,6 @@ public:
     int32_t setECRef_l(std::shared_ptr<Device> dev, bool is_enable) override;
     int32_t ssrDownHandler() override;
     int32_t ssrUpHandler() override;
-private:
-    uint32_t volRampPeriodms;
 };
 
 #endif//STREAMCOMPRESS_H_

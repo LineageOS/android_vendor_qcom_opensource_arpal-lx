@@ -89,7 +89,6 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
     mVolumeData->no_of_volpair = 1;
     mVolumeData->volume_pair[0].channel_mask = 0x03;
     mVolumeData->volume_pair[0].vol = 1.0f;
-    volRampPeriodms = 0x28;
 
     if (!sattr || !dattr) {
         PAL_ERR(LOG_TAG,"invalid arguments");
@@ -1203,9 +1202,30 @@ int32_t StreamPCM::pause_l()
     if (isPaused) {
         PAL_INFO(LOG_TAG, "Stream is already paused");
     } else {
+        status = session->setConfig(this, MODULE, PAUSE_TAG);
+        if (0 != status) {
+           PAL_ERR(LOG_TAG, "session setConfig for pause failed with status %d",
+                    status);
+           goto exit;
+        }
+        if (session->isPauseRegistrationDone) {
+            PAL_DBG(LOG_TAG, "Waiting for Pause to complete from ADSP");
+            pauseCV.wait_for(pauseLock, std::chrono::microseconds(VOLUME_RAMP_PERIOD));
+        } else {
+            PAL_DBG(LOG_TAG, "Pause event registration not done, sleeping for %d",
+                    VOLUME_RAMP_PERIOD);
+            usleep(VOLUME_RAMP_PERIOD);
+        }
+        isPaused = true;
+        currentState = STREAM_PAUSED;
+        PAL_DBG(LOG_TAG, "session setConfig successful");
+
         //caching the volume before setting it to 0
-        voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
-                          (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+        if (mVolumeData) {
+            voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                        (sizeof(struct pal_channel_vol_kv) *
+                        (mVolumeData->no_of_volpair))));
+        }
         if (!voldata) {
             status = -ENOMEM;
             goto exit;
@@ -1216,16 +1236,26 @@ int32_t StreamPCM::pause_l()
             PAL_ERR(LOG_TAG,"getVolumeData Failed \n");
             goto exit;
         }
-        /* set ramp period to 0 */
+        /* set ramp period to 0 to make volume be changed to 0 instantly.
+         * ramp down is already done in soft pause, ramp down twice both
+         * in volume module and pause with non-0 period, the curve of
+         * final ramp down becomes not smooth.
+         */
         ramp_param.ramp_period_ms = 0;
-        status = session->setParameters(this, TAG_STREAM_VOLUME, PAL_PARAM_ID_VOLUME_CTRL_RAMP, &ramp_param);
-        if (0 != status)
-            PAL_ERR(LOG_TAG, "session setParam for vol ctrl ramp failed with status %d", status);
+        status = session->setParameters(this,
+                                        TAG_STREAM_VOLUME,
+                                        PAL_PARAM_ID_VOLUME_CTRL_RAMP,
+                                        &ramp_param);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "setParam for vol ctrl failed, status %d", status);
+            status = 0; //non-fatal
+        }
 
-        volSize = sizeof(uint32_t) + (sizeof(struct pal_channel_vol_kv) * (voldata->no_of_volpair));
-        volRampPeriodms = 0;
-        status = 0; /* not fatal , reset status to 0 */
-        /* set volume to 0 */
+        volSize = sizeof(uint32_t) + (sizeof(struct pal_channel_vol_kv) *
+                                            (voldata->no_of_volpair));
+        /* set volume to 0 to avoid the secerio of doing ramping up
+         * from higher volume to lower volume in coming resume.
+         */
         volume = (struct pal_volume_data *)calloc(1, volSize);
         if (!volume) {
             PAL_ERR(LOG_TAG, "Failed to allocate mem for volume");
@@ -1243,20 +1273,16 @@ int32_t StreamPCM::pause_l()
         volume = NULL;
         voldata = NULL;
 
-        status = session->setConfig(this, MODULE, PAUSE_TAG);
+         /* set ramp period to default */
+        ramp_param.ramp_period_ms = DEFAULT_RAMP_PERIOD;
+        status = session->setParameters(this,
+                                        TAG_STREAM_VOLUME,
+                                        PAL_PARAM_ID_VOLUME_CTRL_RAMP,
+                                        &ramp_param);
         if (0 != status) {
-           PAL_ERR(LOG_TAG, "session setConfig for pause failed with status %d",
-                    status);
-           goto exit;
+            PAL_ERR(LOG_TAG,"setParam for vol ctrl failed, status %d", status);
+            status = 0; //non-fatal
         }
-        PAL_DBG(LOG_TAG, "Waiting for Pause to complete");
-        if (session->isPauseRegistrationDone)
-            pauseCV.wait_for(pauseLock, std::chrono::microseconds(VOLUME_RAMP_PERIOD));
-        else
-            usleep(VOLUME_RAMP_PERIOD);
-        isPaused = true;
-        currentState = STREAM_PAUSED;
-        PAL_DBG(LOG_TAG, "session setConfig successful");
     }
 exit:
     PAL_DBG(LOG_TAG, "Exit status: %d", status);
@@ -1291,18 +1317,6 @@ int32_t StreamPCM::resume_l()
         PAL_ERR(LOG_TAG, "session setConfig for resume failed with status %d",
                 status);
         goto exit;
-    }
-
-    /* set ramp period to default */
-    if (volRampPeriodms == 0) {
-        ramp_param.ramp_period_ms = 0x28;
-        status = session->setParameters(this, TAG_STREAM_VOLUME, PAL_PARAM_ID_VOLUME_CTRL_RAMP, &ramp_param);
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "session setParam for vol ctrl ramp failed with status %d", status);
-        } else {
-            volRampPeriodms = 0x28;
-        }
-        status = 0;
     }
 
     isPaused = false;

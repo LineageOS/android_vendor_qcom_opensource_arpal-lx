@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -132,7 +132,8 @@ typedef enum {
 /*
  * The sleep is required for mute to ramp down.
  */
-#define MUTE_RAMP_PERIOD (30*1000)
+#define MUTE_RAMP_PERIOD (40*1000)
+#define DEFAULT_RAMP_PERIOD 0x28 //40ms
 
 class Device;
 class ResourceManager;
