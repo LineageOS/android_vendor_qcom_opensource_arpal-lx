@@ -866,6 +866,16 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
 
     a2dpSuspend = false;
 
+    /* Check for BT device connected state */
+    for (int32_t i = 0; i < mDevices.size(); i++) {
+        pal_device_id_t dev_id = (pal_device_id_t)mDevices[i]->getSndDeviceId();
+        if (rm->isBtDevice(dev_id) && !(rm->isDeviceAvailable(dev_id))) {
+            PAL_ERR(LOG_TAG, "BT device %d not connected", dev_id);
+            status = -ENODEV;
+            goto exit;
+        }
+    }
+
     /* SCO device is not ready */
     if (rm->isDeviceAvailable(mDevices, PAL_DEVICE_OUT_BLUETOOTH_SCO) &&
         !rm->isDeviceReady(PAL_DEVICE_OUT_BLUETOOTH_SCO)) {
