@@ -814,6 +814,13 @@ public:
                           std::vector<std::pair<int32_t, std::string>> &txBackEndNames) const;
     bool updateDeviceConfig(std::shared_ptr<Device> *inDev,
              struct pal_device *inDevAttr, const pal_stream_attributes* inStrAttr);
+    int findActiveStreamsNotInDisconnectList(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnectList,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
+    int restoreDeviceConfigForUPD(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnect,
+            std::vector <std::tuple<Stream *, struct pal_device *>> &StreamDevConnect,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr,
                               std::vector <Stream *> prevActiveStreams);

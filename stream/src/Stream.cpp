@@ -1408,7 +1408,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     bool voice_call_switch = false;
     uint32_t force_switch_dev_id = PAL_DEVICE_IN_MAX;
     uint32_t curDeviceSlots[PAL_DEVICE_IN_MAX], newDeviceSlots[PAL_DEVICE_IN_MAX];
-    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect, sharedBEStreamDev;
+    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect, sharedBEStreamDev, streamsSkippingSwitch;
     std::vector <std::tuple<Stream *, struct pal_device *>> StreamDevConnect;
     struct pal_device dAttr;
     struct pal_device_info deviceInfo;
@@ -1777,8 +1777,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 }
                 if (voice_call_switch) {
                     for (const auto &elem : sharedBEStreamDev) {
-                        if (!rm->isValidDeviceSwitchForStream(std::get<0>(elem), newDevices[newDeviceSlots[i]].id))
+                        if (!rm->isValidDeviceSwitchForStream(std::get<0>(elem), newDevices[newDeviceSlots[i]].id)) {
+                            streamsSkippingSwitch.push_back(elem);
                             continue;
+                        }
 
                         streamDevDisconnect.push_back(elem);
                         StreamDevConnect.push_back({std::get<0>(elem), &newDevices[newDeviceSlots[i]]});
@@ -1840,8 +1842,16 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         rm->unlockActiveStream();
         goto done;
     }
+
     mStreamMutex.unlock();
     rm->unlockActiveStream();
+
+    status = rm->restoreDeviceConfigForUPD(streamDevDisconnect, StreamDevConnect,
+                                           streamsSkippingSwitch);
+    if (status) {
+        PAL_ERR(LOG_TAG, "Error restoring device config for UPD");
+        goto done;
+    }
 
     status = rm->streamDevSwitch(streamDevDisconnect, StreamDevConnect);
     if (status) {
