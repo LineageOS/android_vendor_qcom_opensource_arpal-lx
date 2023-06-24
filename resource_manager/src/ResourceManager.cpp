@@ -1405,8 +1405,9 @@ int ResourceManager::init_audio()
     bool snd_card_found = false;
 
     char *snd_card_name = NULL;
-
+    FILE *file = NULL;
     char mixer_xml_file[XML_PATH_MAX_LENGTH] = {0};
+    char mixer_xml_file_wo_variant[XML_PATH_MAX_LENGTH] = {0};
     char file_name_extn[XML_PATH_EXTN_MAX_SIZE] = {0};
     char file_name_extn_wo_variant[XML_PATH_EXTN_MAX_SIZE] = {0};
 
@@ -1489,7 +1490,9 @@ int ResourceManager::init_audio()
             "%s/%s", vendor_config_path, RMNGR_XMLFILE_BASE_STRING_NAME);
 
     strlcat(mixer_xml_file, XML_FILE_DELIMITER, XML_PATH_MAX_LENGTH);
+    strlcat(mixer_xml_file_wo_variant, mixer_xml_file, XML_PATH_MAX_LENGTH);
     strlcat(mixer_xml_file, file_name_extn, XML_PATH_MAX_LENGTH);
+    strlcat(mixer_xml_file_wo_variant, file_name_extn_wo_variant, XML_PATH_MAX_LENGTH);
     strlcat(rmngr_xml_file, XML_FILE_DELIMITER, XML_PATH_MAX_LENGTH);
     strlcpy(rmngr_xml_file_wo_variant, rmngr_xml_file, XML_PATH_MAX_LENGTH);
     strlcat(rmngr_xml_file, file_name_extn, XML_PATH_MAX_LENGTH);
@@ -1498,14 +1501,20 @@ int ResourceManager::init_audio()
     strlcat(mixer_xml_file, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
     strlcat(rmngr_xml_file, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
     strlcat(rmngr_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
+    strlcat(mixer_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
 
     audio_route = audio_route_init(snd_hw_card, mixer_xml_file);
     PAL_INFO(LOG_TAG, "audio route %pK, mixer path %s", audio_route, mixer_xml_file);
     if (!audio_route) {
-        PAL_ERR(LOG_TAG, "audio route init failed");
-        mixer_close(audio_virt_mixer);
-        mixer_close(audio_hw_mixer);
-        status = -EINVAL;
+        PAL_ERR(LOG_TAG, "audio route init failed trying with mixer without variant name");
+	audio_route = audio_route_init(snd_hw_card, mixer_xml_file_wo_variant);
+        PAL_INFO(LOG_TAG, "audio route %pK, mixer path %s", audio_route, mixer_xml_file_wo_variant);
+	if (!audio_route) {
+            PAL_ERR(LOG_TAG, "audio route init failed ");
+            mixer_close(audio_virt_mixer);
+            mixer_close(audio_hw_mixer);
+            status = -EINVAL;
+        }
     }
     // audio_route init success
 exit:
