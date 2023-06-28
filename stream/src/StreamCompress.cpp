@@ -991,7 +991,6 @@ int32_t StreamCompress::resume_l()
         if (0 != status) {
             PAL_ERR(LOG_TAG, "session setParameters for rotation failed with status %d",
                     status);
-            goto exit;
         }
     }
 
