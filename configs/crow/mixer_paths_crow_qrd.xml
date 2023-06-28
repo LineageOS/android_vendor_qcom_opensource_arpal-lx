@@ -288,9 +288,9 @@
 
     <path name="amic3">
         <ctl name="TX DEC2 MUX" value="SWR_MIC" />
-        <ctl name="TX SMIC MUX2" value="SWR_MIC5" />
+        <ctl name="TX SMIC MUX2" value="SWR_MIC6" />
         <ctl name="TX_AIF1_CAP Mixer DEC2" value="1" />
-        <ctl name="ADC2 ChMap" value="SWRM_TX2_CH2" />
+        <ctl name="ADC2 ChMap" value="SWRM_TX2_CH3" />
         <ctl name="ADC2 MUX" value="INP3" />
         <ctl name="ADC2_MIXER Switch" value="1" />
     </path>
@@ -479,11 +479,11 @@
     </path>
 
     <path name="speaker-mic">
-        <path name="amic3" />
+        <path name="amic1" />
     </path>
 
     <path name="speaker-mic-liquid">
-        <path name="amic3" />
+        <path name="amic1" />
     </path>
 
     <path name="speaker-mic-sbc">
@@ -559,7 +559,6 @@
         <ctl name="WSA RX0 MUX" value="AIF1_PB" />
         <ctl name="WSA_RX0 INP0" value="RX0" />
         <ctl name="WSA_COMP1 Switch" value="1" />
-        <ctl name="Idle Detect" value="1" />
         <ctl name="SpkrLeft COMP Switch" value="1" />
         <ctl name="SpkrLeft VISENSE Switch" value="1" />
         <ctl name="SpkrLeft SWR DAC_Port Switch" value="1" />
