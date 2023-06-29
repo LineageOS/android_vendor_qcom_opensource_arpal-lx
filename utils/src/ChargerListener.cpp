@@ -19,7 +19,7 @@
 *
 * Changes from Qualcomm Innovation Center are provided under the following
 * license:
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -385,7 +385,7 @@ exit:
 int ChargerListenerImpl::getConcurrentState()
 {
     int status_bit = -EINVAL;
-    char state[2];
+    char state[12];
 
     mlock.lock();
     if (0 != readSysfsPath(BOOST_CONCURRENT_PATH, O_RDONLY, 2, state)) {
