@@ -7224,6 +7224,7 @@ int32_t ResourceManager::streamDevConnect_l(std::vector <std::tuple<Stream *, st
                 PAL_DBG(LOG_TAG,"connected stream %pK from device %d",
                         std::get<0>(*sIter), (std::get<1>(*sIter))->id);
             }
+            std::get<0>(*sIter)->unlockStreamMutex();
         }
     }
 
@@ -7337,6 +7338,18 @@ int32_t ResourceManager::streamDevSwitch(std::vector <std::tuple<Stream *, uint3
         PAL_ERR(LOG_TAG, "Connect failed");
     }
 
+    for (sIter2 = streamDevConnectList.begin(); sIter2 != streamDevConnectList.end(); sIter2++) {
+        if ((std::get<0>(*sIter2) != NULL) && isStreamActive(std::get<0>(*sIter2), mActiveStreams)) {
+            for (sIter = uniqueStreamsList.begin(); sIter != uniqueStreamsList.end(); sIter++) {
+                if (*sIter == std::get<0>(*sIter2)) {
+                    uniqueStreamsList.erase(sIter);
+                    PAL_VERBOSE(LOG_TAG, "already unlocked, remove stream %pK from list",
+                                std::get<0>(*sIter2));
+                    break;
+                }
+            }
+        }
+    }
 exit:
     // unlock all stream mutexes
     for (sIter = uniqueStreamsList.begin(); sIter != uniqueStreamsList.end(); sIter++) {
