@@ -1780,7 +1780,9 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         /* Add device associated with current stream to streamDevDisconnect/StreamDevConnect list */
         for (int j = 0; j < disconnectCount; j++) {
             // check to make sure device direction is the same
-            if (rm->matchDevDir(mDevices[curDeviceSlots[j]]->getSndDeviceId(), newDeviceId)) {
+            // for shared BE, new device on the slot may change in compareSharedBEStreamDevAttr()
+            if (rm->matchDevDir(mDevices[curDeviceSlots[j]]->getSndDeviceId(), newDeviceId) &&
+                newDeviceId == newDevices[newDeviceSlots[i]].id) {
                 streamDevDisconnect.push_back({streamHandle, mDevices[curDeviceSlots[j]]->getSndDeviceId()});
                 // if something disconnected incoming device and current dev diff so push on a switchwe need to add the deivce
                 matchFound = true;
