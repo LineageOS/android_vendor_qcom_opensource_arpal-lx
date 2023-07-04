@@ -692,7 +692,8 @@ int Session::handleDeviceRotation(Stream *s, pal_speaker_rotation_type rotation_
              }
 
              if ((PAL_DEVICE_OUT_SPEAKER == dAttr.id) &&
-                  (2 == dAttr.config.ch_info.channels)) {
+                  (2 == dAttr.config.ch_info.channels) &&
+                  (strcmp(dAttr.custom_config.custom_key, "mspp") != 0)) {
                  /* Get DevicePP MFC MIID and configure to match to device config */
                  /* This has to be done after sending all mixer controls and
                   * before connect
