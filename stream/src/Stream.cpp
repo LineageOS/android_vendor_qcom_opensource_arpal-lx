@@ -1403,7 +1403,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     bool has_out_device = false, has_in_device = false;
     std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
-    pal_device_id_t curBtDevId;
+    pal_device_id_t curBtDevId = PAL_DEVICE_NONE;
     pal_device_id_t newBtDevId;
     bool isBtReady = false;
 
