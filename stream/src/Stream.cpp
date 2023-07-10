@@ -1399,6 +1399,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     char CurrentSndDeviceName[DEVICE_NAME_MAX_SIZE] = {0};
     std::vector <Stream *> streamsToSwitch;
     struct pal_device streamDevAttr;
+    struct pal_device sco_Dattr = {};
     std::vector <Stream*>::iterator sIter;
     bool has_out_device = false, has_in_device = false;
     std::vector <std::shared_ptr<Device>>::iterator dIter;
@@ -1553,9 +1554,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             newBtDevId = newDevices[i].id;
             dev = Device::getInstance(&newDevices[i], rm);
             if (!dev) {
-                status = -ENODEV;
                 PAL_ERR(LOG_TAG, "failed to get a2dp/ble device object");
-                goto done;
+                mStreamMutex.unlock();
+                rm->unlockActiveStream();
+                return -ENODEV;
             }
             dev->getDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
                 (void**)&param_bt_a2dp);
@@ -1599,7 +1601,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         if (!dev) {
             PAL_ERR(LOG_TAG, "No device instance found");
             mStreamMutex.unlock();
-            return -EINVAL;
+            rm->unlockActiveStream();
+            return -ENODEV;
         }
         dev->insertStreamDeviceAttr(&newDevices[i], streamHandle);
         mPalDevices.push_back(dev);
@@ -1684,7 +1687,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 (strAttr.type == PAL_STREAM_VOIP_TX &&
                     newDeviceId == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET &&
                     rm->isDeviceActive(PAL_DEVICE_OUT_BLUETOOTH_SCO)))) {
-                struct pal_device sco_Dattr = {};
                 std::shared_ptr<Device> scoDev = nullptr;
                 std::vector <Stream*> activeStreams;
                 if (newDeviceId == PAL_DEVICE_OUT_BLUETOOTH_SCO) {
@@ -1698,7 +1700,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                     PAL_ERR(LOG_TAG, "getDeviceConfig for bt-sco failed");
                     mStreamMutex.unlock();
                     rm->unlockActiveStream();
-                    return 0;
+                    return status;
                 }
 
                 rm->getActiveStream_l(activeStreams, scoDev);
@@ -1761,7 +1763,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                             PAL_ERR(LOG_TAG,"getStreamAttributes Failed \n");
                             mStreamMutex.unlock();
                             rm->unlockActiveStream();
-                            goto done;
+                            return status;
                         }
 
                         if (sAttr.type == PAL_STREAM_ULTRASOUND &&
@@ -1848,7 +1850,6 @@ done:
         if (!volume) {
             PAL_ERR(LOG_TAG, "pal_volume_data memory allocation failure");
             mStreamMutex.unlock();
-            rm->unlockActiveStream();
             return -ENOMEM;
         }
         status = streamHandle->getVolumeData(volume);
