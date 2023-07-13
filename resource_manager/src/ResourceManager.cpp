@@ -6652,6 +6652,8 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
     std::vector <Stream *> streamsToSwitch;
     std::vector <Stream*>::iterator sIter;
     struct pal_device streamDevAttr;
+    struct pal_device *temp_devAttr = nullptr;
+    int stream_idx = 0;
 
     PAL_DBG(LOG_TAG, "Enter");
 
@@ -6721,6 +6723,12 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
                            sharedBEStreamDev,
                            inDevAttr,
                            inStrAttr);
+        temp_devAttr =
+            (pal_device *)calloc(sharedBEStreamDev.size(), sizeof(struct pal_device));
+        if (!temp_devAttr) {
+            PAL_ERR(LOG_TAG, "allocate mem for temp devAttr failed");
+            goto error;
+        }
         for (const auto &elem : sharedBEStreamDev) {
             struct pal_stream_attributes sAttr;
             Stream *sharedStream = std::get<0>(elem);
@@ -6758,9 +6766,18 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
             }
             if (doDevAttrDiffer(inDevAttr, inSndDeviceName, &curDevAttr) &&
                     isDeviceReady(inDevAttr->id)) {
+                ar_mem_cpy(&temp_devAttr[stream_idx], sizeof(struct pal_device),
+                           inDevAttr, sizeof(struct pal_device));
+                if (strlen(curDevAttr.custom_config.custom_key)) {
+                    strlcpy(temp_devAttr[stream_idx].custom_config.custom_key,
+                            curDevAttr.custom_config.custom_key, PAL_MAX_CUSTOM_KEY_SIZE);
+                    PAL_DBG(LOG_TAG, "copy existing key %s for stream %pK",
+                            curDevAttr.custom_config.custom_key, std::get<0>(elem));
+                }
                 streamDevDisconnect.push_back(elem);
-                streamDevConnect.push_back({std::get<0>(elem), inDevAttr});
+                streamDevConnect.push_back({std::get<0>(elem), &temp_devAttr[stream_idx]});
                 isDeviceSwitch = true;
+                stream_idx++;
             }
         }
         // update the dev instance in case the incoming device is changed to the running device
@@ -6794,6 +6811,10 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
     }
 
 error:
+    if (temp_devAttr) {
+        free(temp_devAttr);
+        temp_devAttr = NULL;
+    }
     PAL_DBG(LOG_TAG, "Exit");
     return isDeviceSwitch;
 }
@@ -8183,8 +8204,10 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                            if (device_connection->connection_state) {
                                param_bt_a2dp.a2dp_suspended = true;
                                PAL_DBG(LOG_TAG, "Applying cached a2dp_suspended true param");
+                               mResourceManagerMutex.unlock();
                                status = dev->setDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
                                                                 &param_bt_a2dp);
+                               mResourceManagerMutex.lock();
                            } else {
                                a2dp_suspended = false;
                            }
