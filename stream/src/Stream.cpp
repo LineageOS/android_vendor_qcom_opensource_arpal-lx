@@ -866,6 +866,16 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
 
     a2dpSuspend = false;
 
+    /* Check for BT device connected state */
+    for (int32_t i = 0; i < mDevices.size(); i++) {
+        pal_device_id_t dev_id = (pal_device_id_t)mDevices[i]->getSndDeviceId();
+        if (rm->isBtDevice(dev_id) && !(rm->isDeviceAvailable(dev_id))) {
+            PAL_ERR(LOG_TAG, "BT device %d not connected", dev_id);
+            status = -ENODEV;
+            goto exit;
+        }
+    }
+
     /* SCO device is not ready */
     if (rm->isDeviceAvailable(mDevices, PAL_DEVICE_OUT_BLUETOOTH_SCO) &&
         !rm->isDeviceReady(PAL_DEVICE_OUT_BLUETOOTH_SCO)) {
@@ -1373,6 +1383,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     int32_t connectCount = 0, disconnectCount = 0;
     bool isNewDeviceA2dp = false;
     bool isCurDeviceA2dp = false;
+    bool isCurDeviceSco = false;
     bool isCurrentDeviceProxyOut = false;
     bool isCurrentDeviceDpOut = false;
     bool matchFound = false;
@@ -1422,6 +1433,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
             curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST) {
             isCurDeviceA2dp = true;
+            curBtDevId = curDevId;
+        }
+
+        if (curDevId == PAL_DEVICE_OUT_BLUETOOTH_SCO) {
+            isCurDeviceSco = true;
             curBtDevId = curDevId;
         }
 
@@ -1497,11 +1513,19 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
          * But the audioflinger continues to write data until standby time
          * (3sec). As BT is turned off, the write gets blocked.
          * Avoid this by routing audio to speaker until standby.
+         *
+         * If a stream is active on SCO and playback has ended, APM will send
+         * routing=0. Stream will be closed in PAL after standby time. If SCO
+         * device gets disconnected, this stream will not receive new routing
+         * and stream will remain with SCO for the time being. If SCO device
+         * gets connected again with different config in the meantime and
+         * capture stream tries to start ABR path, it will lead to error due to
+         * config mismatch. Added OUT_SCO device handling to resolve this.
          */
         // This assumes that PAL_DEVICE_NONE comes as single device
         if ((newDevices[i].id == PAL_DEVICE_NONE) &&
-            (((isCurDeviceA2dp == true) && (!rm->isDeviceReady(curBtDevId))) ||
-             (isCurrentDeviceProxyOut) || (isCurrentDeviceDpOut))) {
+            ((isCurrentDeviceProxyOut) || (isCurrentDeviceDpOut) ||
+             ((isCurDeviceA2dp || isCurDeviceSco) && (!rm->isDeviceReady(curBtDevId))))) {
             newDevices[i].id = PAL_DEVICE_OUT_SPEAKER;
 
             if (rm->getDeviceConfig(&newDevices[i], mStreamAttr)) {
