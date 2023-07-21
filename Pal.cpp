@@ -691,22 +691,39 @@ int32_t pal_get_timestamp(pal_stream_handle_t *stream_handle,
                           struct pal_session_time *stime)
 {
     Stream *s = NULL;
-    int status;
+    int status = -EINVAL;
+    std::shared_ptr<ResourceManager> rm = NULL;
+
     if (!stream_handle) {
-        status = -EINVAL;
         PAL_ERR(LOG_TAG, "Invalid input parameters status %d\n", status);
         return status;
     }
     PAL_DBG(LOG_TAG, "Enter. Stream handle :%pK\n", stream_handle);
-    s =  reinterpret_cast<Stream *>(stream_handle);
-    status = s->getTimestamp(stime);
+
+    rm = ResourceManager::getInstance();
+    if (!rm) {
+        PAL_ERR(LOG_TAG, "Invalid resource manager");
+        return status;
+    }
+
+    rm->lockActiveStream();
+    if (rm->isActiveStream(stream_handle)) {
+        s =  reinterpret_cast<Stream *>(stream_handle);
+        status = s->getTimestamp(stime);
+    } else {
+        PAL_ERR(LOG_TAG, "stream handle in stale state.\n");
+    }
+    rm->unlockActiveStream();
+
     if (0 != status) {
         PAL_ERR(LOG_TAG, "pal_get_timestamp failed with status %d\n", status);
         return status;
     }
+
     PAL_VERBOSE(LOG_TAG, "stime->session_time.value_lsw = %u, stime->session_time.value_msw = %u \n", stime->session_time.value_lsw, stime->session_time.value_msw);
     PAL_VERBOSE(LOG_TAG, "stime->absolute_time.value_lsw = %u, stime->absolute_time.value_msw = %u \n", stime->absolute_time.value_lsw, stime->absolute_time.value_msw);
     PAL_VERBOSE(LOG_TAG, "stime->timestamp.value_lsw = %u, stime->timestamp.value_msw = %u \n", stime->timestamp.value_lsw, stime->timestamp.value_msw);
+
     PAL_DBG(LOG_TAG, "Exit. status %d", status);
     return status;
 }
