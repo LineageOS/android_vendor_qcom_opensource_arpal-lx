@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef PAYLOAD_BUILDER_H_
@@ -35,6 +39,7 @@
 #include "kvh2xml.h"
 #include "PalCommon.h"
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <expat.h>
 #include <map>
@@ -198,6 +203,11 @@ public:
                             uint8_t *acdbParam,
                             uint32_t moduleInstanceId,
                             uint32_t sampleRate);
+    int payloadACDBTunnelParam(uint8_t **alsaPayload, size_t *size,
+                            uint8_t *acdbParam,
+                            const std::set <std::pair<int, int>> &acdbGKVSet,
+                            uint32_t moduleInstanceId,
+                            uint32_t sampleRate);
     int payloadSVAConfig(uint8_t **payload, size_t *size,
                         uint8_t *config, size_t config_size,
                         uint32_t miid, uint32_t param_id);
@@ -230,6 +240,8 @@ public:
     int populateStreamKV(Stream* s, std::vector <std::pair<int,int>> &keyVector);
     int populateStreamKV(Stream* s, std::vector <std::pair<int,int>> &keyVectorRx,
         std::vector <std::pair<int,int>> &keyVectorTx ,struct vsid_info vsidinfo);
+    int populateStreamKVTunnel(Stream* s,
+        std::vector <std::pair<int,int>> &keyVector, uint32_t instanceId);
     int populateStreamPPKV(Stream* s, std::vector <std::pair<int,int>> &keyVectorRx,
         std::vector <std::pair<int,int>> &keyVectorTx);
     int populateStreamDeviceKV(Stream* s, int32_t beDevId, std::vector <std::pair<int,int>> &keyVector);
@@ -238,8 +250,12 @@ public:
     int populateDeviceKV(Stream* s, int32_t beDevId, std::vector <std::pair<int,int>> &keyVector);
     int populateDeviceKV(Stream* s, int32_t rxBeDevId, std::vector <std::pair<int,int>> &keyVectorRx,
         int32_t txBeDevId, std::vector <std::pair<int,int>> &keyVectorTx, sidetone_mode_t sidetoneMode);
+    int populateDeviceKVTunnel(Stream* s, int32_t beDevId,
+        std::vector <std::pair<int,int>> &keyVector);
     int populateDevicePPKV(Stream* s, int32_t rxBeDevId, std::vector <std::pair<int,int>> &keyVectorRx,
         int32_t txBeDevId, std::vector <std::pair<int,int>> &keyVectorTx);
+    int populateDevicePPKVTunnel(Stream* s, int32_t rxBeDevId,
+        std::vector <std::pair<int,int>> &keyVectorRx);
     int populateDevicePPCkv(Stream *s, std::vector <std::pair<int,int>> &keyVector);
     int populateStreamCkv(Stream *s, std::vector <std::pair<int,int>> &keyVector, int tag, struct pal_volume_data **);
     int populateCalKeyVector(Stream *s, std::vector <std::pair<int,int>> &ckv, int tag);

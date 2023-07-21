@@ -70,6 +70,7 @@
 #include "StreamSoundTrigger.h"
 #include "StreamACD.h"
 #include "StreamInCall.h"
+#include "StreamACDB.h"
 #include "StreamContextProxy.h"
 #include "StreamUltraSound.h"
 #include "StreamSensorPCMData.h"
@@ -5245,6 +5246,7 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
         struct pal_device *curDevAttr)
 {
     std::vector <std::tuple<Stream *, uint32_t>> sharedBEStreamDev;
+    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect;
     std::vector <Stream *> activeHapticsStreams;
 
     if (!deviceattr) {
@@ -5275,11 +5277,15 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
                 deviceattr->config.aud_fmt_id =  bitWidthToFormat.at(deviceattr->config.bit_width);
                 PAL_DBG(LOG_TAG, "headset is coming, update headset to sr: %d bw: %d ",
                     deviceattr->config.sample_rate, deviceattr->config.bit_width);
+
             }
         }
     } else if (deviceattr->id == PAL_DEVICE_OUT_HAPTICS_DEVICE) {
         // if haptics is coming, update headset sample rate if needed
         getSharedBEActiveStreamDevs(sharedBEStreamDev, PAL_DEVICE_OUT_WIRED_HEADSET);
+        if(sharedBEStreamDev.size() == 0){
+            getSharedBEActiveStreamDevs(sharedBEStreamDev, PAL_DEVICE_OUT_WIRED_HEADPHONE);
+        }
         if (sharedBEStreamDev.size() > 0) {
             for (const auto &elem : sharedBEStreamDev) {
                 bool switchNeeded = false;
@@ -5298,13 +5304,26 @@ void ResourceManager::checkHapticsConcurrency(struct pal_device *deviceattr,
                 curDev->getDeviceAttributes(curDevAttr);
                 if ((curDevAttr->config.sample_rate % SAMPLINGRATE_44K == 0) &&
                     (sAttr->out_media_config.sample_rate % SAMPLINGRATE_44K != 0)) {
-                    curDevAttr->config.sample_rate = sAttr->out_media_config.sample_rate;
-                    curDevAttr->config.bit_width = sAttr->out_media_config.bit_width;
-                    curDevAttr->config.aud_fmt_id = bitWidthToFormat.at(deviceattr->config.bit_width);
                     switchNeeded = true;
-                    streamsToSwitch.push_back(sharedStream);
-                    PAL_DBG(LOG_TAG, "haptics is coming, update headset to sr: %d bw: %d ",
-                        curDevAttr->config.sample_rate, curDevAttr->config.bit_width);
+                    if(!isDeviceAvailable(PAL_DEVICE_OUT_WIRED_HEADSET) && !isDeviceAvailable(PAL_DEVICE_OUT_WIRED_HEADPHONE)) {
+                        PAL_DBG(LOG_TAG, "WHS Device not available, disconnect stream");
+                        streamDevDisconnect.push_back(elem);
+                        int status = 0;
+                        status = streamDevDisconnect_l(streamDevDisconnect);
+                        if (status) {
+                            PAL_ERR(LOG_TAG, "disconnect failed");
+                        }
+                        switchNeeded = false;
+                    }
+
+                    if (switchNeeded) {
+                        curDevAttr->config.sample_rate = sAttr->out_media_config.sample_rate;
+                        curDevAttr->config.bit_width = sAttr->out_media_config.bit_width;
+                        curDevAttr->config.aud_fmt_id = bitWidthToFormat.at(deviceattr->config.bit_width);
+                        streamsToSwitch.push_back(sharedStream);
+                        PAL_DBG(LOG_TAG, "haptics is coming, update headset to sr: %d bw: %d ",
+                            curDevAttr->config.sample_rate, curDevAttr->config.bit_width);
+                   }
                 }
             }
         }
@@ -8861,7 +8880,7 @@ int ResourceManager::rwParameterACDB(uint32_t paramId, void *paramPayload,
                  uint32_t instanceId, bool isParamWrite, bool isPlay)
 {
     int status = -EINVAL;
-    Stream *s = NULL;
+    StreamACDB *s = NULL;
     struct pal_stream_attributes sattr;
     struct pal_device dattr;
     bool match = false;
@@ -8875,114 +8894,46 @@ int ResourceManager::rwParameterACDB(uint32_t paramId, void *paramPayload,
     switch (paramId) {
         case PAL_PARAM_ID_UIEFFECT:
         {
-
-            mActiveStreamMutex.lock();
-            for(sIter = mActiveStreams.begin(); sIter != mActiveStreams.end();
-                    sIter++) {
-                match = (*sIter)->checkStreamMatch(palDeviceId, palStreamType);
-                if (match)
-                    matchCount++;
-
-                if (match) {
-                    status = (*sIter)->rwACDBParameters(paramPayload,
-                                        sampleRate, isParamWrite);
-                    if (status) {
-                        PAL_ERR(LOG_TAG, "failed to set param for palDeviceId=%x stream_type=%x",
-                                palDeviceId, palStreamType);
-                    }
-                }
-            }
-            mActiveStreamMutex.unlock();
-
-            PAL_DBG(LOG_TAG, "%d active stream match with device %d type %d",
-                        matchCount, palDeviceId, palStreamType);
-            if (!matchCount) {
-                if (palDeviceId == PAL_DEVICE_OUT_BLUETOOTH_A2DP &&
-                        isDeviceActive(PAL_DEVICE_OUT_BLUETOOTH_SCO)) {
-                    PAL_ERR(LOG_TAG, "SCO is active. Param set to A2DP quits.");
-                    status = -EINVAL;
-                    goto error;
-                }
-                /*
-                 * set default stream type (low latency) for device-only effect.
-                 * the instance is shared by streams.
-                 */
-                if (palStreamType == PAL_STREAM_GENERIC) {
-                    palStreamType = PAL_STREAM_LOW_LATENCY;
-                    PAL_INFO(LOG_TAG, "change PAL stream from %d to %d for device effect",
+            /*
+             * set default stream type (low latency) for device-only effect.
+             * the instance is shared by streams.
+             */
+            if (palStreamType == PAL_STREAM_GENERIC) {
+                palStreamType = PAL_STREAM_LOW_LATENCY;
+                PAL_INFO(LOG_TAG, "change PAL stream from %d to %d for device effect",
                             PAL_STREAM_GENERIC, palStreamType);
-                }
-
-                /*
-                 * set default device (speaker) for stream-only effect.
-                 * the instance is shared by devices.
-                 */
-                if (palDeviceId == PAL_DEVICE_NONE) {
-                    if (isPlay)
-                        palDeviceId = PAL_DEVICE_OUT_SPEAKER;
-                    else
-                        palDeviceId = PAL_DEVICE_IN_HANDSET_MIC;
-
-                    PAL_INFO(LOG_TAG, "change PAL device id from %d to %d for stream effect",
-                                PAL_DEVICE_NONE, palDeviceId);
-                }
-
-                sattr.type = palStreamType;
-                sattr.direction = (pal_stream_direction_t)getDeviceDirection(palDeviceId);
-                sattr.flags = PAL_STREAM_FLAG_NON_BLOCKING;
-                sattr.out_media_config.ch_info.channels = 2;
-                sattr.out_media_config.sample_rate = 48000;
-                sattr.out_media_config.bit_width = 16;
-                dattr.id = palDeviceId;
-
-                if (isPluginDevice(dattr.id) ||
-                    isBtDevice(dattr.id)) {
-                    /* dummy device can igonre physical existence
-                     * and work as a flag for ACDB parameter set
-                     */
-                    dattr.address.card_id = DUMMY_SND_CARD;
-                    PAL_INFO(LOG_TAG, "Use dummy card id 0x%x for ACDB parameter set on plugin or bt device.",
-                                dattr.address.card_id);
-                }
-
-                std::shared_ptr<Device> devDummy = nullptr;
-                devDummy = Device::getInstance(&dattr, rm);
-                if (devDummy && !isBtDevice(dattr.id))
-                    devDummy->getDeviceAttributes(&dattr);
-                else {
-                    PAL_ERR(LOG_TAG, "failed to get device instance. dev id =%d",
-                                dattr.id);
-                }
-
-                try {
-                    s = Stream::create(&sattr, &dattr, 1, nullptr, 0);
-                } catch (const std::exception& e) {
-                    PAL_ERR(LOG_TAG, "Stream create failed: %s", e.what());
-                    return -EINVAL;
-                }
-                if (!s) {
-                    status = -EINVAL;
-                    PAL_ERR(LOG_TAG, "stream creation failed status %d", status);
-                    goto error;
-                }
-
-                status = s->open();
-                if (0 != status) {
-                    PAL_ERR(LOG_TAG, "pal_stream_open failed with status %d", status);
-                    if (s->close() != 0) {
-                        PAL_ERR(LOG_TAG, "stream close failed.");
-                    }
-                    delete s;
-                    goto error;
-                }
-                status = s->rwACDBParameters(paramPayload, sampleRate, isParamWrite);
-                if (s->close())
-                    PAL_ERR(LOG_TAG, "stream failed to close");
-
-                delete s;
             }
-        }
 
+            /*
+             * set default device (speaker) for stream-only effect.
+             * the instance is shared by devices.
+             */
+            if (palDeviceId == PAL_DEVICE_NONE) {
+                if (isPlay)
+                    palDeviceId = PAL_DEVICE_OUT_SPEAKER;
+                else
+                    palDeviceId = PAL_DEVICE_IN_HANDSET_MIC;
+
+                PAL_INFO(LOG_TAG, "change PAL device id from %d to %d for stream effect",
+                            PAL_DEVICE_NONE, palDeviceId);
+            }
+
+            sattr.type = palStreamType;
+            sattr.out_media_config.sample_rate = sampleRate;
+            sattr.direction = PAL_AUDIO_OUTPUT;
+            dattr.id = palDeviceId;
+            s = new StreamACDB(&sattr, &dattr, instanceId, getInstance());
+            if (!s) {
+                status = -EINVAL;
+                PAL_ERR(LOG_TAG, "stream creation failed status %d", status);
+                goto error;
+            }
+
+            status = s->rwACDBParam(palDeviceId, palStreamType, sampleRate,
+                instanceId, paramPayload, isParamWrite);
+
+            delete s;
+        }
         break;
         default:
             PAL_ERR(LOG_TAG, "Unknown ParamID:%d", paramId);

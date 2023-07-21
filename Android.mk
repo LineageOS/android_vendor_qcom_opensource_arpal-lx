@@ -61,6 +61,7 @@ LOCAL_SRC_FILES := \
     stream/src/Stream.cpp \
     stream/src/StreamCompress.cpp \
     stream/src/StreamPCM.cpp \
+    stream/src/StreamACDB.cpp \
     stream/src/StreamInCall.cpp \
     stream/src/StreamNonTunnel.cpp \
     stream/src/StreamSoundTrigger.cpp \
