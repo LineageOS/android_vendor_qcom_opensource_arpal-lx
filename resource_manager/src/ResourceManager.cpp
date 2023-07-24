@@ -1762,8 +1762,10 @@ int32_t ResourceManager::voteSleepMonitor(Stream *str, bool vote, bool force_nlp
         return ret;
     }
 
-    lpi_stream = (sleep_monitor_vote_type_[type] == LPI_VOTE &&
-                 !IsTransitToNonLPIOnChargingSupported() && (!force_nlpi_vote));
+    if (sleep_monitor_vote_type_[type] == LPI_VOTE) {
+        lpi_stream = (!force_nlpi_vote && str->ConfigSupportLPI() &&
+                      !IsTransitToNonLPIOnChargingSupported());
+    }
 
     mSleepMonitorMutex.lock();
     if (vote) {

@@ -165,6 +165,7 @@ public:
     int32_t EnableLPI(bool is_enable);
     int32_t setECRef(std::shared_ptr<Device> dev, bool is_enable) override;
     int32_t setECRef_l(std::shared_ptr<Device> dev, bool is_enable) override;
+    bool ConfigSupportLPI() override;
     void TransitTo(int32_t state_id);
 
     friend class PalRingBufferReader;

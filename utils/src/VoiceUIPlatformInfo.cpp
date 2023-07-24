@@ -113,7 +113,8 @@ void VUISecondStageConfig::HandleStartTag(const char *tag, const char **attribs)
 
 VUIFirstStageConfig::VUIFirstStageConfig() :
     module_type_(ST_MODULE_TYPE_GMM),
-    module_name_("GMM")
+    module_name_("GMM"),
+    lpi_supported_(true)
 {
     for (int i = 0; i < MAX_PARAM_IDS; i++) {
         module_tag_ids_[i] = 0;
@@ -145,6 +146,8 @@ void VUIFirstStageConfig::HandleStartTag(const char *tag, const char **attribs)
                 }
                 PAL_DBG(LOG_TAG, "Module name:%s, type:%d",
                         module_name_.c_str(), module_type_);
+            } else if (!strcmp(attribs[i], "lpi_supported")) {
+                lpi_supported_ = !strcmp(attribs[++i], "true");
             } else {
                 uint32_t index = 0;
 
