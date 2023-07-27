@@ -66,6 +66,7 @@
 #include <set>
 #include <unistd.h>
 #include <stdlib.h>
+#include <mutex>
 #include <PalApi.h>
 #include "Stream.h"
 #include "Device.h"
@@ -83,6 +84,9 @@ class Stream;
 const char* pal_get_version( ){
     return PAL_VERSION;
 }
+
+static std::mutex pal_mutex;
+static uint32_t pal_init_ref_cnt = 0;
 
 static void notify_concurrent_stream(pal_stream_type_t type,
                                      pal_stream_direction_t dir,
@@ -113,6 +117,13 @@ int32_t pal_init(void)
     PAL_DBG(LOG_TAG, "Enter.");
     int32_t ret = 0;
     std::shared_ptr<ResourceManager> ri = NULL;
+
+    pal_mutex.lock();
+    if (pal_init_ref_cnt++ > 0) {
+        PAL_DBG(LOG_TAG, "PAL already initialized, cnt: %d", pal_init_ref_cnt);
+        goto exit;
+    }
+
     try {
         ri = ResourceManager::getInstance();
     } catch (const std::exception& e) {
@@ -135,6 +146,7 @@ int32_t pal_init(void)
     }
 
 exit:
+    pal_mutex.unlock();
     PAL_DBG(LOG_TAG, "Exit. exit status : %d ", ret);
     return ret;
 }
@@ -151,6 +163,17 @@ void pal_deinit(void)
 
     std::shared_ptr<ResourceManager> ri = NULL;
 
+    pal_mutex.lock();
+    if (pal_init_ref_cnt > 0) {
+        pal_init_ref_cnt--;
+        PAL_DBG(LOG_TAG, "decrease pal ref cnt to %d", pal_init_ref_cnt);
+        if (pal_init_ref_cnt > 0)
+            goto exit;
+    } else {
+        PAL_ERR(LOG_TAG, "pal not initialized yet");
+        goto exit;
+    }
+
     try {
         ri = ResourceManager::getInstance();
     } catch (const std::exception& e) {
@@ -159,6 +182,9 @@ void pal_deinit(void)
     ri->deInitContextManager();
 
     ResourceManager::deinit();
+
+exit:
+    pal_mutex.unlock();
     PAL_DBG(LOG_TAG, "Exit.");
     return;
 }
