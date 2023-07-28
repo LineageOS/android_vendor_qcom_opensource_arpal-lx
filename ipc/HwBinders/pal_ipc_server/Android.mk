@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := \
     src/pal_server_wrapper.cpp
 
 LOCAL_C_INCLUDES := \
-    $(TOP)/vendor/qcom/opensource/pal/utils/inc
+    $(call project-path-for,qcom-audio)/pal/utils/inc
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc
 
