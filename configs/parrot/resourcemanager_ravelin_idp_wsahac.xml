@@ -90,6 +90,12 @@
     <low_power_vote_streams>
         <stream_type>PAL_STREAM_VOICE_UI</stream_type>
     </low_power_vote_streams>
+    <device_temp_ctls>
+        <device_temp_ctrl id="PAL_DEVICE_OUT_SPEAKER" spkr_posn="SPKR_LEFT" ctrl="SpkrLeft WSA Temp"/>
+        <device_temp_ctrl id="PAL_DEVICE_OUT_SPEAKER" spkr_posn="SPKR_RIGHT" ctrl="SpkrRight WSA Temp"/>
+        <device_temp_ctrl id="PAL_DEVICE_OUT_HANDSET" spkr_posn="SPKR_TOP" ctrl="SpkrTop WSA Temp"/>
+        <device_temp_ctrl id="PAL_DEVICE_OUT_HANDSET" spkr_posn="SPKR_BOTTOM" ctrl="SpkrBottom WSA Temp"/>
+    </device_temp_ctls>
     <device_profile>
         <in-device>
             <id>PAL_DEVICE_IN_HANDSET_MIC</id>
@@ -394,7 +400,8 @@
             <samplerate>48000</samplerate>
             <bit_width>16</bit_width>
             <snd_device_name>speaker</snd_device_name>
-            <speaker_protection_enabled>0</speaker_protection_enabled>
+            <speaker_protection_enabled>1</speaker_protection_enabled>
+            <speaker_handset_protection_separate>1</speaker_handset_protection_separate>
             <fractional_sr>0</fractional_sr>
             <!-- To enable external EC reference the flag extec_ref_enabled must be added as 1 -->
             <ext_ec_ref_enabled>0</ext_ec_ref_enabled>
@@ -439,6 +446,7 @@
             <samplerate>48000</samplerate>
             <bit_width>16</bit_width>
             <fractional_sr>0</fractional_sr>
+            <handset_protection_enabled>1</handset_protection_enabled>
             <snd_device_name>handset</snd_device_name>
           <usecase>
               <name>PAL_STREAM_VOICE_CALL</name>

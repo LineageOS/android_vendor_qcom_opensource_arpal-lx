@@ -3021,9 +3021,30 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
             ckv.push_back(std::make_pair(GAIN, level));
         break;
     case HANDSET_PROT_ENABLE:
-         PAL_DBG(LOG_TAG, "Handset Mono channel speaker");
-         ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_MONO));
-         break;
+        status = s->getAssociatedDevices(associatedDevices);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG,"getAssociatedDevices Failed \n");
+            return status;
+        }
+        for (int i = 0; i < associatedDevices.size(); i++) {
+            status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG,"getAssociatedDevices Failed \n");
+                return status;
+            }
+            if (dAttr.id == PAL_DEVICE_OUT_HANDSET) {
+                if (dAttr.config.ch_info.channels > 1) {
+                    PAL_DBG(LOG_TAG, "Multi channel speaker");
+                    ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_RIGHT));
+                }
+                else {
+                    PAL_DBG(LOG_TAG, "Mono channel speaker");
+                    ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_MONO));
+                }
+                break;
+            }
+        }
+        break;
     case SPKR_PROT_ENABLE :
         status = s->getAssociatedDevices(associatedDevices);
         if (0 != status) {
@@ -3589,6 +3610,52 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
 
                 memcpy(spThrshConf, data, sizeof(param_id_cps_lpass_swr_thresholds_cfg_t) +
                                 (sizeof(cps_reg_wr_values_t) * data->num_spkr));
+            }
+        case PARAM_ID_SP_VI_CH_ENABLE:
+            {
+                param_id_sp_vi_ch_enable_t *spConf = NULL;
+                param_id_sp_vi_ch_enable_t *data = NULL;
+                data = (param_id_sp_vi_ch_enable_t *)param;
+                payloadSize = sizeof(struct apm_module_param_data_t) +
+                                sizeof(param_id_sp_vi_ch_enable_t) +
+                                (sizeof(int32_t) * data->num_ch);
+                padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+                payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
+                if (!payloadInfo) {
+                    PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s",
+                                                            strerror(errno));
+                    return;
+                }
+                header = (struct apm_module_param_data_t*) payloadInfo;
+                spConf = (param_id_sp_vi_ch_enable_t *) (payloadInfo +
+                        sizeof(struct apm_module_param_data_t));
+                spConf->num_ch = data->num_ch;
+                for (int i = 0; i < data->num_ch; i++) {
+                    spConf->chan_en_flag[i] = data->chan_en_flag[i];
+                }
+            }
+        case PARAM_ID_SP_RX_CH_ENABLE:
+            {
+                param_id_sp_rx_ch_enable_t *spConf = NULL;
+                param_id_sp_rx_ch_enable_t *data = NULL;
+                data = (param_id_sp_rx_ch_enable_t *)param;
+                payloadSize = sizeof(struct apm_module_param_data_t) +
+                                sizeof(param_id_sp_rx_ch_enable_t) +
+                                (sizeof(int32_t) * data->num_ch);
+                padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+                payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
+                if (!payloadInfo) {
+                    PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s",
+                                                            strerror(errno));
+                    return;
+                }
+                header = (struct apm_module_param_data_t*) payloadInfo;
+                spConf = (param_id_sp_rx_ch_enable_t *) (payloadInfo +
+                        sizeof(struct apm_module_param_data_t));
+                spConf->num_ch = data->num_ch;
+                for (int i = 0; i < data->num_ch; i++) {
+                    spConf->chan_en_flag[i] = data->chan_en_flag[i];
+                }
             }
         break;
         default:

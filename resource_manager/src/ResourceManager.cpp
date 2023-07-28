@@ -465,6 +465,7 @@ uint32_t ResourceManager::wake_lock_cnt = 0;
 static int max_session_num;
 bool ResourceManager::isSpeakerProtectionEnabled = false;
 bool ResourceManager::isHandsetProtectionEnabled = false;
+bool ResourceManager::isSpeakerHandsetProtectionSeparate = false;
 bool ResourceManager::isChargeConcurrencyEnabled = false;
 bool ResourceManager::isCpsEnabled = false;
 bool ResourceManager::isVbatEnabled = false;
@@ -506,6 +507,7 @@ std::vector<struct pal_amp_db_and_gain_table> ResourceManager::gainLvlMap;
 std::map<std::pair<uint32_t, std::string>, std::string> ResourceManager::btCodecMap;
 std::map<int, std::string> ResourceManager::spkrTempCtrlsMap;
 std::map<uint32_t, uint32_t> ResourceManager::btSlimClockSrcMap;
+std::map<pal_device_id_t, std::vector<std::string>> ResourceManager::deviceTempCtrlsMap;
 
 std::shared_ptr<group_dev_config_t> ResourceManager::activeGroupDevConfig = nullptr;
 std::shared_ptr<group_dev_config_t> ResourceManager::currentGroupDevConfig = nullptr;
@@ -528,7 +530,9 @@ std::map<std::string, uint32_t> ResourceManager::btFmtTable = {
 
 std::map<std::string, int> ResourceManager::spkrPosTable = {
     MAKE_STRING_FROM_ENUM(SPKR_RIGHT),
-    MAKE_STRING_FROM_ENUM(SPKR_LEFT)
+    MAKE_STRING_FROM_ENUM(SPKR_LEFT),
+    MAKE_STRING_FROM_ENUM(SPKR_TOP),
+    MAKE_STRING_FROM_ENUM(SPKR_BOTTOM)
 };
 
 std::vector<std::pair<int32_t, std::string>> ResourceManager::listAllBackEndIds {
@@ -1323,10 +1327,20 @@ int ResourceManager::init()
     dev = std::dynamic_pointer_cast<Device>(Device::getInstance(&dattr , rm));
     if (dev) {
         PAL_DBG(LOG_TAG, "Speaker instance created");
-    }
-    else
+    } else {
         PAL_INFO(LOG_TAG, "Speaker instance not created");
+    }
 
+    if (isSpeakerHandsetProtectionSeparate) {
+        memset(&dattr, 0, sizeof(dattr));
+        dattr.id = PAL_DEVICE_OUT_HANDSET;
+        dev = std::dynamic_pointer_cast<Device>(Device::getInstance(&dattr , rm));
+        if (dev) {
+            PAL_DBG(LOG_TAG, "Handset instance created");
+        } else {
+            PAL_INFO(LOG_TAG, "Handset instance not created");
+        }
+    }
     return 0;
 }
 
@@ -9690,6 +9704,61 @@ done:
     return;
 }
 
+std::vector<std::string> ResourceManager::getDeviceTempCtrl(pal_device_id_t id)
+{
+    std::map<pal_device_id_t, std::vector<std::string>>::iterator iter;
+    std::vector<std::string> ret;
+
+    iter = deviceTempCtrlsMap.find(id);
+    if (iter != deviceTempCtrlsMap.end()) {
+        return iter->second;
+    }
+
+    return ret;
+}
+
+void ResourceManager::processDeviceTempCtrls(const XML_Char **attr, const int attr_count)
+{
+    pal_device_id_t dev_id;
+    std::map<std::string, int>::iterator iter;
+
+    /*
+     * Total 6 arguments must be present in the following order:
+     * id, id_value, spkr_posn, pos value, ctrl, ctrl value
+     */
+    if (attr_count != 6) {
+        PAL_ERR(LOG_TAG, "invalid attribute passed for device_temp_ctrl");
+        return;
+    }
+
+    if ((strcmp(attr[0], "id") != 0) ||
+        (strcmp(attr[2], "spkr_posn") != 0) ||
+        (strcmp(attr[4], "ctrl") != 0)) {
+        PAL_ERR(LOG_TAG, "invalid attributes passed for device_temp_ctrl");
+        return;
+    }
+
+    /* Add temperature controls in the device map based on device id */
+    iter = spkrPosTable.find(std::string(attr[3]));
+    if (iter == spkrPosTable.end()) {
+        PAL_ERR(LOG_TAG, "Invalid temperature position for %s %s",
+                attr[2], attr[3]);
+        return;
+    }
+
+    if (strcmp(attr[1], "PAL_DEVICE_OUT_SPEAKER") == 0) {
+        dev_id = PAL_DEVICE_OUT_SPEAKER;
+    } else if (strcmp(attr[1], "PAL_DEVICE_OUT_HANDSET") == 0) {
+        dev_id = PAL_DEVICE_OUT_HANDSET;
+    } else {
+        PAL_ERR(LOG_TAG, "position for %s : %s not found",
+                attr[2], attr[3]);
+        return;
+    }
+
+    deviceTempCtrlsMap[dev_id].push_back(std::string(attr[5]));
+}
+
 bool ResourceManager::isPluginDevice(pal_device_id_t id) {
     if (id == PAL_DEVICE_OUT_USB_DEVICE ||
         id == PAL_DEVICE_OUT_USB_HEADSET ||
@@ -10092,6 +10161,9 @@ void ResourceManager::process_device_info(struct xml_userdata *data, const XML_C
         } else if (!strcmp(tag_name, "handset_protection_enabled")) {
             if (atoi(data->data_buf))
                 isHandsetProtectionEnabled = true;
+        } else if (!strcmp(tag_name, "speaker_handset_protection_separate")) {
+            if (atoi(data->data_buf))
+                isSpeakerHandsetProtectionSeparate = true;
         } else if (!strcmp(tag_name, "ext_ec_ref_enabled")) {
             size = deviceInfo.size() - 1;
             deviceInfo[size].isExternalECRefEnabled = atoi(data->data_buf);
@@ -10458,6 +10530,9 @@ void ResourceManager::startTag(void *userdata, const XML_Char *tag_name,
         return;
     } else if(strcmp(tag_name, "temp_ctrl") == 0) {
         processSpkrTempCtrls(attr);
+        return;
+    } else if(strcmp(tag_name, "device_temp_ctrl") == 0) {
+        processDeviceTempCtrls(attr, XML_GetSpecifiedAttributeCount(data->parser));
         return;
     }
 

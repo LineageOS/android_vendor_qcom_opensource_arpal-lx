@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -40,6 +40,7 @@
 #include <thread>
 #include<vector>
 #include "apm_api.h"
+#include "ResourceManager.h"
 
 class Device;
 
@@ -66,6 +67,8 @@ typedef enum speaker_prot_proc_state {
 enum {
     SPKR_RIGHT,    /* Right Speaker */
     SPKR_LEFT,     /* Left Speaker */
+    SPKR_TOP,      /* Top Speaker */
+    SPKR_BOTTOM,   /* Bottom Speaker */
 };
 
 struct agmMetaData {
@@ -75,6 +78,19 @@ struct agmMetaData {
         :buf(b),size(s) {}
 };
 
+struct spDeviceInfo {
+    bool devThreadExit;
+    speaker_prot_cal_state deviceCalState;
+    int *deviceTempList;
+    bool isDeviceInUse;
+    bool isDeviceDynamicCalTriggered;
+    bool devCalThrdCreated;
+    struct timespec deviceLastTimeUsed;
+    int numChannels;
+    int devNumberOfRequest;
+    struct pal_device_info dev_vi_device;
+    std::thread mDeviceCalThread;
+};
 
 class SpeakerProtection : public Device
 {
@@ -102,8 +118,11 @@ protected :
     static int calibrationCallbackStatus;
     static int numberOfRequest;
     static struct pal_device_info vi_device;
+    struct spDeviceInfo spDevInfo;
 
 private :
+    static bool isSharedBE;
+    int populateSpDevInfoCreateCalThread(struct pal_device *device);
 
 public:
     static std::thread mCalThread;
@@ -111,14 +130,19 @@ public:
     static std::mutex cvMutex;
     std::mutex deviceMutex;
     static std::mutex calibrationMutex;
+    static std::mutex calSharedBeMutex;
     void spkrCalibrationThread();
+    void spkrCalibrationThreadV2();
     int getSpeakerTemperature(int spkr_pos);
     void spkrCalibrateWait();
     int spkrStartCalibration();
+    int spkrStartCalibrationV2();
     void speakerProtectionInit();
     void speakerProtectionDeinit();
     void getSpeakerTemperatureList();
+    int getDeviceTemperatureList();
     static void spkrProtSetSpkrStatus(bool enable);
+    void spkrProtSetSpkrStatusV2(bool enable);
     static int setConfig(int type, int tag, int tagValue, int devId, const char *aif);
     bool isSpeakerInUse(unsigned long *sec);
 
@@ -133,6 +157,7 @@ public:
     int32_t getParameter(uint32_t param_id, void **param) override;
 
     int32_t spkrProtProcessingMode(bool flag);
+    int32_t spkrProtProcessingModeV2(bool flag);
     int speakerProtectionDynamicCal();
     void updateSPcustomPayload();
     static int32_t spkrProtSetR0T0Value(vi_r0t0_cfg_t r0t0Array[]);
@@ -144,6 +169,8 @@ public:
     int32_t getFTMParameter(void **param);
     void disconnectFeandBe(std::vector<int> pcmDevIds, std::string backEndName);
 
+    bool canDeviceProceedForCalibration(unsigned long *sec);
+    bool isDeviceInUse(unsigned long *sec);
 };
 
 class SpeakerFeedback : public Device
