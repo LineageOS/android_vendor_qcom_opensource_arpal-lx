@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b5b751c_2aead2c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2023-07-31T09:10:12Z",
+      "side": 1,
+      "message": "afaik ar_osal_mem_op.h is just functions proptotypes, but ar_osal_types.h is pretty messy",
+      "revId": "fb599a4817b01811ef97d78a41a52ae20c76f88e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
