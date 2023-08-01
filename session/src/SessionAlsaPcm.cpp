@@ -1281,8 +1281,11 @@ set_mixer:
                     }
                 }
             }
-
 pcm_start:
+            status = setInitialVolume();
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "setVolume failed");
+            }
             memset(&lpm_info, 0, sizeof(struct disable_lpm_info));
             rm->getDisableLpmInfo(&lpm_info);
             isStreamAvail = (find(lpm_info.streams_.begin(),
@@ -1389,37 +1392,8 @@ pcm_start:
             }
            break;
     }
-    memset(&vol_set_param_info, 0, sizeof(struct volume_set_param_info));
-    rm->getVolumeSetParamInfo(&vol_set_param_info);
-    isStreamAvail = (find(vol_set_param_info.streams_.begin(),
-                vol_set_param_info.streams_.end(), sAttr.type) !=
-                vol_set_param_info.streams_.end());
-    if (isStreamAvail && vol_set_param_info.isVolumeUsingSetParam) {
-        // apply if there is any cached volume
-        if (s->mVolumeData) {
-            volSize = (sizeof(struct pal_volume_data) +
-                    (sizeof(struct pal_channel_vol_kv) * (s->mVolumeData->no_of_volpair)));
-            volPayload = new uint8_t[sizeof(pal_param_payload) +
-                volSize]();
-            pal_param_payload *pld = (pal_param_payload *)volPayload;
-            pld->payload_size = sizeof(struct pal_volume_data);
-            memcpy(pld->payload, s->mVolumeData, volSize);
-            status = setParameters(s, TAG_STREAM_VOLUME,
-                    PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
-            delete[] volPayload;
-        }
-    } else {
-        // Setting the volume as in stream open, no default volume is set.
-        if (sAttr.type != PAL_STREAM_ACD &&
-            sAttr.type != PAL_STREAM_VOICE_UI &&
-            sAttr.type != PAL_STREAM_CONTEXT_PROXY &&
-            sAttr.type != PAL_STREAM_ULTRASOUND &&
-            sAttr.type != PAL_STREAM_SENSOR_PCM_DATA &&
-            sAttr.type != PAL_STREAM_HAPTICS) {
-            if (setConfig(s, CALIBRATION, TAG_STREAM_VOLUME) != 0) {
-                PAL_ERR(LOG_TAG,"Setting volume failed");
-            }
-        }
+    if (sAttr.direction != PAL_AUDIO_OUTPUT) {
+        status = setInitialVolume();
     }
 
     mState = SESSION_STARTED;
@@ -3182,3 +3156,4 @@ exit:
     PAL_DBG(LOG_TAG, "Exit status: %d", status);
     return status;
 }
+
