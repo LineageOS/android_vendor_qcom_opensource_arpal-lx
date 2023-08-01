@@ -915,6 +915,14 @@ Return<int32_t> PAL::ipc_pal_stream_set_volume(const uint64_t streamHandle,
     struct pal_volume_data *volume = nullptr;
     uint32_t noOfVolPairs = vol.data()->noOfVolPairs;
     int32_t ret = -ENOMEM;
+    if (1 != vol.size()) {
+        ALOGE("Invalid vol pairs");
+        return -EINVAL;
+    }
+    if (noOfVolPairs > vol.data()->volPair.size()) {
+        ALOGE("Invalid vol vector size");
+        return -EINVAL;
+    }
     volume = (struct pal_volume_data *) calloc(1,
                                         sizeof(struct pal_volume_data) +
                                         noOfVolPairs * sizeof(pal_channel_vol_kv));
