@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -190,7 +190,6 @@ int32_t pal_stream_open(struct pal_stream_attributes *attributes,
        s->registerCallBack(cb, cookie);
 
     rm->initStreamUserCounter(s);
-    s->initStreamSmph();
     stream = reinterpret_cast<uint64_t *>(s);
     *stream_handle = stream;
 exit:
@@ -231,9 +230,10 @@ int32_t pal_stream_close(pal_stream_handle_t *stream_handle)
     s->setCachedState(STREAM_IDLE);
     status = s->close();
 
-    s->waitStreamSmph();
-    rm->deinitStreamUserCounter(s);
-    s->deinitStreamSmph();
+    if (rm->deactivateStreamUserCounter(s)) {
+        PAL_ERR(LOG_TAG, "stream is being closed by another client");
+        return 0;
+    }
 
     if (0 != status) {
         PAL_ERR(LOG_TAG, "stream closed failed. status %d", status);
@@ -243,6 +243,7 @@ exit:
     s->getStreamAttributes(&sAttr);
     notify_concurrent_stream(sAttr.type, sAttr.direction, false);
     delete s;
+    rm->eraseStreamUserCounter(s);
     PAL_INFO(LOG_TAG, "Exit. status %d", status);
     return status;
 }
@@ -274,7 +275,12 @@ int32_t pal_stream_start(pal_stream_handle_t *stream_handle)
     }
 
     s = reinterpret_cast<Stream *>(stream_handle);
-    rm->increaseStreamUserCounter(s);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        goto exit;
+    }
     rm->unlockActiveStream();
     status = s->start();
 
@@ -319,7 +325,12 @@ int32_t pal_stream_stop(pal_stream_handle_t *stream_handle)
     }
 
     s = reinterpret_cast<Stream *>(stream_handle);
-    rm->increaseStreamUserCounter(s);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        goto exit;
+    }
     rm->unlockActiveStream();
     s->setCachedState(STREAM_STOPPED);
     status = s->stop();
@@ -461,7 +472,12 @@ int32_t pal_stream_set_volume(pal_stream_handle_t *stream_handle,
     }
 
     s =  reinterpret_cast<Stream *>(stream_handle);
-    rm->increaseStreamUserCounter(s);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        return status;
+    }
     rm->unlockActiveStream();
     status = s->setVolume(volume);
 
@@ -506,7 +522,12 @@ int32_t pal_stream_set_mute(pal_stream_handle_t *stream_handle, bool state)
     }
 
     s =  reinterpret_cast<Stream *>(stream_handle);
-    rm->increaseStreamUserCounter(s);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        goto exit;
+    }
     rm->unlockActiveStream();
     status = s->mute(state);
 
@@ -598,7 +619,12 @@ int32_t pal_stream_drain(pal_stream_handle_t *stream_handle, pal_drain_type_t ty
     }
 
     s =  reinterpret_cast<Stream *>(stream_handle);
-    rm->increaseStreamUserCounter(s);
+    status = rm->increaseStreamUserCounter(s);
+    if (0 != status) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "failed to increase stream user count");
+        goto exit;
+    }
     rm->unlockActiveStream();
 
     status = s->drain(type);
