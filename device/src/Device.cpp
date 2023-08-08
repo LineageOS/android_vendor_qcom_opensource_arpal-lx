@@ -934,7 +934,10 @@ int Device::getTopPriorityDeviceAttr(struct pal_device *deviceAttr, uint32_t *st
     /* update sample rate if it's valid */
     if (mSampleRate)
         deviceAttr->config.sample_rate = mSampleRate;
-
+    if (mBitWidth) {
+        deviceAttr->config.bit_width = mBitWidth;
+        deviceAttr->config.aud_fmt_id = rm->getAudioFmt(mBitWidth);
+    }
 #if DUMP_DEV_ATTR
     pal_stream_attributes dumpstrAttr;
     (*it).second.first->getStreamAttributes(&dumpstrAttr);

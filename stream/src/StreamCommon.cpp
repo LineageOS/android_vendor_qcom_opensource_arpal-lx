@@ -121,6 +121,8 @@ StreamCommon::StreamCommon(const struct pal_stream_attributes *sattr, struct pal
                 continue;
             rm->getDeviceInfo(devAttr.id, sattr->type, "", &inDeviceInfo);
             dev->setSampleRate(inDeviceInfo.samplerate);
+            if (devAttr.id == PAL_DEVICE_OUT_HANDSET)
+                dev->setBitWidth(inDeviceInfo.bit_width);
         }
     }
     for (int i = 0; i < no_of_devices; i++) {
@@ -184,6 +186,7 @@ StreamCommon::~StreamCommon()
             if (!dev)
                 continue;
             dev->setSampleRate(0);
+            dev->setBitWidth(0);
         }
     }
 
