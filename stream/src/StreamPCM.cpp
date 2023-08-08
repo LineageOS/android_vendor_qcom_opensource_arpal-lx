@@ -1656,8 +1656,10 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
         rm->lockGraph();
         for (int32_t i=0; i < mDevices.size(); i++) {
             if ((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
-                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)) {
-                PAL_DBG(LOG_TAG, "start BT A2DP/BLE device as to populate the full GKVs");
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)  ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_BLE)   ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
+                PAL_DBG(LOG_TAG, "start BT devices as to populate the full GKVs");
                 status = mDevices[i]->start();
                 if ((0 != status) && mDevices.size() == 1) {
                     PAL_ERR(LOG_TAG, "device start failed: %d", status);
