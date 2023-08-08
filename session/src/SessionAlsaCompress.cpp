@@ -1707,6 +1707,9 @@ int SessionAlsaCompress::stop(Stream * s __unused)
 
     switch (sAttr.direction) {
         case PAL_AUDIO_OUTPUT:
+            if (compress && playback_started) {
+                status = compress_stop(compress);
+            }
             // Deregister for callback for Soft Pause
             if (isPauseRegistrationDone) {
                 payload_size = sizeof(struct agm_event_reg_cfg);
@@ -1734,10 +1737,6 @@ int SessionAlsaCompress::stop(Stream * s __unused)
                     PAL_ERR(LOG_TAG, "Pause callback deregistration failed\n");
                     status = 0;
                 }
-            }
-
-            if (compress && playback_started) {
-                status = compress_stop(compress);
             }
             break;
         case PAL_AUDIO_INPUT:
