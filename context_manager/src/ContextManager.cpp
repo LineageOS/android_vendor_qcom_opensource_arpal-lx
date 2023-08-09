@@ -71,6 +71,8 @@
 #define ACKDATA_DEFAULT_SIZE 1024
 #define PAL_ALIGN_8BYTE(x) (((x) + 7) & (~7))
 
+std::mutex see_client::see_client_mutex;
+
 int32_t ContextManager::process_register_request(uint32_t see_id, uint32_t usecase_id, uint32_t size,
     void *payload)
 {
@@ -86,6 +88,8 @@ int32_t ContextManager::process_register_request(uint32_t see_id, uint32_t useca
         PAL_ERR(LOG_TAG, "Error:%d, Failed to get see_client:%d", rc, see_id);
         goto exit;
     }
+
+    seeclient->lock_see_client();
 
     uc = seeclient->Usecase_Get(usecase_id);
     if (uc == NULL) {
@@ -154,6 +158,7 @@ exit:
     if (rc) {
         send_asps_basic_response(rc, EVENT_ID_ASPS_SENSOR_REGISTER_REQUEST, see_id);
     }
+    seeclient->unlock_see_client();
     PAL_VERBOSE(LOG_TAG, "Exit rc:%d", rc);
     return rc;
 }
@@ -246,6 +251,8 @@ int32_t ContextManager::process_deregister_request(uint32_t see_id, uint32_t use
         goto exit;
     }
 
+    seeclient->lock_see_client();
+
     uc = seeclient->Usecase_Get(usecase_id);
     if (uc == NULL) {
         rc = -EINVAL;
@@ -266,6 +273,7 @@ int32_t ContextManager::process_deregister_request(uint32_t see_id, uint32_t use
     }
 
 exit:
+    seeclient->unlock_see_client();
     PAL_VERBOSE(LOG_TAG, "Exit rc:%d", rc);
     return rc;
 }
@@ -915,6 +923,8 @@ void see_client::CloseAllUsecases()
 
     PAL_VERBOSE(LOG_TAG, "Enter:");
 
+    see_client_mutex.lock();
+
     for (auto it_uc = this->usecases.begin(); it_uc != this->usecases.cend();) {
         uc = it_uc->second;
         PAL_VERBOSE(LOG_TAG, "Calling StopAndClose on usecase_id:0x%x", uc->GetUseCaseID());
@@ -922,6 +932,8 @@ void see_client::CloseAllUsecases()
         usecases.erase(it_uc++);
         delete uc;
     }
+
+    see_client_mutex.unlock();
 
     PAL_VERBOSE(LOG_TAG, "Exit:");
 }
