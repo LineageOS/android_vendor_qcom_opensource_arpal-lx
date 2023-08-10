@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <dlfcn.h>
@@ -67,6 +71,16 @@ bool SoundTriggerUUID::operator<(const SoundTriggerUUID& rhs) const {
         return false;
     else if (clockSeq < rhs.clockSeq)
         return true;
+
+    //check node
+    for (int i = 0; i < 6; i++) {
+        if (node[i] > rhs.node[i]) {
+            return false;
+        }
+        else if(node[i] < rhs.node[i]){
+            return true;
+        }
+    }
     /* everything is equal */
 
     return false;
