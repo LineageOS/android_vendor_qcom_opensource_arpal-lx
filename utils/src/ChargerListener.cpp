@@ -385,14 +385,14 @@ exit:
 int ChargerListenerImpl::getConcurrentState()
 {
     int status_bit = -EINVAL;
-    char state[12];
+    char state[22];
 
     mlock.lock();
     if (0 != readSysfsPath(BOOST_CONCURRENT_PATH, O_RDONLY, 2, state)) {
         ALOGE("%s %d, read Concurrency bit failed %s", __func__, __LINE__,
               strerror(errno));
     } else {
-        sscanf(state, "%d\n", &status_bit);
+        sscanf(state, "%d", &status_bit);
     }
     mlock.unlock();
     return status_bit;

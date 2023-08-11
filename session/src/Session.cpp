@@ -829,7 +829,7 @@ exit:
     return status;
 }
 
-/* This is to set devicePP MFC(if exists) and PSPD MFC */
+/* This is to set devicePP MFC(if exists) and PSPD MFC and stream MFC*/
 int Session::configureMFC(const std::shared_ptr<ResourceManager>& rm, struct pal_stream_attributes &sAttr,
             struct pal_device &dAttr, const std::vector<int> &pcmDevIds, const char* intf)
 {
@@ -896,6 +896,32 @@ int Session::configureMFC(const std::shared_ptr<ResourceManager>& rm, struct pal
         setSlotMask(rm, sAttr, dAttr, pcmDevIds);
     }
 
+    /* Prepare stream MFC payload */
+    if (sAttr.direction == PAL_AUDIO_INPUT) {
+        status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0), intf,
+                                                       TAG_STREAM_MFC_SR, &miid);
+        if (status == 0) {
+            PAL_DBG(LOG_TAG, "miid : %x id = %d, data %s, dev id = %d\n", miid,
+                    pcmDevIds.at(0), intf, dAttr.id);
+            if (isPalPCMFormat(sAttr.in_media_config.aud_fmt_id))
+                mfcData.bitWidth = ResourceManager::palFormatToBitwidthLookup(
+                                                    sAttr.in_media_config.aud_fmt_id);
+            else
+                mfcData.bitWidth = sAttr.in_media_config.bit_width;
+            mfcData.sampleRate = sAttr.in_media_config.sample_rate;
+            mfcData.numChannel = sAttr.in_media_config.ch_info.channels;
+            mfcData.ch_info = nullptr;
+            builder->payloadMFCConfig((uint8_t **)&payload, &payloadSize, miid, &mfcData);
+            if (payloadSize && payload) {
+                status = updateCustomPayload(payload, payloadSize);
+                freeCustomPayload(&payload, &payloadSize);
+                if (0 != status) {
+                    PAL_ERR(LOG_TAG, "updateCustomPayload failed\n");
+                    goto exit;
+                }
+            }
+        }
+    }
     /* Prepare PSPD MFC payload */
     /* Get PSPD MFC MIID and configure to match to device config */
     /* This has to be done after sending all mixer controls and before connect */

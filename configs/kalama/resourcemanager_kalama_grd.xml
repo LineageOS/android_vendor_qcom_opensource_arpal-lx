@@ -283,6 +283,9 @@
             <ec_rx_device>
                 <id>PAL_DEVICE_OUT_HANDSET</id>
                 <id>PAL_DEVICE_OUT_SPEAKER</id>
+                <id>PAL_DEVICE_OUT_WIRED_HEADPHONE</id>
+                <id>PAL_DEVICE_OUT_USB_DEVICE</id>
+                <id>PAL_DEVICE_OUT_USB_HEADSET</id>
             </ec_rx_device>
         </in-device>
         <in-device>
@@ -420,6 +423,7 @@
             <ec_rx_device>
                 <id>PAL_DEVICE_OUT_WIRED_HEADSET</id>
                 <id>PAL_DEVICE_OUT_WIRED_HEADPHONE</id>
+                <id>PAL_DEVICE_OUT_SPEAKER</id>
             </ec_rx_device>
         </in-device>
         <in-device>
@@ -527,6 +531,10 @@
             <usecase>
                 <name>PAL_STREAM_ULTRA_LOW_LATENCY</name>
             </usecase>
+            <ec_rx_device>
+                <id>PAL_DEVICE_OUT_USB_HEADSET</id>
+                <id>PAL_DEVICE_OUT_SPEAKER</id>
+            </ec_rx_device>
         </in-device>
         <in-device>
             <id>PAL_DEVICE_IN_FM_TUNER</id>
