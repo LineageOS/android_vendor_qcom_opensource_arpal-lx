@@ -1474,6 +1474,7 @@
                 <sound_model_info>
                     <first_stage_module_params>
                         <param module_type="GMM" />
+                        <param lpi_supported="false"/>
                         <param load_sound_model_ids="0xC0000008, 0x0800104C" />
                         <param wakeup_config_ids="0xC0000008, 0x08001049" />
                         <param buffering_config_ids="0xC0000008, 0x08001044" />

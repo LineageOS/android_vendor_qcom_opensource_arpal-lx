@@ -3489,6 +3489,20 @@ int32_t StreamSoundTrigger::StSSR::ProcessEvent(
 
     return status;
 }
+bool StreamSoundTrigger::ConfigSupportLPI() {
+
+    bool lpi = true;
+    bool config_support_lpi = true;
+
+    if (sm_cfg_ && sm_cfg_->GetVUIFirstStageConfig(model_type_))
+        config_support_lpi =
+               sm_cfg_->GetVUIFirstStageConfig(model_type_)->IsLpiSupported();
+
+    if (!config_support_lpi || !vui_ptfm_info_->GetLpiEnable())
+        lpi = false;
+
+    return lpi;
+}
 
 int32_t StreamSoundTrigger::ssrDownHandler() {
     int32_t status = 0;
