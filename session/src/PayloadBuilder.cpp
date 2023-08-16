@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: PayloadBuilder"
@@ -887,6 +890,209 @@ void PayloadBuilder::payloadTimestamp(std::shared_ptr<std::vector<uint8_t>>& pay
                   header->error_code, header->param_size);
     *size = payloadSize + padBytes;
     PAL_DBG(LOG_TAG, "payload %pK size %zu", payload->data(), *size);
+}
+
+int PayloadBuilder::payloadACDBTunnelParam(uint8_t **alsaPayload,
+            size_t *size, uint8_t *payload,
+            const std::set <std::pair<int, int>> &acdbGKVSet,
+            uint32_t moduleInstanceId, uint32_t sampleRate) {
+    struct apm_module_param_data_t* header;
+    struct agm_acdb_tunnel_param *payloadACDBTunnelInfo = NULL;
+    size_t paddedPayloadSize = 0;
+    uint32_t payloadSize = 0;
+    uint32_t totalPaddedSize = 0;
+    uint32_t parsedSize = 0;
+    uint32_t dataLength = 0;
+    struct agm_acdb_param *acdbParam = (struct agm_acdb_param *)payload;
+    uint32_t appendSampleRateInCKV = 1;
+    uint8_t *ptrSrc = nullptr;
+    uint8_t *ptrDst = nullptr;
+    uint32_t *ptr = nullptr;
+    uint32_t offset = 0;
+    pal_effect_custom_payload_t *effectCustomPayload = nullptr;
+
+    if (!acdbParam)
+        return -EINVAL;
+
+    if (sampleRate != 0 && acdbParam->isTKV == PARAM_TKV) {
+        PAL_ERR(LOG_TAG, "Sample Rate %d CKV and TKV are not compatible.",
+                    sampleRate);
+        return -EINVAL;
+    }
+
+    if (sampleRate) {
+        //CKV
+        // step 1. check sample rate is in kv or not
+        PAL_INFO(LOG_TAG, "CKV param to ACDB");
+        pal_key_value_pair_t *rawCKVPair = nullptr;
+        rawCKVPair = (pal_key_value_pair_t *)acdbParam->blob;
+        for (int k = 0; k < acdbParam->num_kvs; k++) {
+            if (rawCKVPair[k].key == SAMPLINGRATE) {
+                PAL_INFO(LOG_TAG, "Sample rate is in CKV. No need to append.");
+                appendSampleRateInCKV = 0;
+                break;
+            }
+        }
+        PAL_DBG(LOG_TAG, "is sample rate appended in CKV? %x",
+                                appendSampleRateInCKV);
+    } else {
+        //TKV
+        appendSampleRateInCKV = 0;
+    }
+
+    // multipl param check by param id
+    dataLength = sizeof(struct agm_acdb_param) +
+                    acdbParam->num_kvs * sizeof(struct gsl_key_value_pair);
+    effectCustomPayload = (pal_effect_custom_payload_t *)
+                                ((uint8_t *)acdbParam + dataLength);
+    PAL_DBG(LOG_TAG, "first param id = 0x%x", effectCustomPayload->paramId);
+    // step 1: get param data size = blob size - kv size - param id size
+    payloadSize = acdbParam->blob_size -
+                    acdbParam->num_kvs * sizeof(struct gsl_key_value_pair)
+                    - sizeof(pal_effect_custom_payload_t);
+    PAL_DBG(LOG_TAG, "payloadSize = 0x%x", payloadSize);
+
+    if (effectCustomPayload->paramId) {
+        paddedPayloadSize = PAL_ALIGN_8BYTE(payloadSize);
+        PAL_INFO(LOG_TAG, "payloadSize=%d paddedPayloadSize=%x",
+                    payloadSize, paddedPayloadSize);
+        payloadACDBTunnelInfo = (struct agm_acdb_tunnel_param *)calloc(1,
+            sizeof(struct agm_acdb_tunnel_param) +
+            (acdbParam->num_kvs + appendSampleRateInCKV + acdbGKVSet.size()) *
+            sizeof(struct gsl_key_value_pair) +
+            sizeof(struct apm_module_param_data_t) + paddedPayloadSize);
+    } else {
+        PAL_INFO(LOG_TAG, "This is multiple parameter case.");
+        payloadACDBTunnelInfo = (struct agm_acdb_tunnel_param *)calloc(1,
+            sizeof(struct agm_acdb_tunnel_param) +
+            (acdbParam->num_kvs + appendSampleRateInCKV + acdbGKVSet.size()) *
+            sizeof(struct gsl_key_value_pair) +
+            sizeof(struct apm_module_param_data_t) + payloadSize * 2);
+    }
+
+    if (!payloadACDBTunnelInfo) {
+        PAL_ERR(LOG_TAG, "failed to allocate memory.");
+        return -ENOMEM;
+    }
+
+    // copy meta
+    payloadACDBTunnelInfo->isTKV = acdbParam->isTKV;
+    payloadACDBTunnelInfo->tag = acdbParam->tag;
+    payloadACDBTunnelInfo->num_gkvs = acdbGKVSet.size();
+    payloadACDBTunnelInfo->num_kvs = acdbParam->num_kvs;
+
+    // copy gkv
+    offset = sizeof(struct agm_acdb_tunnel_param);
+    dataLength = acdbGKVSet.size() * sizeof(struct gsl_key_value_pair);
+    ptrDst = (uint8_t *)payloadACDBTunnelInfo + offset;
+    ptr = (uint32_t *)ptrDst;
+    for (const auto& ele: acdbGKVSet) {
+        *ptr++ = ele.first;
+        *ptr++ = ele.second;
+    }
+
+    // copy tkv or ckv
+    offset += dataLength;
+    dataLength = acdbParam->num_kvs * sizeof(struct gsl_key_value_pair);
+    ptrDst = (uint8_t *)payloadACDBTunnelInfo + offset;
+    ptrSrc = (uint8_t *)acdbParam + sizeof(struct agm_acdb_param);
+    ar_mem_cpy(ptrDst, dataLength, acdbParam->blob, dataLength);
+
+    //update ckv for sample rate
+    offset += dataLength;
+    payloadACDBTunnelInfo->num_kvs += appendSampleRateInCKV;
+    if (appendSampleRateInCKV) {
+        dataLength = sizeof(struct gsl_key_value_pair);
+        ptrDst = (uint8_t *)payloadACDBTunnelInfo + offset;
+        ptr = (uint32_t *)ptrDst;
+        *ptr++ = SAMPLINGRATE;
+        *ptr = sampleRate;
+        header = (struct apm_module_param_data_t *)(
+                    (uint8_t *)payloadACDBTunnelInfo +
+                    offset + sizeof(struct gsl_key_value_pair));
+    } else {
+        dataLength = 0;
+        header = (struct apm_module_param_data_t *)
+                    ((uint8_t *)payloadACDBTunnelInfo + offset);
+    }
+
+    offset += dataLength;
+    /* actual param pointer */
+    if (effectCustomPayload->paramId) {
+        PAL_INFO(LOG_TAG, "This is single param id=0x%x",
+            effectCustomPayload->paramId);
+        header->module_instance_id = acdbParam->tag;
+        header->param_id = effectCustomPayload->paramId;
+        header->param_size = payloadSize;
+        header->error_code = 0x0;
+        PAL_DBG(LOG_TAG, "tag = 0x%x", acdbParam->tag);
+        PAL_DBG(LOG_TAG, "padded payload size = 0x%x", paddedPayloadSize);
+        if (paddedPayloadSize) {
+            ptrDst = (uint8_t *)header + sizeof(struct apm_module_param_data_t);
+            ptrSrc = (uint8_t *)effectCustomPayload->data;
+            // padded bytes are zero by calloc. no need to copy.
+            ar_mem_cpy(ptrDst, payloadSize, ptrSrc, payloadSize);
+        }
+
+        offset += sizeof(struct apm_module_param_data_t) + paddedPayloadSize;
+        *size = offset;
+        *alsaPayload = (uint8_t *)payloadACDBTunnelInfo;
+        payloadACDBTunnelInfo->blob_size = (payloadACDBTunnelInfo->num_gkvs +
+            payloadACDBTunnelInfo->num_kvs) * sizeof(struct gsl_key_value_pair)
+            + sizeof(struct apm_module_param_data_t) + paddedPayloadSize;
+    } else {
+        PAL_INFO(LOG_TAG, "This is multiple param case.");
+        legacyGefParamHeader *gefMultipleParamHeader = NULL;
+        while (parsedSize < payloadSize) {
+            PAL_INFO(LOG_TAG, "parsed size = 0x%x", parsedSize);
+            gefMultipleParamHeader =
+                (legacyGefParamHeader *)
+                ((uint8_t *)(effectCustomPayload->data) + parsedSize);
+            paddedPayloadSize = PAL_ALIGN_8BYTE(sizeof(struct apm_module_param_data_t)
+                                                + gefMultipleParamHeader->length);
+            PAL_INFO(LOG_TAG, "total padded size = 0x%x current padded size=0x%x",
+                        totalPaddedSize, paddedPayloadSize);
+            PAL_INFO(LOG_TAG, "current param value length = 0x%x",
+                        gefMultipleParamHeader->length);
+            header->module_instance_id = acdbParam->tag;
+            header->param_id = gefMultipleParamHeader->paramId;
+            header->error_code = 0x0;
+            header->param_size = gefMultipleParamHeader->length;
+            PAL_DBG(LOG_TAG, "tag=0x%x param id = 0x%x param length=0x%x",
+                        header->module_instance_id, header->param_id,
+                        header->param_size);
+            if (gefMultipleParamHeader->length) {
+                ar_mem_cpy((uint8_t *)header +
+                                sizeof(struct apm_module_param_data_t),
+                                gefMultipleParamHeader->length,
+                                (uint8_t *)gefMultipleParamHeader +
+                                sizeof(legacyGefParamHeader),
+                                gefMultipleParamHeader->length);
+            }
+
+            // offset to output data
+            totalPaddedSize += paddedPayloadSize;
+            // offset to input data
+            parsedSize += sizeof(legacyGefParamHeader) +
+                            gefMultipleParamHeader->length;
+            PAL_DBG(LOG_TAG, "parsed size=0x%x total padded size=0x%x",
+                                parsedSize, totalPaddedSize);
+            header = (struct apm_module_param_data_t*)((uint8_t *)header + paddedPayloadSize);
+        }
+
+        payloadACDBTunnelInfo->blob_size =
+            (payloadACDBTunnelInfo->num_kvs + payloadACDBTunnelInfo->num_gkvs)
+            * sizeof(struct gsl_key_value_pair)
+            + totalPaddedSize;
+
+        offset += totalPaddedSize;
+        *size = offset;
+        *alsaPayload = (uint8_t *)payloadACDBTunnelInfo;
+    }
+
+    PAL_ERR(LOG_TAG, "ALSA payload %pK size %zu", *alsaPayload, *size);
+
+    return 0;
 }
 
 int PayloadBuilder::payloadACDBParam(uint8_t **alsaPayload, size_t *size,
@@ -2289,6 +2495,57 @@ int PayloadBuilder::populateStreamKV(Stream* s,
     selectors = retrieveSelectors(sattr->type, all_streams);
     if (selectors.empty() != true)
         filled_selector_pairs = getSelectorValues(selectors, s, NULL);
+
+    retrieveKVs(filled_selector_pairs ,sattr->type, all_streams, keyVector);
+
+free_sattr:
+    delete sattr;
+exit:
+    return status;
+}
+
+int PayloadBuilder::populateStreamKVTunnel(Stream* s,
+        std::vector <std::pair<int,int>> &keyVector, uint32_t instanceId)
+{
+    int status = -EINVAL;
+    struct pal_stream_attributes *sattr = NULL;
+    std::vector <std::string> selectors;
+    std::vector <std::pair<selector_type_t, std::string>> filled_selector_pairs;
+    std::stringstream st;
+
+    PAL_DBG(LOG_TAG, "enter");
+    sattr = new struct pal_stream_attributes;
+    if (!sattr) {
+        status = -ENOMEM;
+        PAL_ERR(LOG_TAG,"sattr malloc failed %s status %d", strerror(errno), status);
+        goto exit;
+    }
+    memset(sattr, 0, sizeof(struct pal_stream_attributes));
+
+    status = s->getStreamAttributes(sattr);
+    if (0 != status) {
+        PAL_ERR(LOG_TAG,"getStreamAttributes Failed status %d", status);
+        goto free_sattr;
+    }
+    PAL_INFO(LOG_TAG, "stream type %d", sattr->type);
+    selectors = retrieveSelectors(sattr->type, all_streams);
+
+    for (int i = 0; i < selectors.size(); i++) {
+        selector_type_t selector_type =  selectorstypeLUT.at(selectors[i]);
+        PAL_DBG(LOG_TAG, "selector name is %s type is 0x%x",
+                            selectors[i].c_str(), selector_type);
+        // it avoids instance request.
+        if (selector_type == INSTANCE_SEL) {
+            selectors.erase(selectors.begin() + i);
+        }
+    }
+
+    if (selectors.empty() != true)
+        filled_selector_pairs = getSelectorValues(selectors, s, NULL);
+
+    st << instanceId;
+    filled_selector_pairs.push_back(std::make_pair(INSTANCE_SEL, st.str()));
+
     retrieveKVs(filled_selector_pairs ,sattr->type, all_streams, keyVector);
 
 free_sattr:
@@ -2412,6 +2669,67 @@ int PayloadBuilder::populateDeviceKV(Stream* s, int32_t rxBeDevId,
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
 
     return status;
+}
+
+
+int PayloadBuilder::populateDeviceKVTunnel(Stream* s, int32_t beDevId,
+        std::vector <std::pair<int,int>> &keyVector)
+{
+    int status = 0;
+    std::vector <std::string> selectors;
+    std::vector <std::pair<selector_type_t, std::string>> filled_selector_pairs;
+    struct pal_device dAttr;
+    std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+
+    /* For BT devices, device KV will be populated from Bluetooth device only so skip here */
+    if (rm->isBtDevice((pal_device_id_t)beDevId)) {
+        PAL_INFO(LOG_TAG, "Use default value for BT ACDB case.");
+        keyVector.push_back(std::make_pair(DEVICERX, BT_RX));
+        keyVector.push_back(std::make_pair(BT_PROFILE, A2DP));
+        keyVector.push_back(std::make_pair(BT_FORMAT, GENERIC));
+        return status;
+    }
+
+
+    if (beDevId > 0) {
+        memset (&dAttr, 0, sizeof(struct pal_device));
+        dAttr.id = (pal_device_id_t)beDevId;
+        selectors = retrieveSelectors(beDevId, all_devices);
+        if (selectors.empty() != true)
+            filled_selector_pairs = getSelectorValues(selectors, s, &dAttr);
+        retrieveKVs(filled_selector_pairs, beDevId, all_devices, keyVector);
+    }
+
+    PAL_INFO(LOG_TAG, "Exit device id:%d, status %d", beDevId, status);
+    return status;
+}
+
+
+int PayloadBuilder::populateDevicePPKVTunnel(Stream* s, int32_t rxBeDevId,
+        std::vector <std::pair<int,int>> &keyVectorRx)
+{
+    int status = 0;
+    struct pal_device dAttr;
+    std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+    std::vector <std::string> selectors;
+    std::vector <std::pair<selector_type_t, std::string>> filled_selector_pairs;
+
+    /* Populate Rx Device PP KV */
+    if (rxBeDevId > 0) {
+        PAL_INFO(LOG_TAG, "Rx device id:%d", rxBeDevId);
+        memset (&dAttr, 0, sizeof(struct pal_device));
+        dAttr.id = (pal_device_id_t)rxBeDevId;
+
+        selectors = retrieveSelectors(dAttr.id, all_devicepps);
+        if (selectors.empty() != true)
+            filled_selector_pairs = getSelectorValues(selectors, s, &dAttr);
+
+        retrieveKVs(filled_selector_pairs, rxBeDevId, all_devicepps,
+            keyVectorRx);
+    }
+
+    PAL_DBG(LOG_TAG, "Exit, status: %d", status);
+    return 0;
 }
 
 int PayloadBuilder::populateDevicePPKV(Stream* s, int32_t rxBeDevId,
@@ -2703,9 +3021,30 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
             ckv.push_back(std::make_pair(GAIN, level));
         break;
     case HANDSET_PROT_ENABLE:
-         PAL_DBG(LOG_TAG, "Handset Mono channel speaker");
-         ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_MONO));
-         break;
+        status = s->getAssociatedDevices(associatedDevices);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG,"getAssociatedDevices Failed \n");
+            return status;
+        }
+        for (int i = 0; i < associatedDevices.size(); i++) {
+            status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG,"getAssociatedDevices Failed \n");
+                return status;
+            }
+            if (dAttr.id == PAL_DEVICE_OUT_HANDSET) {
+                if (dAttr.config.ch_info.channels > 1) {
+                    PAL_DBG(LOG_TAG, "Multi channel speaker");
+                    ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_RIGHT));
+                }
+                else {
+                    PAL_DBG(LOG_TAG, "Mono channel speaker");
+                    ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, LEFT_MONO));
+                }
+                break;
+            }
+        }
+        break;
     case SPKR_PROT_ENABLE :
         status = s->getAssociatedDevices(associatedDevices);
         if (0 != status) {
@@ -3271,6 +3610,52 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
 
                 memcpy(spThrshConf, data, sizeof(param_id_cps_lpass_swr_thresholds_cfg_t) +
                                 (sizeof(cps_reg_wr_values_t) * data->num_spkr));
+            }
+        case PARAM_ID_SP_VI_CH_ENABLE:
+            {
+                param_id_sp_vi_ch_enable_t *spConf = NULL;
+                param_id_sp_vi_ch_enable_t *data = NULL;
+                data = (param_id_sp_vi_ch_enable_t *)param;
+                payloadSize = sizeof(struct apm_module_param_data_t) +
+                                sizeof(param_id_sp_vi_ch_enable_t) +
+                                (sizeof(int32_t) * data->num_ch);
+                padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+                payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
+                if (!payloadInfo) {
+                    PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s",
+                                                            strerror(errno));
+                    return;
+                }
+                header = (struct apm_module_param_data_t*) payloadInfo;
+                spConf = (param_id_sp_vi_ch_enable_t *) (payloadInfo +
+                        sizeof(struct apm_module_param_data_t));
+                spConf->num_ch = data->num_ch;
+                for (int i = 0; i < data->num_ch; i++) {
+                    spConf->chan_en_flag[i] = data->chan_en_flag[i];
+                }
+            }
+        case PARAM_ID_SP_RX_CH_ENABLE:
+            {
+                param_id_sp_rx_ch_enable_t *spConf = NULL;
+                param_id_sp_rx_ch_enable_t *data = NULL;
+                data = (param_id_sp_rx_ch_enable_t *)param;
+                payloadSize = sizeof(struct apm_module_param_data_t) +
+                                sizeof(param_id_sp_rx_ch_enable_t) +
+                                (sizeof(int32_t) * data->num_ch);
+                padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+                payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
+                if (!payloadInfo) {
+                    PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s",
+                                                            strerror(errno));
+                    return;
+                }
+                header = (struct apm_module_param_data_t*) payloadInfo;
+                spConf = (param_id_sp_rx_ch_enable_t *) (payloadInfo +
+                        sizeof(struct apm_module_param_data_t));
+                spConf->num_ch = data->num_ch;
+                for (int i = 0; i < data->num_ch; i++) {
+                    spConf->chan_en_flag[i] = data->chan_en_flag[i];
+                }
             }
         break;
         default:
