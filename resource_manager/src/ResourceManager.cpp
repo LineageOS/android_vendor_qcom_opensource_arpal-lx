@@ -8718,82 +8718,29 @@ int ResourceManager::getParameter(uint32_t param_id, void **param_payload,
         case PAL_PARAM_ID_BT_A2DP_RECONFIG_SUPPORTED:
         case PAL_PARAM_ID_BT_A2DP_SUSPENDED:
         case PAL_PARAM_ID_BT_A2DP_ENCODER_LATENCY:
-        {
-            std::shared_ptr<Device> dev = nullptr;
-            struct pal_device dattr;
-            pal_param_bta2dp_t *param_bt_a2dp = nullptr;
-
-            if (isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_A2DP)) {
-                dattr.id = PAL_DEVICE_OUT_BLUETOOTH_A2DP;
-            } else if (isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_BLE)) {
-                dattr.id = PAL_DEVICE_OUT_BLUETOOTH_BLE;
-            } else if (isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST)) {
-                dattr.id = PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST;
-            } else {
-                goto exit;
-            }
-            dev = Device::getInstance(&dattr , rm);
-            if (dev) {
-                status = dev->getDeviceParameter(param_id, (void **)&param_bt_a2dp);
-                if (status) {
-                    PAL_ERR(LOG_TAG, "get Parameter %d failed\n", param_id);
-                    goto exit;
-                }
-                *param_payload = param_bt_a2dp;
-                *payload_size = sizeof(pal_param_bta2dp_t);
-            }
-            break;
-        }
         case PAL_PARAM_ID_BT_A2DP_CAPTURE_SUSPENDED:
-        {
-            std::shared_ptr<Device> dev = nullptr;
-            struct pal_device dattr;
-            pal_param_bta2dp_t *param_bt_a2dp = nullptr;
-
-            if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_A2DP)) {
-                dattr.id = PAL_DEVICE_IN_BLUETOOTH_A2DP;
-            } else if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_BLE)) {
-                dattr.id = PAL_DEVICE_IN_BLUETOOTH_BLE;
-            } else {
-                goto exit;
-            }
-            dev = Device::getInstance(&dattr , rm);
-            if (dev) {
-                status = dev->getDeviceParameter(param_id, (void **)&param_bt_a2dp);
-                if (status) {
-                    PAL_ERR(LOG_TAG, "get Parameter %d failed\n", param_id);
-                    goto exit;
-                }
-                *param_payload = param_bt_a2dp;
-                *payload_size = sizeof(pal_param_bta2dp_t);
-            }
-            break;
-        }
         case PAL_PARAM_ID_BT_A2DP_DECODER_LATENCY:
         {
             std::shared_ptr<Device> dev = nullptr;
             struct pal_device dattr;
             pal_param_bta2dp_t* param_bt_a2dp = nullptr;
 
-            if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_A2DP)) {
-                dattr.id = PAL_DEVICE_IN_BLUETOOTH_A2DP;
-            } else if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_BLE)) {
-                dattr.id = PAL_DEVICE_IN_BLUETOOTH_BLE;
+            if (isDeviceAvailable((*(pal_param_bta2dp_t**)param_payload)->dev_id)) {
+                dattr.id = (*(pal_param_bta2dp_t**)param_payload)->dev_id;
             } else {
                 goto exit;
             }
+
             dev = Device::getInstance(&dattr, rm);
-            if (!dev) {
-                PAL_ERR(LOG_TAG, "Failed to get device instance");
-                goto exit;
+            if (dev) {
+                status = dev->getDeviceParameter(param_id, (void**)&param_bt_a2dp);
+                if (status) {
+                    PAL_ERR(LOG_TAG, "get Parameter %d failed\n", param_id);
+                    goto exit;
+                }
+                *param_payload = param_bt_a2dp;
+                *payload_size = sizeof(pal_param_bta2dp_t);
             }
-            status = dev->getDeviceParameter(param_id, (void**)&param_bt_a2dp);
-            if (status) {
-                PAL_ERR(LOG_TAG, "get Parameter %d failed\n", param_id);
-                goto exit;
-            }
-            *param_payload = param_bt_a2dp;
-            *payload_size = sizeof(pal_param_bta2dp_t);
             break;
         }
         case PAL_PARAM_ID_GAIN_LVL_MAP:
