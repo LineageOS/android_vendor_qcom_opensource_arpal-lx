@@ -561,10 +561,10 @@
             <id>PAL_DEVICE_IN_VI_FEEDBACK</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-TX-0</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>48000</samplerate>
             <bit_width>32</bit_width>
-            <snd_device_name>vi-feedback</snd_device_name>
+            <snd_device_name>vi-feedback-mono-2</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <channels>1</channels>
@@ -575,10 +575,10 @@
             <id>PAL_DEVICE_IN_CPS_FEEDBACK</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-TX-2</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>24000</samplerate>
             <bit_width>32</bit_width>
-            <snd_device_name>cps-feedback</snd_device_name>
+            <snd_device_name>cps-feedback-mono-2</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <channels>1</channels>
