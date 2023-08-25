@@ -5001,7 +5001,7 @@ void ResourceManager::GetConcurrencyInfo(pal_stream_type_t st_type,
                 in_type != PAL_STREAM_CONTEXT_PROXY  &&
                 in_type != PAL_STREAM_VOICE_UI)) {
         *tx_conc = true;
-        if (!audio_capture_conc_enable) {
+        if (!audio_capture_conc_enable && in_type != PAL_STREAM_PROXY) {
             PAL_DBG(LOG_TAG, "pause on audio capture concurrency");
             *conc_en = false;
         }
