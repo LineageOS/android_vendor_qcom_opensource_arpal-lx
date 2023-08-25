@@ -7,6 +7,7 @@ if BUILDSYSTEM_OPENWRT
 h_sources = ./stream/inc/Stream.h \
             ./stream/inc/StreamCompress.h \
             ./stream/inc/StreamPCM.h \
+            ./stream/inc/StreamACDB.h \
             ./stream/inc/StreamSoundTrigger.h \
             ./stream/inc/StreamUltraSound.h \
             ./device/inc/Device.h \

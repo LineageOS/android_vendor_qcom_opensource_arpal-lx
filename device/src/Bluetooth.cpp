@@ -652,10 +652,12 @@ void Bluetooth::startAbr()
     std::vector <std::pair<int, int>> keyVector;
     struct pcm_config config;
     struct mixer_ctl *connectCtrl = NULL;
+    struct mixer_ctl *disconnectCtrl = NULL;
     struct mixer_ctl *btSetFeedbackChannelCtrl = NULL;
     struct mixer *virtualMixerHandle = NULL;
     struct mixer *hwMixerHandle = NULL;
     std::ostringstream connectCtrlName;
+    std::ostringstream disconnectCtrlName;
     unsigned int flags;
     uint32_t codecTagId = 0, miid = 0;
     void *pluginLibHandle = NULL;
@@ -765,12 +767,12 @@ void Bluetooth::startAbr()
     if (!btSetFeedbackChannelCtrl) {
         PAL_ERR(LOG_TAG, "ERROR %s mixer control not identified",
                 MIXER_SET_FEEDBACK_CHANNEL);
-        goto free_fe;
+        goto disconnect_fe;
     }
 
     if (mixer_ctl_set_value(btSetFeedbackChannelCtrl, 0, 1) != 0) {
         PAL_ERR(LOG_TAG, "Failed to set BT usecase");
-        goto free_fe;
+        goto disconnect_fe;
     }
 
     if (codecFormat == CODEC_TYPE_APTX_AD_SPEECH) {
@@ -779,7 +781,7 @@ void Bluetooth::startAbr()
         fbDev = std::dynamic_pointer_cast<BtSco>(BtSco::getInstance(&fbDevice, rm));
         if (!fbDev) {
             PAL_ERR(LOG_TAG, "failed to get BtSco singleton object.");
-            goto free_fe;
+            goto disconnect_fe;
         }
 
         fbDev->lockDeviceMutex();
@@ -795,19 +797,19 @@ void Bluetooth::startAbr()
                      fbpcmDevIds.at(0), backEndName.c_str(), codecTagId, &miid);
         if (ret) {
             PAL_ERR(LOG_TAG, "getMiid for feedback device failed");
-            goto free_fe;
+            goto disconnect_fe;
         }
 
         ret = getPluginPayload(&pluginLibHandle, &codec, &out_buf, (codecType == DEC ? ENC : DEC));
         if (ret) {
             PAL_ERR(LOG_TAG, "getPluginPayload failed");
-            goto free_fe;
+            goto disconnect_fe;
         }
 
         /* SWB Encoder/Decoder has only 1 param, read block 0 */
         if (out_buf->num_blks != 1) {
             PAL_ERR(LOG_TAG, "incorrect block size %d", out_buf->num_blks);
-            goto free_fe;
+            goto disconnect_fe;
         }
         fbDev->codecConfig.sample_rate = out_buf->sample_rate;
         fbDev->codecConfig.bit_width = out_buf->bit_format;
@@ -824,7 +826,7 @@ void Bluetooth::startAbr()
         if (!paramData) {
             PAL_ERR(LOG_TAG, "Failed to populateAPMHeader");
             ret = -ENOMEM;
-            goto free_fe;
+            goto disconnect_fe;
         }
 
         ret = SessionAlsaUtils::setDeviceCustomPayload(rm, backEndName,
@@ -832,7 +834,7 @@ void Bluetooth::startAbr()
         free(paramData);
         if (ret) {
             PAL_ERR(LOG_TAG, "Error: Dev setParam failed for %d", fbDevice.id);
-            goto free_fe;
+            goto disconnect_fe;
         }
     } else if (codecFormat == CODEC_TYPE_LC3) {
         builder = new PayloadBuilder();
@@ -842,13 +844,13 @@ void Bluetooth::startAbr()
             fbDev = std::dynamic_pointer_cast<BtSco>(BtSco::getInstance(&fbDevice, rm));
             if (!fbDev) {
                 PAL_ERR(LOG_TAG, "failed to get BtSco singleton object.");
-                goto free_fe;
+                goto disconnect_fe;
             }
         } else if (fbDevice.id == PAL_DEVICE_IN_BLUETOOTH_A2DP) {
             fbDev = std::dynamic_pointer_cast<BtA2dp>(BtA2dp::getInstance(&fbDevice, rm));
             if (!fbDev) {
                 PAL_ERR(LOG_TAG, "failed to get BtA2dp singleton object.");
-                goto free_fe;
+                goto disconnect_fe;
             }
         }
 
@@ -874,7 +876,7 @@ void Bluetooth::startAbr()
             if (ret) {
                 PAL_ERR(LOG_TAG, "Failed to get tag info %x, ret = %d",
                         COP_DEPACKETIZER_V2, ret);
-                goto free_fe;
+                goto disconnect_fe;
             }
 
             // intentionally configure depacketizer in the same manner as configuring packetizer
@@ -882,7 +884,7 @@ void Bluetooth::startAbr()
             if (!paramData) {
                 PAL_ERR(LOG_TAG, "Invalid COPv2 module param size");
                 ret = -EINVAL;
-                goto free_fe;
+                goto disconnect_fe;
             }
 
             ret = SessionAlsaUtils::setDeviceCustomPayload(rm, backEndName,
@@ -890,7 +892,7 @@ void Bluetooth::startAbr()
             delete [] paramData;
             if (ret) {
                 PAL_ERR(LOG_TAG, "Error: Dev setParam failed for %d", fbDevice.id);
-                goto free_fe;
+                goto disconnect_fe;
             }
         } else if ((fbDevice.id == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
                 (fbDevice.id == PAL_DEVICE_OUT_BLUETOOTH_SCO)) {
@@ -901,18 +903,18 @@ void Bluetooth::startAbr()
                          fbpcmDevIds.at(0), backEndName.c_str(), codecTagId, &miid);
             if (ret) {
                 PAL_ERR(LOG_TAG, "getMiid for feedback device failed");
-                goto free_fe;
+                goto disconnect_fe;
             }
 
             ret = getPluginPayload(&pluginLibHandle, &codec, &out_buf, (codecType == DEC ? ENC : DEC));
             if (ret) {
                 PAL_ERR(LOG_TAG, "getPluginPayload failed");
-                goto free_fe;
+                goto disconnect_fe;
             }
 
             if (out_buf->num_blks != 1) {
                 PAL_ERR(LOG_TAG, "incorrect block size %d", out_buf->num_blks);
-                goto free_fe;
+                goto disconnect_fe;
             }
             fbDev->codecConfig.sample_rate = out_buf->sample_rate;
             fbDev->codecConfig.bit_width = out_buf->bit_format;
@@ -930,7 +932,7 @@ void Bluetooth::startAbr()
             } else {
                 ret = -EINVAL;
                 PAL_ERR(LOG_TAG, "Failed to populateAPMHeader");
-                goto free_fe;
+                goto disconnect_fe;
             }
 
             codec->close_plugin(codec);
@@ -943,7 +945,7 @@ void Bluetooth::startAbr()
                 if (ret) {
                     PAL_ERR(LOG_TAG, "Failed to get tag info %x, ret = %d",
                             COP_DEPACKETIZER_V2, ret);
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
 
                 builder->payloadCopV2DepackConfig(&paramData, &paramSize, miid, codecInfo, false /* StreamMapOut */);
@@ -955,7 +957,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid COPv2 module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
 
                 builder->payloadCopV2DepackConfig(&paramData, &paramSize, miid, codecInfo, true /* StreamMapIn */);
@@ -967,7 +969,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid COPv2 module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
             } else { /* fbDevice.id == PAL_DEVICE_OUT_BLUETOOTH_SCO */
                 /* COP v2 PACKETIZER Module Configuration */
@@ -976,7 +978,7 @@ void Bluetooth::startAbr()
                 if (ret) {
                     PAL_ERR(LOG_TAG, "Failed to get tag info %x, ret = %d",
                             COP_PACKETIZER_V2, ret);
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
 
                 // PARAM_ID_COP_V2_STREAM_INFO for COPv2
@@ -989,7 +991,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid COPv2 module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
 
                 // PARAM_ID_COP_PACKETIZER_OUTPUT_MEDIA_FORMAT for COPv2
@@ -1002,7 +1004,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid COP module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
             }
 
@@ -1011,7 +1013,7 @@ void Bluetooth::startAbr()
                          fbpcmDevIds.at(0), backEndName.c_str(), RAT_RENDER, &miid);
             if (ret) {
                 PAL_ERR(LOG_TAG, "Failed to get tag info %x, ret = %d", RAT_RENDER, ret);
-                goto free_fe;
+                goto disconnect_fe;
             } else {
                 builder->payloadRATConfig(&paramData, &paramSize, miid, &fbDev->codecConfig);
                 if (paramSize) {
@@ -1022,7 +1024,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid RAT module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
             }
 
@@ -1031,7 +1033,7 @@ void Bluetooth::startAbr()
                          fbpcmDevIds.at(0), backEndName.c_str(), BT_PCM_CONVERTER, &miid);
             if (ret) {
                 PAL_ERR(LOG_TAG, "Failed to get tag info %x, ret = %d", BT_PCM_CONVERTER, ret);
-                goto free_fe;
+                goto disconnect_fe;
             } else {
                 builder->payloadPcmCnvConfig(&paramData, &paramSize, miid, &fbDev->codecConfig,
                         (codecType == DEC ? true : false) /* isRx */);
@@ -1043,7 +1045,7 @@ void Bluetooth::startAbr()
                 } else {
                     ret = -EINVAL;
                     PAL_ERR(LOG_TAG, "Invalid PCM CNV module param size");
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
             }
 
@@ -1052,7 +1054,7 @@ void Bluetooth::startAbr()
                                             fbDev->customPayload, fbDev->customPayloadSize);
                 if (ret) {
                     PAL_ERR(LOG_TAG, "Error: Dev setParam failed for %d", fbDevice.id);
-                    goto free_fe;
+                    goto disconnect_fe;
                 }
                 free(fbDev->customPayload);
                 fbDev->customPayload = NULL;
@@ -1073,7 +1075,7 @@ start_pcm:
     fbPcm = pcm_open(rm->getVirtualSndCard(), fbpcmDevIds.at(0), flags, &config);
     if (!fbPcm) {
         PAL_ERR(LOG_TAG, "pcm open failed");
-        goto free_fe;
+        goto disconnect_fe;
     }
 
     if (!pcm_is_ready(fbPcm)) {
@@ -1111,6 +1113,12 @@ start_pcm:
 err_pcm_open:
     pcm_close(fbPcm);
     fbPcm = NULL;
+disconnect_fe:
+    disconnectCtrlName << "PCM" << fbpcmDevIds.at(0) << " disconnect";
+    disconnectCtrl = mixer_get_ctl_by_name(virtualMixerHandle, disconnectCtrlName.str().data());
+    if(disconnectCtrl != NULL){
+       mixer_ctl_set_enum_by_string(disconnectCtrl, backEndName.c_str());
+    }
 free_fe:
     rm->freeFrontEndIds(fbpcmDevIds, sAttr, dir);
     fbpcmDevIds.clear();
@@ -1502,6 +1510,7 @@ int BtA2dp::startPlayback()
 
     if (a2dpState != A2DP_STATE_STARTED && !totalActiveSessionRequests) {
         codecFormat = CODEC_TYPE_INVALID;
+        isAbrEnabled = false;
         PAL_DBG(LOG_TAG, "calling BT module stream start");
         /* This call indicates BT IPC lib to start playback */
         ret =  audio_source_start();
