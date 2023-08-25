@@ -481,7 +481,7 @@ protected:
     std::vector <std::pair<std::shared_ptr<Device>, Stream*>> active_devices;
     std::vector <std::shared_ptr<Device>> plugin_devices_;
     std::vector <pal_device_id_t> avail_devices_;
-    std::map<Stream*, uint32_t> mActiveStreamUserCounter;
+    std::map<Stream*, std::pair<uint32_t, bool>> mActiveStreamUserCounter;
     bool bOverwriteFlag;
     bool screen_state_ = true;
     bool charging_state_;
@@ -534,6 +534,8 @@ protected:
     static std::map<std::string, int> spkrPosTable;
     static std::map<int, std::string> spkrTempCtrlsMap;
     static std::map<uint32_t, uint32_t> btSlimClockSrcMap;
+    static std::map<std::string, int> handsetPosTable;
+    static std::map<pal_device_id_t, std::vector<std::string>> deviceTempCtrlsMap;
     static std::vector<deviceIn> deviceInfo;
     static std::vector<tx_ecinfo> txEcInfo;
     static struct vsid_info vsidInfo;
@@ -587,6 +589,7 @@ public:
     /* Variable to store whether Speaker protection is enabled or not */
     static bool isSpeakerProtectionEnabled;
     static bool isHandsetProtectionEnabled;
+    static bool isSpeakerHandsetProtectionSeparate;
     static bool isChargeConcurrencyEnabled;
     static bool isCpsEnabled;
     static bool isVbatEnabled;
@@ -655,7 +658,8 @@ public:
     int deregisterStream(Stream *s);
     int isActiveStream(pal_stream_handle_t *handle);
     int initStreamUserCounter(Stream *s);
-    int deinitStreamUserCounter(Stream *s);
+    int deactivateStreamUserCounter(Stream *s);
+    int eraseStreamUserCounter(Stream *s);
     int increaseStreamUserCounter(Stream* s);
     int decreaseStreamUserCounter(Stream* s);
     int getStreamUserCounter(Stream *s);
@@ -694,6 +698,7 @@ public:
     static std::string getBtCodecLib(uint32_t codecFormat, std::string codecType);
     static void updateSpkrTempCtrls(int key, std::string value);
     static std::string getSpkrTempCtrl(int channel);
+    static std::vector<std::string> getDeviceTempCtrl(pal_device_id_t pal_device_id);
     static void updateBtSlimClockSrcMap(uint32_t key, uint32_t value);
     static uint32_t getBtSlimClockSrc(uint32_t codecFormat);
     int getGainLevelMapping(struct pal_amp_db_and_gain_table *mapTbl, int tblSize);
@@ -826,6 +831,7 @@ public:
     static void process_gain_db_to_level_map(struct xml_userdata *data, const XML_Char **attr);
     static void processCardInfo(struct xml_userdata *data, const XML_Char *tag_name);
     static void processSpkrTempCtrls(const XML_Char **attr);
+    static void processDeviceTempCtrls(const XML_Char **attr, const int attr_count);
     static void processBTCodecInfo(const XML_Char **attr, const int attr_count);
     static void startTag(void *userdata __unused, const XML_Char *tag_name, const XML_Char **attr);
     static void snd_data_handler(void *userdata, const XML_Char *s, int len);
@@ -874,6 +880,8 @@ public:
     void unlockGraph() { mGraphMutex.unlock(); };
     void lockActiveStream() { mActiveStreamMutex.lock(); };
     void unlockActiveStream() { mActiveStreamMutex.unlock(); };
+    void lockResourceManagerMutex() {mResourceManagerMutex.lock();};
+    void unlockResourceManagerMutex() {mResourceManagerMutex.unlock();};
     void getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream *, uint32_t>> &activeStreamDevs,
                                      int dev_id);
     int32_t streamDevSwitch(std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnectList,

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SESSION_H
@@ -101,6 +104,7 @@ public:
     bool isPauseRegistrationDone;
     virtual ~Session();
     static Session* makeSession(const std::shared_ptr<ResourceManager>& rm, const struct pal_stream_attributes *sAttr);
+    static Session* makeACDBSession(const std::shared_ptr<ResourceManager>& rm, const struct pal_stream_attributes *sAttr);
     int handleDeviceRotation(Stream *s, pal_speaker_rotation_type rotation_type,
         int device, struct mixer *mixer, PayloadBuilder* builder,
         std::vector<std::pair<int32_t, std::string>> rxAifBackEnds);
@@ -149,6 +153,9 @@ public:
     virtual uint32_t getMIID(const char *backendName __unused, uint32_t tagId __unused, uint32_t *miid __unused) { return -EINVAL; }
     int getEffectParameters(Stream *s, effect_pal_payload_t *effectPayload);
     int rwACDBParameters(void *payload, uint32_t sampleRate, bool isParamWrite);
+    int rwACDBParamTunnel(void *payload, pal_device_id_t palDeviceId,
+        pal_stream_type_t palStreamType, uint32_t sampleRate, uint32_t instanceId,
+        bool isParamWrite, Stream *s);
     virtual struct mixer_ctl* getFEMixerCtl(const char *controlName __unused, int *device __unused) {return nullptr;}
     virtual int createMmapBuffer(Stream *s __unused, int32_t min_size_frames __unused,
                                    struct pal_mmap_buffer *info __unused) {return -EINVAL;}
