@@ -2685,8 +2685,8 @@ int32_t ResourceManager::getDeviceConfig(struct pal_device *deviceattr,
             {
                 PAL_INFO(LOG_TAG, "wfd TX is not in progress");
                 if (rm->num_proxy_channels) {
+                    PAL_INFO(LOG_TAG, "proxy device channel number: %d", rm->num_proxy_channels);
                     deviceattr->config.ch_info.channels = rm->num_proxy_channels;
-                    rm->num_proxy_channels = 0;
                 }
             }
             PAL_INFO(LOG_TAG, "PAL_DEVICE_OUT_PROXY sample rate %d bitwidth %d ch:%d",
