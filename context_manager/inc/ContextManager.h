@@ -141,6 +141,9 @@ private:
     uint32_t see_id;
     std::map<uint32_t, Usecase*> usecases;
 
+protected:
+    static std::mutex see_client_mutex;
+
 public:
     see_client(uint32_t id);
     ~see_client();
@@ -148,6 +151,8 @@ public:
     Usecase* Usecase_Get(uint32_t usecase_id);
     int32_t Usecase_Remove(uint32_t usecase_id);
     int32_t Usecase_Add(uint32_t usecase_id, Usecase* uc);
+    void lock_see_client() { see_client_mutex.lock(); };
+    void unlock_see_client() { see_client_mutex.unlock(); };
     void CloseAllUsecases();
 };
 

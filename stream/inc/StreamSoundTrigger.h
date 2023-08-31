@@ -147,7 +147,7 @@ public:
                             bool enable __unused) {
         return -ENOSYS;
     }
-
+    bool isStarted();
     void SetDetectedToEngines(bool detected);
     int32_t SetEngineDetectionState(int32_t state);
 
@@ -165,6 +165,7 @@ public:
     int32_t EnableLPI(bool is_enable);
     int32_t setECRef(std::shared_ptr<Device> dev, bool is_enable) override;
     int32_t setECRef_l(std::shared_ptr<Device> dev, bool is_enable) override;
+    bool ConfigSupportLPI() override;
     void TransitTo(int32_t state_id);
 
     friend class PalRingBufferReader;
@@ -181,7 +182,6 @@ public:
               (GetCurrentStateId() == ST_STATE_BUFFERING);
     }
     struct st_uuid GetVendorUuid();
-
     void *GetGSLEngine() {
         if (gsl_engine_)
             return (void *)gsl_engine_.get();

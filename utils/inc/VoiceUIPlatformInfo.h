@@ -100,6 +100,7 @@ public:
 
     st_module_type_t GetModuleType() const { return module_type_; }
     std::string GetModuleName() const { return module_name_; }
+    bool IsLpiSupported() const { return lpi_supported_; }
     uint32_t GetModuleTagId(st_param_id_type_t param_id) const {
         return module_tag_ids_[param_id];
     }
@@ -108,6 +109,7 @@ public:
     }
 
 private:
+    bool lpi_supported_;
     st_module_type_t module_type_;
     std::string module_name_;
     uint32_t module_tag_ids_[MAX_PARAM_IDS];

@@ -766,6 +766,7 @@
               <name>PAL_STREAM_ULTRASOUND</name>
               <priority>4</priority>
               <samplerate>96000</samplerate>
+              <bit_width>16</bit_width>
           </usecase>
         </out-device>
         <out-device>
