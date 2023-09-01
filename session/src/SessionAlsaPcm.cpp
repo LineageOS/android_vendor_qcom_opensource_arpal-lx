@@ -2741,6 +2741,8 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             }
 
 skip_ultrasound_gain:
+            if (tagConfig)
+                free(tagConfig);
             if (status)
                 PAL_ERR(LOG_TAG, "Failed to set Ultrasound Gain %d", status);
             return 0;
