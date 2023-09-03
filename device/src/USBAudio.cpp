@@ -686,7 +686,7 @@ unsigned int USBCardConfig::getFormatByBitWidth(int bitwidth) {
     return default_format;
 }
 
-unsigned int USBCardConfig::readSupportedFormat(bool is_playback, uint32_t *format) {
+void USBCardConfig::readSupportedFormat(bool is_playback, uint32_t *format) {
     int i = 0;
     unsigned int bw;
     unsigned int bitWidth[MAX_SUPPORTED_FORMATS + 1];
@@ -729,11 +729,9 @@ unsigned int USBCardConfig::readSupportedFormat(bool is_playback, uint32_t *form
     /* convert bw to format */
     for (int j = 0; j < i; j++)
         format[j] = getFormatByBitWidth(bitWidth[j]);
-
-    return 0;
 }
 
-unsigned int USBCardConfig::readSupportedSampleRate(bool is_playback, uint32_t *sample_rate) {
+void USBCardConfig::readSupportedSampleRate(bool is_playback, uint32_t *sample_rate) {
     usb_usecase_type_t type = is_playback ? USB_PLAYBACK : USB_CAPTURE;
 
     typename std::vector<std::shared_ptr<USBDeviceConfig>>::iterator iter;
@@ -760,50 +758,34 @@ unsigned int USBCardConfig::readSupportedSampleRate(bool is_playback, uint32_t *
 
     for (int j = 0; j < i; j++)
         PAL_DBG(LOG_TAG, "%s %d", is_playback ? "P" : "C", sample_rate[j]);
-
-    return 0;
 }
 
-unsigned int USBCardConfig::readSupportedChannelMask(bool is_playback, uint32_t *channel) {
+void USBCardConfig::readSupportedChannelMask(bool is_playback, uint32_t *channel) {
 
     int channels = getMaxChannels(is_playback);
     int channel_count;
-    uint32_t num_masks = 0;
 
     if (channels > MAX_HIFI_CHANNEL_COUNT)
         channels = MAX_HIFI_CHANNEL_COUNT;
-
+     /* need to calculate the mask from channel count either because this is
+      * the query case or the specified mask isn't valid for this device,
+      * or is more than the FW can handle
+      */
     if (is_playback) {
-        channel[num_masks++] = channels <= 2
+        channel[0] = channels <= 2
                      /* position mask for mono and stereo*/
                      ? audio_channel_out_mask_from_count(channels)
                      /* otherwise indexed */
                      : audio_channel_mask_for_index_assignment_from_count(channels);
-        // TODO: needs to figure out the accurate match of channel mask
     } else {
-        // For capture we report all supported channel masks from 1 channel up.
-        channel_count = MIN_CHANNEL_COUNT;
-        // audio_channel_in_mask_from_count() does the right conversion to either positional or
-        // indexed mask
-        for ( ; channel_count <= channels && num_masks < MAX_SUPPORTED_CHANNEL_MASKS; channel_count++) {
-            audio_channel_mask_t mask = AUDIO_CHANNEL_NONE;
-            if (channel_count <= 2) {
-                mask = audio_channel_in_mask_from_count(channel_count);
-                channel[num_masks++] = mask;
-            }
-            const audio_channel_mask_t index_mask =
-                    audio_channel_mask_for_index_assignment_from_count(channel_count);
-            if (mask != index_mask && num_masks < MAX_SUPPORTED_CHANNEL_MASKS) { // ensure index mask added.
-                channel[num_masks++] = index_mask;
-            }
-        }
+        channel[0] = channels <= 2
+             /* position mask for mono & stereo */
+             ? audio_channel_in_mask_from_count(channels)
+             /* otherwise indexed */
+             : audio_channel_mask_for_index_assignment_from_count(channels);
     }
-
-    for (size_t i = 0; i < num_masks; ++i) {
-        PAL_DBG(LOG_TAG, "%s supported ch %d channel[%zu] %08x num_masks %d",
-              is_playback ? "P" : "C", channels, i, channel[i], num_masks);
-    }
-    return num_masks;
+    PAL_DBG(LOG_TAG, "%s supported ch %d, channel mask: %08x ",
+            is_playback ? "P" : "C", channels, channel[0]);
 }
 
 bool USBCardConfig::readDefaultJackStatus(bool is_playback) {
