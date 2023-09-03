@@ -1139,6 +1139,11 @@ int32_t StreamSoundTrigger::LoadSoundModel(
         engine = HandleEngineLoad((uint8_t *)iter.second.first,
                                   iter.second.second,
                                   iter.first, model_type_);
+        if (!engine) {
+            PAL_ERR(LOG_TAG, "Failed to create engine");
+            status = -EINVAL;
+            goto error_exit;
+        }
         std::shared_ptr<EngineCfg> engine_cfg(new EngineCfg(
             engine_id, engine, (void *)iter.second.first, iter.second.second));
 
@@ -1173,6 +1178,7 @@ error_exit:
     }
     engines_.clear();
     gsl_engine_.reset();
+    rm->resetStreamInstanceID(this, mInstanceID);
     if (sm_config_) {
         free(sm_config_);
         sm_config_ = nullptr;
