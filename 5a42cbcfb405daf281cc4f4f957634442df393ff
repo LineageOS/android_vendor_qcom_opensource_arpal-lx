@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c4b14b6_52717cee",
+        "filename": "session/inc/kvh2xml.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2023-09-06T09:36:28Z",
+      "side": 1,
+      "message": "I had to add this for agmvoiceui on sm8550. Do you mind if we match sm8550 header even if it\u0027s unused here?",
+      "range": {
+        "startLine": 62,
+        "startChar": 1,
+        "endLine": 62,
+        "endChar": 19
+      },
+      "revId": "5a42cbcfb405daf281cc4f4f957634442df393ff",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
