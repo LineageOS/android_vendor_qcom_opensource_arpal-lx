@@ -22,6 +22,30 @@
       },
       "revId": "5a42cbcfb405daf281cc4f4f957634442df393ff",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c73402f4_653eb78a",
+        "filename": "session/inc/kvh2xml.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2023-09-06T17:14:09Z",
+      "side": 1,
+      "message": "Nevermind, I ended up doing this https://review.lineageos.org/c/LineageOS/android_vendor_qcom_opensource_arpal-lx/+/365744",
+      "parentUuid": "5c4b14b6_52717cee",
+      "range": {
+        "startLine": 62,
+        "startChar": 1,
+        "endLine": 62,
+        "endChar": 19
+      },
+      "revId": "5a42cbcfb405daf281cc4f4f957634442df393ff",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
