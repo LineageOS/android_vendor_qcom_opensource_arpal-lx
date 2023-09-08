@@ -904,8 +904,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
                 iter = mDevices.erase(iter);
+                rm->unlockGraph();
             }
         } else {
             PAL_ERR(LOG_TAG, "BT SCO output device is not ready");
@@ -972,8 +972,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
                 iter = mDevices.erase(iter);
+                rm->unlockGraph();
             }
         } else {
             // For non-combo device, mute the stream and route to speaker or handset
@@ -984,8 +984,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             suspendedDevIds.clear();
             suspendedDevIds.push_back(dattr.id);
 
+            rm->lockGraph();
             for (int i = 0; i < mDevices.size(); i++) {
-                rm->lockGraph();
                 status = session->disconnectSessionDevice(this, mStreamAttr->type, mDevices[i]);
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "disconnectSessionDevice failed:%d", status);
@@ -1009,9 +1009,9 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
             }
             mDevices.clear();
+            rm->unlockGraph();
             clearOutPalDevices(this);
 
             /* Check whether there's active stream associated with handset or speaker
@@ -1141,14 +1141,15 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
                     goto exit;
                 }
             }
-            rm->unlockGraph();
 
             status = mDevices[i]->close();
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "device close failed with status %d", status);
+                rm->unlockGraph();
                 goto exit;
             }
             mDevices.erase(mDevices.begin() + i);
+            rm->unlockGraph();
             break;
         }
     }

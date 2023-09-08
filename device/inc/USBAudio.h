@@ -146,9 +146,9 @@ public:
     int getMaxBitWidth(bool is_playback);
     int getMaxChannels(bool is_playback);
     unsigned int getFormatByBitWidth(int bitwidth);
-    unsigned int readSupportedFormat(bool is_playback, uint32_t *format);
-    unsigned int readSupportedSampleRate(bool is_playback, uint32_t *sample_rate);
-    unsigned int readSupportedChannelMask(bool is_playback, uint32_t *channel);
+    void readSupportedFormat(bool is_playback, uint32_t *format);
+    void readSupportedSampleRate(bool is_playback, uint32_t *sample_rate);
+    void readSupportedChannelMask(bool is_playback, uint32_t *channel);
     int readSupportedConfig(dynamic_media_config_t *config, bool is_playback, int usb_card);
     int readBestConfig(struct pal_media_config *config,
                                     struct pal_stream_attributes *sattr,
