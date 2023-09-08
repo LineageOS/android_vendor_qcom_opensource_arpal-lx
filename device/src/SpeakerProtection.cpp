@@ -77,7 +77,7 @@
 #define PAL_SP_II_TEMP_PATH "/data/vendor/audio/audio_sp2.cal"
 #endif
 
-#define PAL_SP_XMAX_TMAX_DATA_PATH "/data/vendor/audio/spkr_xmax_tmax.cal"
+#define PAL_SP_XMAX_TMAX_DATA_PATH "/data/vendor/audio/spkr_xmax_tmax.txt"
 #define PAL_SP_XMAX_TMAX_LOG_PATH "/data/vendor/audio/log_spkr_xmax_tmax.cal"
 #define FEEDBACK_MONO_1 "-mono-1"
 
@@ -1409,7 +1409,7 @@ int32_t SpeakerProtection::getSpkrXmaxTmaxData()
     int ret = 0;
     uint32_t miid = 0, num_ch = 0, stringLen =0;
     int32_t pcmID = -EINVAL;
-    size_t payloadSize = 0, bytesWritten = 0;
+    size_t payloadSize = 0, bytesWritten = -1;
     struct mixer_ctl* ctl;
     FILE* fp;
     std::ostringstream cntrlName;
@@ -1490,7 +1490,7 @@ int32_t SpeakerProtection::getSpkrXmaxTmaxData()
     else {
         sp_xmax_tmax_value = (param_id_sp_tmax_xmax_logging_t*)(payload +
             sizeof(struct apm_module_param_data_t));
-        fp = fopen(PAL_SP_XMAX_TMAX_DATA_PATH, "ab");
+        fp = fopen(PAL_SP_XMAX_TMAX_DATA_PATH, "a");
 
         if (!fp) {
             PAL_ERR(LOG_TAG, "Unable to open file for write");
@@ -1505,9 +1505,9 @@ int32_t SpeakerProtection::getSpkrXmaxTmaxData()
             stringLen = std::strlen(currentTimeStr);
 
             PAL_DBG(LOG_TAG, "Current Timestamp : %s and size of string : %d", currentTimeStr, stringLen);
-            bytesWritten = fwrite(currentTimeStr, stringLen, 1, fp);
+            bytesWritten = fprintf(fp, "%s ", currentTimeStr);
 
-            if (bytesWritten != 1) {
+            if (bytesWritten < 0) {
                 PAL_ERR(LOG_TAG, "Error in writing to file");
                 fclose(fp);
                 ret = -EBADF;
@@ -1516,9 +1516,9 @@ int32_t SpeakerProtection::getSpkrXmaxTmaxData()
 
             for (int i = 0; i < num_ch; i++) {
                 PAL_DBG(LOG_TAG, "Channel: %d, Max Excursion Value =%d",i, sp_xmax_tmax_value->tmax_xmax_params[i].max_excursion);
-                bytesWritten = fwrite(&sp_xmax_tmax_value->tmax_xmax_params[i].max_excursion, sizeof(int32_t), 1, fp);
+                bytesWritten = fprintf(fp, "Ch: %d <Xmax> : %3.4f", i, (float)sp_xmax_tmax_value->tmax_xmax_params[i].max_excursion / (1 << 27));
 
-                if (bytesWritten != 1) {
+                if (bytesWritten < 0) {
                     PAL_ERR(LOG_TAG, "Error in writing to file");
                     fclose(fp);
                     ret = -EBADF;
@@ -1526,14 +1526,21 @@ int32_t SpeakerProtection::getSpkrXmaxTmaxData()
                 }
 
                 PAL_DBG(LOG_TAG, "Channel: %d, Max Temperature Value =%d",i, sp_xmax_tmax_value->tmax_xmax_params[i].max_temperature);
-                fwrite(&sp_xmax_tmax_value->tmax_xmax_params[i].max_temperature, sizeof(int32_t), 1, fp);
+                bytesWritten = fprintf(fp, " <Tmax> : %3.4f ", (float)sp_xmax_tmax_value->tmax_xmax_params[i].max_temperature / (1 << 22));
 
-                if (bytesWritten != 1) {
+                if (bytesWritten < 0) {
                     PAL_ERR(LOG_TAG, "Error in writing to file");
                     fclose(fp);
                     ret = -EBADF;
                     goto exit;
                 }
+            }
+            bytesWritten = fprintf(fp, "\n");
+            if (bytesWritten < 0) {
+                PAL_ERR(LOG_TAG, "Error in writing to file");
+                fclose(fp);
+                ret = -EBADF;
+                goto exit;
             }
             fclose(fp);
         }
