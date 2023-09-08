@@ -8432,7 +8432,8 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                          (sAttr.type == PAL_STREAM_VOIP_RX) ||
                          (sAttr.type == PAL_STREAM_PCM_OFFLOAD) ||
                          (sAttr.type == PAL_STREAM_DEEP_BUFFER) ||
-                         (sAttr.type == PAL_STREAM_COMPRESSED))) {
+                         (sAttr.type == PAL_STREAM_COMPRESSED) ||
+                         (sAttr.type == PAL_STREAM_GENERIC))) {
                         str->getAssociatedDevices(associatedDevices);
                         for (int i = 0; i < associatedDevices.size(); i++) {
                             if (!isDeviceActive_l(associatedDevices[i], str) ||
@@ -8484,6 +8485,22 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
 
                 SortAndUnique(rxDevices);
                 SortAndUnique(txDevices);
+
+                /*
+                 * If there a switch in SCO configurations and at the time of BT_SCO=on,
+                 * there are streams active with old SCO configs as well as on another
+                 * device. In this case, we need to disconnect streams over SCO first and
+                 * move them to new SCO configs, before we move streams on other devices
+                 * to SCO. This is ensured by moving SCO to the beginning of the disconnect
+                 * device list.
+                 */
+                {
+                    dAttr.id = PAL_DEVICE_OUT_BLUETOOTH_SCO;
+                    dev = Device::getInstance(&dAttr, rm);
+                    auto it = std::find(rxDevices.begin(),rxDevices.end(),dev);
+                    if ((it != rxDevices.end()) && (it != rxDevices.begin()))
+                        std::iter_swap(it, rxDevices.begin());
+                }
                 mActiveStreamMutex.unlock();
 
                 for (auto& device : rxDevices) {
@@ -8676,7 +8693,8 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                             (streamType == PAL_STREAM_VOIP_RX) ||
                             (streamType == PAL_STREAM_PCM_OFFLOAD) ||
                             (streamType == PAL_STREAM_DEEP_BUFFER) ||
-                            (streamType == PAL_STREAM_COMPRESSED)) {
+                            (streamType == PAL_STREAM_COMPRESSED) ||
+                            (streamType == PAL_STREAM_GENERIC)) {
                             (*sIter)->suspendedDevIds.clear();
                             (*sIter)->suspendedDevIds.push_back(PAL_DEVICE_OUT_BLUETOOTH_A2DP);
                             PAL_DBG(LOG_TAG, "a2dp resumed, mark sco streams as to route them later");
