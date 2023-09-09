@@ -1223,8 +1223,8 @@ int ResourceManager::init_audio()
                     PAL_VERBOSE(LOG_TAG, "Found Codec sound card");
                     snd_card_found = true;
                     audio_hw_mixer = tmp_mixer;
-                    //for bengal target multiple same rate on combo device not supported
-                    if(strstr(snd_card_name, "bengal"))
+                    //for bengal and blair targets multiple sample rate on combo device not supported
+                    if(strstr(snd_card_name, "bengal") || strstr(snd_card_name, "blair"))
                     {   PAL_INFO(LOG_TAG, "%s: setting is_multiple_sample_rate_combo_supported false for bengal",__func__);
                         is_multiple_sample_rate_combo_supported = false;
                     } else {

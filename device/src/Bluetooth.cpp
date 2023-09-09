@@ -1511,7 +1511,10 @@ int BtA2dp::startPlayback()
 
     if (a2dpState != A2DP_STATE_STARTED && !totalActiveSessionRequests) {
         codecFormat = CODEC_TYPE_INVALID;
-        isAbrEnabled = false;
+
+        if (!isConfigured)
+            isAbrEnabled = false;
+
         PAL_DBG(LOG_TAG, "calling BT module stream start");
         /* This call indicates BT IPC lib to start playback */
         ret =  audio_source_start();
