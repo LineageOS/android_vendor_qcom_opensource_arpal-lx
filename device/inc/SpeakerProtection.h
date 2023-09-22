@@ -105,6 +105,7 @@ protected :
     static bool isSpkrInUse;
     static bool calThrdCreated;
     static bool isDynamicCalTriggered;
+    static bool viTxSetupThrdCreated;
     static struct timespec spkrLastTimeUsed;
     static struct mixer *virtMixer;
     static struct mixer *hwMixer;
@@ -126,6 +127,7 @@ private :
 
 public:
     static std::thread mCalThread;
+    static std::thread viTxSetupThread;
     static std::condition_variable cv;
     static std::mutex cvMutex;
     std::mutex deviceMutex;
@@ -137,6 +139,7 @@ public:
     void spkrCalibrateWait();
     int spkrStartCalibration();
     int spkrStartCalibrationV2();
+    int viTxSetupThreadLoop();
     void speakerProtectionInit();
     void speakerProtectionDeinit();
     void getSpeakerTemperatureList();
