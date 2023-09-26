@@ -820,7 +820,7 @@ int32_t pal_stream_get_volume(pal_stream_handle_t *stream_handle,
 int32_t pal_stream_set_volume(pal_stream_handle_t *stream_handle,
                               struct pal_volume_data *volume)
 {
-    hidl_vec<PalVolumeData> vol;
+    hidl_vec<PalVolumeData> vol(1);
     int32_t ret = -EINVAL;
     if (volume == NULL) {
        ALOGE("Invalid volume");
@@ -833,8 +833,6 @@ int32_t pal_stream_set_volume(pal_stream_handle_t *stream_handle,
             return ret;
 
         uint32_t noOfVolPair = volume->no_of_volpair;
-        uint32_t volSize = sizeof(PalVolumeData);
-        vol.resize(volSize);
         vol.data()->volPair.resize(sizeof(PalChannelVolKv) * noOfVolPair);
         vol.data()->noOfVolPairs = noOfVolPair;
         memcpy(vol.data()->volPair.data(), volume->volume_pair,
