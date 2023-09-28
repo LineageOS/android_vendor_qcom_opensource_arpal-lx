@@ -63,10 +63,7 @@
 
 #define LOG_TAG "PAL: SpeakerProtection"
 
-
 #include "SpeakerProtection.h"
-#include "PalAudioRoute.h"
-#include "ResourceManager.h"
 #include "SessionAlsaUtils.h"
 #include "kvh2xml.h"
 #include <errno.h>
@@ -80,6 +77,8 @@
 #define PAL_SP_II_TEMP_PATH "/data/vendor/audio/audio_sp2.cal"
 #endif
 
+#define PAL_SP_XMAX_TMAX_DATA_PATH "/data/vendor/audio/spkr_xmax_tmax.txt"
+#define PAL_SP_XMAX_TMAX_LOG_PATH "/data/vendor/audio/log_spkr_xmax_tmax.cal"
 #define FEEDBACK_MONO_1 "-mono-1"
 
 #define MIN_SPKR_IDLE_SEC (60 * 30)
@@ -124,6 +123,7 @@
 #define CALIBRATION_STATUS_FAILURE 5
 
 std::thread SpeakerProtection::mCalThread;
+std::thread SpeakerProtection::XmaxTmaxLogThread;
 std::condition_variable SpeakerProtection::cv;
 std::mutex SpeakerProtection::cvMutex;
 std::mutex SpeakerProtection::calibrationMutex;
@@ -131,6 +131,7 @@ std::mutex SpeakerProtection::calibrationMutex;
 bool SpeakerProtection::isSpkrInUse;
 bool SpeakerProtection::calThrdCreated;
 bool SpeakerProtection::isDynamicCalTriggered = false;
+bool SpeakerProtection::startXmaxLogging = false;
 struct timespec SpeakerProtection::spkrLastTimeUsed;
 struct mixer *SpeakerProtection::virtMixer;
 struct mixer *SpeakerProtection::hwMixer;
@@ -1400,6 +1401,189 @@ SpeakerProtection::~SpeakerProtection()
     customPayloadSize = 0;
 }
 
+int32_t SpeakerProtection::getSpkrXmaxTmaxData()
+{
+    const char* getParamControl = "getParam";
+    char* pcmDeviceName = NULL;
+    uint8_t* payload = NULL;
+    int ret = 0;
+    uint32_t miid = 0, num_ch = 0, stringLen =0;
+    int32_t pcmID = -EINVAL;
+    size_t payloadSize = 0, bytesWritten = -1;
+    struct mixer_ctl* ctl;
+    FILE* fp;
+    std::ostringstream cntrlName;
+    std::string backendName;
+    param_id_sp_tmax_xmax_logging_t sp_xmax_tmax;
+    param_id_sp_tmax_xmax_logging_t* sp_xmax_tmax_value;
+    PayloadBuilder* builder = new PayloadBuilder();
+
+    /* Frontend ID information for RX Session presents at SessionAlsaPCM/Compress
+     * In Kalama, there is no getter func for pcmDevIds (private attribute)
+     * Assuming there will be only one session. So hardcoded here*/
+
+    pcmID = 125;
+    pcmDeviceName = rm->getDeviceNameFromID(pcmID);
+
+    if (pcmDeviceName == NULL) {
+        /*To check for PAL_STREAM_COMPRESSED*/
+        pcmID = 105;
+        pcmDeviceName = rm->getDeviceNameFromID(pcmID);
+    }
+
+    if (pcmDeviceName) {
+        cntrlName << pcmDeviceName << " " << getParamControl;
+    }
+    else {
+        PAL_ERR(LOG_TAG, "Error: %d Unable to get Device name\n", -EINVAL);
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    ctl = mixer_get_ctl_by_name(virtMixer, cntrlName.str().data());
+
+    if (!ctl) {
+        ret = -ENOENT;
+        PAL_ERR(LOG_TAG, "Error: %d Invalid mixer control: %s\n", ret, cntrlName.str().data());
+        goto exit;
+    }
+
+    rm->getBackendName(PAL_DEVICE_OUT_SPEAKER, backendName);
+
+    if (!strlen(backendName.c_str())) {
+        ret = -ENOENT;
+        PAL_ERR(LOG_TAG, "Error: %d Failed to obtain RX backend name", ret);
+        goto exit;
+    }
+
+    ret = SessionAlsaUtils::getModuleInstanceId(virtMixer, pcmID,
+        backendName.c_str(), MODULE_SP, &miid);
+
+    if (0 != ret) {
+        PAL_ERR(LOG_TAG, "Error: %d Failed to get tag info %x", ret, MODULE_SP);
+        goto exit;
+    }
+
+    sp_xmax_tmax.num_ch = vi_device.channels;
+    builder->payloadSPConfig(&payload, &payloadSize, miid,
+        PARAM_ID_SP_TMAX_XMAX_LOGGING, (void *) &sp_xmax_tmax);
+
+    if (!payloadSize) {
+        PAL_ERR(LOG_TAG, "Payload memory allocation failed");
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    ret = mixer_ctl_set_array(ctl, payload, payloadSize);
+    if (0 != ret) {
+        PAL_ERR(LOG_TAG, "Set failed with return value = %d", ret);
+        goto exit;
+    }
+
+    memset(payload, 0, payloadSize);
+
+    ret = mixer_ctl_get_array(ctl, payload, payloadSize);
+    if (0 != ret) {
+        PAL_ERR(LOG_TAG, "Get failed with return value = %d", ret);
+        goto exit;
+    }
+    else {
+        sp_xmax_tmax_value = (param_id_sp_tmax_xmax_logging_t*)(payload +
+            sizeof(struct apm_module_param_data_t));
+        fp = fopen(PAL_SP_XMAX_TMAX_DATA_PATH, "a");
+
+        if (!fp) {
+            PAL_ERR(LOG_TAG, "Unable to open file for write");
+            ret = -EBADF;
+            goto exit;
+        }
+        else {
+            num_ch = sp_xmax_tmax_value->num_ch;
+            auto currentTime = std::chrono::system_clock::now();
+            std::time_t currentTimeT = std::chrono::system_clock::to_time_t(currentTime);
+            const char* currentTimeStr = std::ctime(&currentTimeT);
+            stringLen = std::strlen(currentTimeStr);
+
+            PAL_DBG(LOG_TAG, "Current Timestamp : %s and size of string : %d", currentTimeStr, stringLen);
+            bytesWritten = fprintf(fp, "%s ", currentTimeStr);
+
+            if (bytesWritten < 0) {
+                PAL_ERR(LOG_TAG, "Error in writing to file");
+                fclose(fp);
+                ret = -EBADF;
+                goto exit;
+            }
+
+            for (int i = 0; i < num_ch; i++) {
+                PAL_DBG(LOG_TAG, "Channel: %d, Max Excursion Value =%d",i, sp_xmax_tmax_value->tmax_xmax_params[i].max_excursion);
+                bytesWritten = fprintf(fp, "Ch: %d <Xmax> : %3.4f", i, (float)sp_xmax_tmax_value->tmax_xmax_params[i].max_excursion / (1 << 27));
+
+                if (bytesWritten < 0) {
+                    PAL_ERR(LOG_TAG, "Error in writing to file");
+                    fclose(fp);
+                    ret = -EBADF;
+                    goto exit;
+                }
+
+                PAL_DBG(LOG_TAG, "Channel: %d, Max Temperature Value =%d",i, sp_xmax_tmax_value->tmax_xmax_params[i].max_temperature);
+                bytesWritten = fprintf(fp, " <Tmax> : %3.4f ", (float)sp_xmax_tmax_value->tmax_xmax_params[i].max_temperature / (1 << 22));
+
+                if (bytesWritten < 0) {
+                    PAL_ERR(LOG_TAG, "Error in writing to file");
+                    fclose(fp);
+                    ret = -EBADF;
+                    goto exit;
+                }
+            }
+            bytesWritten = fprintf(fp, "\n");
+            if (bytesWritten < 0) {
+                PAL_ERR(LOG_TAG, "Error in writing to file");
+                fclose(fp);
+                ret = -EBADF;
+                goto exit;
+            }
+            fclose(fp);
+        }
+    }
+exit:
+    if (builder) {
+        delete builder;
+        builder = NULL;
+    }
+    return ret;
+
+}
+
+void SpeakerProtection::startSpkrXmaxTmaxLogging()
+{
+    FILE* log_fp = NULL;
+    int32_t ret = 0;
+
+    PAL_DBG(LOG_TAG, "Enter");
+
+    /* This condition is added to know if the Speaker_RX graph started or not.
+     * Assuming this file will be pushed to target after playback started
+     * That's how, we will be sure Speaker_RX graph has been started */
+
+    while (!log_fp) {
+        log_fp = fopen(PAL_SP_XMAX_TMAX_LOG_PATH, "rb");
+    }
+    fclose(log_fp);
+
+    if (remove(PAL_SP_XMAX_TMAX_LOG_PATH) == 0) {
+        PAL_DBG(LOG_TAG, "log_spkr_xmax_tmax file deleted successfully");
+    }
+
+    startXmaxLogging = true;
+    while (startXmaxLogging && (ret == 0)) {
+        ret = getSpkrXmaxTmaxData();
+        if (ret != 0) {
+            PAL_ERR(LOG_TAG, "Failed to get Param for spkr_xmax_tmax");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+}
+
 /*
  * CPS related custom payload
  */
@@ -2471,6 +2655,11 @@ cps_dev_setup:
                 }
             }
         }
+
+        if (ResourceManager::isSpkrXmaxTmaxLoggingEnabled) {
+            XmaxTmaxLogThread = std::thread(&SpeakerProtection::startSpkrXmaxTmaxLogging,
+                this);
+        }
         // Free up the local variables
         goto exit;
     }
@@ -2486,6 +2675,8 @@ cps_dev_setup:
         }
         spkrProtSetSpkrStatus(flag);
         // Speaker not in use anymore. Stop the processing mode
+        startXmaxLogging = false;
+
         PAL_DBG(LOG_TAG, "Closing VI path");
         if (txPcm) {
             rm = ResourceManager::getInstance();
@@ -2652,7 +2843,7 @@ void SpeakerProtection::updateSPcustomPayload()
     }
     stream = static_cast<Stream *>(activeStreams[0]);
     stream->getAssociatedSession(&session);
-    for (int ch = numberOfChannels; ch != 0; ch >> ch/CHANNELS_2) {
+    for (int ch = numberOfChannels; ch != 0; ch == ch >> CHANNELS_2) {
         if (ch == CHANNELS_4)
             tagid = MODULE_SP2;
         else {
@@ -2808,7 +2999,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
         goto exit;
     }
 
-    for (int ch = numberOfChannels; ch != 0; ch >> ch/CHANNELS_2) {
+    for (int ch = numberOfChannels; ch != 0; ch == ch >> CHANNELS_2) {
 
         if (ch == CHANNELS_4)
             tagid = MODULE_VI2;

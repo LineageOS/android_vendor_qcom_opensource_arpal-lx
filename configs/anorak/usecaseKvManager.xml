@@ -28,7 +28,7 @@
 
 
 * Changes from Qualcomm Innovation Center are provided under the following license:
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 * SPDX-License-Identifier: BSD-3-Clause-Clear
 *  -->
 
@@ -78,6 +78,15 @@
                 <graph_kv key="0xB1000000" value="0xB1000001"/>
                 <!-- INSTANCE - INSTANCE_2 -->
                 <graph_kv key="0xAB000000" value="0x2"/>
+            </keys_and_values>
+        </stream>
+        <!-- Spatial audio stream -->
+        <stream type="PAL_STREAM_SPATIAL_AUDIO">
+            <keys_and_values Direction="RX" Instance="1">
+                <!-- STREAMRX - SPATIAL_AUDIO_PLAYBACK  -->
+                <graph_kv key="0xA1000000" value="0xA1000018"/>
+                <!-- INSTANCE - INSTANCE_1 -->
+                <graph_kv key="0xAB000000" value="0x1"/>
             </keys_and_values>
         </stream>
         <stream type="PAL_STREAM_VOICE_RECOGNITION">
@@ -756,13 +765,13 @@
     <devicepps>
         <!-- OUT Speaker DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_SPEAKER">
-            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC">
+            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICERX - SPEAKER -->
                 <graph_kv key="0xA2000000" value="0xA2000001"/>
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
                 <graph_kv key="0xAC000000" value="0xAC000002"/>
             </keys_and_values>
-            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_GENERIC,PAL_STREAM_LOW_LATENCY" CustomConfig="mspp">
+            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_GENERIC,PAL_STREAM_LOW_LATENCY,PAL_STREAM_SPATIAL_AUDIO" CustomConfig="mspp">
                 <!-- DEVICERX - SPEAKER -->
                 <graph_kv key="0xA2000000" value="0xA2000001"/>
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MSPP -->
@@ -858,7 +867,7 @@
         </devicepp>
         <!-- OUT Headset and Headphone Digital DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_WIRED_HEADSET,PAL_DEVICE_OUT_WIRED_HEADPHONE">
-            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC">
+            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICERX - HEADPHONES -->
                 <graph_kv key="0xA2000000" value="0xA2000002"/>
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
@@ -891,7 +900,7 @@
         </devicepp>
         <!-- OUT Bluetooth A2DP DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_BLUETOOTH_A2DP">
-            <keys_and_values StreamType="PAL_STREAM_COMPRESSED,PAL_STREAM_DEEP_BUFFER,PAL_STREAM_LOW_LATENCY,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_GENERIC">
+            <keys_and_values StreamType="PAL_STREAM_COMPRESSED,PAL_STREAM_DEEP_BUFFER,PAL_STREAM_LOW_LATENCY,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_GENERIC,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
                 <graph_kv key="0xAC000000" value="0xAC000002"/>
             </keys_and_values>
@@ -902,7 +911,7 @@
         </devicepp>
         <!-- OUT Bluetooth BLE DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_BLUETOOTH_BLE">
-            <keys_and_values StreamType="PAL_STREAM_COMPRESSED,PAL_STREAM_DEEP_BUFFER,PAL_STREAM_LOW_LATENCY,PAL_STREAM_PCM_OFFLOAD">
+            <keys_and_values StreamType="PAL_STREAM_COMPRESSED,PAL_STREAM_DEEP_BUFFER,PAL_STREAM_LOW_LATENCY,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
                 <graph_kv key="0xAC000000" value="0xAC000002"/>
             </keys_and_values>
@@ -924,7 +933,7 @@
         </devicepp>
         <!-- OUT BT SCO DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_BLUETOOTH_SCO">
-            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC">
+            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICERX - BT_RX -->
                 <graph_kv key="0xA2000000" value="0xA2000003"/>
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
@@ -960,7 +969,7 @@
         </devicepp>
         <!-- OUT USB device and USB Headset DevicePPs -->
         <devicepp id="PAL_DEVICE_OUT_USB_DEVICE,PAL_DEVICE_OUT_USB_HEADSET">
-            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC">
+            <keys_and_values StreamType="PAL_STREAM_DEEP_BUFFER,PAL_STREAM_PCM_OFFLOAD,PAL_STREAM_COMPRESSED,PAL_STREAM_LOW_LATENCY,PAL_STREAM_GENERIC,PAL_STREAM_SPATIAL_AUDIO">
                 <!-- DEVICERX - USB_RX -->
                 <graph_kv key="0xA2000000" value="0xA2000005"/>
                 <!-- DEVICEPP_RX - DEVICEPP_RX_AUDIO_MBDRC -->
