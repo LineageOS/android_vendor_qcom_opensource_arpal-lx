@@ -583,8 +583,7 @@ int32_t pal_stream_set_param(pal_stream_handle_t *stream_handle,
         if (pal_client == nullptr)
             return ret;
 
-        hidl_vec<PalParamPayload> paramPayload;
-        paramPayload.resize(sizeof(PalParamPayload));
+        hidl_vec<PalParamPayload> paramPayload(1);
         paramPayload.data()->payload.resize(param_payload->payload_size);
         paramPayload.data()->size = param_payload->payload_size;
         memcpy(paramPayload.data()->payload.data(), param_payload->payload,

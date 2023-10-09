@@ -701,6 +701,14 @@ Return<int32_t> PAL::ipc_pal_stream_set_param(const uint64_t streamHandle, uint3
 {
     int32_t ret = 0;
     pal_param_payload *param_payload;
+    if (1 != paramPayload.size()) {
+        ALOGE("Invalid vector size");
+        return -EINVAL;
+    }
+    if (paramPayload.data()->size > paramPayload.data()->payload.size()) {
+        ALOGE("Invalid payload size");
+        return -EINVAL;
+    }
     param_payload = (pal_param_payload *)calloc (1,
                                     sizeof(pal_param_payload) + paramPayload.data()->size);
     if (!param_payload) {
@@ -749,6 +757,10 @@ Return<int32_t> PAL::ipc_pal_stream_set_device(const uint64_t streamHandle,
     struct pal_device *devices = NULL;
     int cnt = 0;
     int32_t ret = -ENOMEM;
+    if (noOfDevices > devs_hidl.size()) {
+        ALOGE("Invalid noOfDevices");
+        return -EINVAL;
+    }
     if (devs_hidl.size()) {
         PalDevice *dev_hidl = NULL;
         devices = (struct pal_device *)calloc (1,
@@ -791,6 +803,14 @@ Return<int32_t> PAL::ipc_pal_stream_set_volume(const uint64_t streamHandle,
     struct pal_volume_data *volume;
     uint32_t noOfVolPairs = vol.data()->noOfVolPairs;
     int32_t ret = -ENOMEM;
+    if (1 != vol.size()) {
+        ALOGE("Invalid vol pairs");
+        return -EINVAL;
+    }
+    if (noOfVolPairs > vol.data()->volPair.size()) {
+        ALOGE("Invalid vol vector size");
+        return -EINVAL;
+    }
     volume = (struct pal_volume_data *) calloc(1,
                                         sizeof(struct pal_volume_data) +
                                         noOfVolPairs * sizeof(pal_channel_vol_kv));
