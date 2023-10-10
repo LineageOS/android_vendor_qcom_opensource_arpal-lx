@@ -2075,6 +2075,7 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
 {
     int32_t status = 0;
     pal_param_bta2dp_t* param_a2dp = (pal_param_bta2dp_t *)param;
+    bool skip_switch = false;
 
     if (isA2dpOffloadSupported == false) {
        PAL_VERBOSE(LOG_TAG, "no supported encoders identified,ignoring a2dp setparam");
@@ -2159,7 +2160,12 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
                     goto exit;
                 }
             }
-            status = rm->a2dpResume(param_a2dp->dev_id);
+
+            if (param_a2dp->dev_id == PAL_DEVICE_OUT_BLUETOOTH_A2DP && param_a2dp->is_in_call)
+                skip_switch = true;
+
+            if (!skip_switch)
+                status = rm->a2dpResume(param_a2dp->dev_id);
         }
         break;
     }
@@ -2246,7 +2252,12 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
                     goto exit;
                 }
             }
-            rm->a2dpCaptureResume(param_a2dp->dev_id);
+
+            if (param_a2dp->dev_id == PAL_DEVICE_IN_BLUETOOTH_A2DP && param_a2dp->is_in_call)
+                skip_switch = true;
+
+            if (!skip_switch)
+                rm->a2dpCaptureResume(param_a2dp->dev_id);
         }
         break;
     }
