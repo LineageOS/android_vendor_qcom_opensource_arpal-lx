@@ -7172,6 +7172,15 @@ bool ResourceManager::isValidDeviceSwitchForStream(Stream *s, pal_device_id_t ne
         case PAL_DEVICE_OUT_HANDSET:
         case PAL_DEVICE_OUT_SPEAKER:
             ret = true;
+            /*
+             * if upd shares BE with handset, while handset doesn't
+             * share BE with speaker, then during device switch
+             * between handset and speaker, upd should still stay
+             * on handset
+             */
+            if (listAllBackEndIds[PAL_DEVICE_OUT_HANDSET].second !=
+                listAllBackEndIds[PAL_DEVICE_OUT_SPEAKER].second)
+                ret = false;
             break;
         default:
             ret = false;
@@ -7292,6 +7301,8 @@ int ResourceManager::restoreDeviceConfigForUPD(
 {
     int ret = 0;
     static struct pal_device dAttr; //struct reference is passed in StreamDevConnect.
+    struct pal_device curDevAttr = {};
+    std::shared_ptr<Device> hs_dev = nullptr;
     uint32_t devId;
     Stream *s;
     struct pal_stream_attributes sAttr;
@@ -7347,6 +7358,15 @@ int ResourceManager::restoreDeviceConfigForUPD(
     if (ret) {
         PAL_ERR(LOG_TAG, "Error getting deviceConfig");
         goto exit_on_error;
+    }
+
+    hs_dev = Device::getObject(PAL_DEVICE_OUT_HANDSET);
+    if (hs_dev)
+        hs_dev->getDeviceAttributes(&curDevAttr);
+
+    if (!doDevAttrDiffer(&dAttr, &curDevAttr)) {
+        PAL_DBG(LOG_TAG, "No need to update device attr for UPD");
+        return ret;
     }
 
     /*
