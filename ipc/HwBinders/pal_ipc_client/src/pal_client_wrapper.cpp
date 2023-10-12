@@ -351,12 +351,11 @@ int32_t pal_stream_open(struct pal_stream_attributes *attr,
         if (pal_client == nullptr)
             return ret;
 
-        hidl_vec<PalStreamAttributes> attr_hidl;
+        hidl_vec<PalStreamAttributes> attr_hidl(1);
         hidl_vec<PalDevice> devs_hidl;
         hidl_vec<ModifierKV> modskv_hidl;
         uint16_t in_channels = 0;
         uint16_t out_channels = 0;
-        uint32_t dev_size = 0;
         int cnt = 0;
         uint8_t *temp = NULL;
         struct pal_stream_info info = attr->info.opt_stream_info;
@@ -367,8 +366,6 @@ int32_t pal_stream_open(struct pal_stream_attributes *attr,
             info.version, info.size, info.duration_us, info.has_video, info.is_streaming,
             info.loopback_type);
 
-        attr_hidl.resize(sizeof(::vendor::qti::hardware::pal::V1_0::PalStreamAttributes) + in_channels +
-                         out_channels);
         attr_hidl.data()->type = (PalStreamType)attr->type;
         attr_hidl.data()->info.version = info.version;
         attr_hidl.data()->info.size = info.size;
@@ -382,7 +379,8 @@ int32_t pal_stream_open(struct pal_stream_attributes *attr,
 
         if (in_channels) {
             attr_hidl.data()->in_media_config.ch_info.channels = attr->in_media_config.ch_info.channels;
-            attr_hidl.data()->in_media_config.ch_info.ch_map = attr->in_media_config.ch_info.ch_map;
+            memcpy(&attr_hidl.data()->in_media_config.ch_info.ch_map, &attr->in_media_config.ch_info.ch_map,
+                sizeof(uint8_t[64]));
         }
         attr_hidl.data()->in_media_config.aud_fmt_id = (PalAudioFmt)attr->in_media_config.aud_fmt_id;
 
@@ -394,26 +392,28 @@ int32_t pal_stream_open(struct pal_stream_attributes *attr,
         attr_hidl.data()->out_media_config.bit_width = attr->out_media_config.bit_width;
         if (out_channels) {
             attr_hidl.data()->out_media_config.ch_info.channels = attr->out_media_config.ch_info.channels;
-            attr_hidl.data()->out_media_config.ch_info.ch_map = attr->out_media_config.ch_info.ch_map;
+            memcpy(&attr_hidl.data()->out_media_config.ch_info.ch_map, &attr->out_media_config.ch_info.ch_map,
+                sizeof(uint8_t[64]));
         }
         attr_hidl.data()->out_media_config.aud_fmt_id = (PalAudioFmt)attr->out_media_config.aud_fmt_id;
         if (devices) {
-            dev_size = no_of_devices * sizeof(struct pal_device);
-            devs_hidl.resize(dev_size);
-            PalDevice *dev_hidl = devs_hidl.data();
+            devs_hidl.resize(no_of_devices);
             for ( cnt = 0; cnt < no_of_devices; cnt++) {
-                 dev_hidl->id =(PalDeviceId)devices[cnt].id;
-                 dev_hidl->config.sample_rate = devices[cnt].config.sample_rate;
-                 dev_hidl->config.bit_width = devices[cnt].config.bit_width;
-                 dev_hidl->config.ch_info.channels = devices[cnt].config.ch_info.channels;
-                 dev_hidl->config.ch_info.ch_map = devices[cnt].config.ch_info.ch_map;
-                 dev_hidl->config.aud_fmt_id = (PalAudioFmt)devices[cnt].config.aud_fmt_id;
-                 dev_hidl =  (PalDevice *)(devs_hidl.data() + sizeof(PalDevice));
+                 devs_hidl[cnt].id =(PalDeviceId)devices[cnt].id;
+                 devs_hidl[cnt].config.sample_rate = devices[cnt].config.sample_rate;
+                 devs_hidl[cnt].config.bit_width = devices[cnt].config.bit_width;
+                 devs_hidl[cnt].config.ch_info.channels = devices[cnt].config.ch_info.channels;
+                 memcpy(&devs_hidl[cnt].config.ch_info.ch_map, &devices[cnt].config.ch_info.ch_map,
+                 sizeof(uint8_t [64]));
+                 devs_hidl[cnt].config.aud_fmt_id = (PalAudioFmt)devices[cnt].config.aud_fmt_id;
             }
         }
         if (modifiers) {
-            modskv_hidl.resize(sizeof(struct modifier_kv) * no_of_modifiers);
-            memcpy(modskv_hidl.data(), modifiers, sizeof(struct modifier_kv) * no_of_modifiers);
+            modskv_hidl.resize(no_of_modifiers);
+            for ( cnt = 0; cnt < no_of_modifiers; cnt++) {
+                modskv_hidl[cnt].key = modifiers[cnt].key;
+                modskv_hidl[cnt].value = modifiers[cnt].value;
+            } 
         }
         pal_client->ipc_pal_stream_open(attr_hidl, no_of_devices, devs_hidl, no_of_modifiers,
                                         modskv_hidl, ClbkBinder, cookie,
@@ -777,7 +777,6 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
 {
     hidl_vec<PalDevice> devs_hidl;
     int32_t cnt = 0;
-    uint32_t dev_size = 0;
     int32_t ret = -EINVAL;
 
     if (!pal_server_died) {
@@ -788,18 +787,16 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
 
 
         if (devices) {
-           dev_size = no_of_devices * sizeof(struct pal_device);
-           ALOGD("dev_size %d", dev_size);
-           devs_hidl.resize(dev_size);
-           PalDevice *dev_hidl = devs_hidl.data();
+           ALOGD("no_of_devices %d", no_of_devices);
+           devs_hidl.resize(no_of_devices);
            for (cnt = 0; cnt < no_of_devices; cnt++) {
-                dev_hidl->id =(PalDeviceId)devices[cnt].id;
-                dev_hidl->config.sample_rate = devices[cnt].config.sample_rate;
-                dev_hidl->config.bit_width = devices[cnt].config.bit_width;
-                dev_hidl->config.ch_info.channels = devices[cnt].config.ch_info.channels;
-                dev_hidl->config.ch_info.ch_map = devices[cnt].config.ch_info.ch_map;
-                dev_hidl->config.aud_fmt_id = (PalAudioFmt)devices[cnt].config.aud_fmt_id;
-                dev_hidl =  (PalDevice *)(devs_hidl.data() + sizeof(PalDevice));
+                devs_hidl[cnt].id =(PalDeviceId)devices[cnt].id;
+                devs_hidl[cnt].config.sample_rate = devices[cnt].config.sample_rate;
+                devs_hidl[cnt].config.bit_width = devices[cnt].config.bit_width;
+                devs_hidl[cnt].config.ch_info.channels = devices[cnt].config.ch_info.channels;
+                memcpy(&devs_hidl[cnt].config.ch_info.ch_map, &devices[cnt].config.ch_info.ch_map,
+                sizeof(uint8_t [64]));
+                devs_hidl[cnt].config.aud_fmt_id = (PalAudioFmt)devices[cnt].config.aud_fmt_id;
            }
            ret = pal_client->ipc_pal_stream_set_device((PalStreamHandle)stream_handle,
                                                        no_of_devices, devs_hidl);
