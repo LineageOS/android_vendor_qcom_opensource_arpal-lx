@@ -10540,6 +10540,15 @@ bool ResourceManager::isDeviceAvailable(
     return isAvailable;
 }
 
+bool ResourceManager::isDisconnectedDeviceStillActive(
+    std::set<pal_device_id_t> &curPalDevices, std::set<pal_device_id_t> &activeDevices,
+    pal_device_id_t id)
+{
+    return (!isDeviceAvailable(id)) &&
+        (curPalDevices.find(id) != curPalDevices.end()) &&
+        (activeDevices.find(id) != activeDevices.end());
+}
+
 bool ResourceManager::isDeviceReady(pal_device_id_t id)
 {
     struct pal_device dAttr;
