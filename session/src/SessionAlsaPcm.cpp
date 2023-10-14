@@ -2524,7 +2524,7 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
                 status = SessionAlsaUtils::setMixerParameter(mixer, device,
                                                paramData, paramSize);
                 PAL_INFO(LOG_TAG, "mixer set volume config status=%d\n", status);
-                delete [] paramData;
+                freeCustomPayload(&paramData, &paramSize);
                 paramSize = 0;
             }
             return 0;

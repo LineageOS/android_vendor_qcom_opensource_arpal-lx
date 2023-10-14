@@ -377,6 +377,16 @@ int Device::setDeviceAttributes(struct pal_device dattr)
     return status;
 }
 
+int Device::freeCustomPayload(uint8_t **payload, size_t *payloadSize)
+{
+    if (*payload) {
+        free(*payload);
+        *payload = NULL;
+        *payloadSize = 0;
+    }
+    return 0;
+}
+
 int Device::updateCustomPayload(void *payload, size_t size)
 {
     if (!customPayloadSize) {
