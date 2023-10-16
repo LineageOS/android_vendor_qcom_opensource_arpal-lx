@@ -850,6 +850,7 @@ int32_t StreamPCM::setVolume(struct pal_volume_data *volume)
             status = session->setParameters(this, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
             delete[] volPayload;
+            PAL_DBG(LOG_TAG, "set volume by parameter, status: %d", status);
         } else {
             status = session->setConfig(this, CALIBRATION, TAG_STREAM_VOLUME);
         }
@@ -1206,7 +1207,7 @@ int32_t StreamPCM::pause_l()
         if (0 != status) {
            PAL_ERR(LOG_TAG, "session setConfig for pause failed with status %d",
                     status);
-           goto exit;
+           return status;
         }
         if (session->isPauseRegistrationDone) {
             PAL_DBG(LOG_TAG, "Waiting for Pause to complete from ADSP");
@@ -1216,8 +1217,6 @@ int32_t StreamPCM::pause_l()
                     VOLUME_RAMP_PERIOD);
             usleep(VOLUME_RAMP_PERIOD);
         }
-        isPaused = true;
-        currentState = STREAM_PAUSED;
         PAL_DBG(LOG_TAG, "session setConfig successful");
 
         //caching the volume before setting it to 0
@@ -1285,6 +1284,8 @@ int32_t StreamPCM::pause_l()
         }
     }
 exit:
+    isPaused = true;
+    currentState = STREAM_PAUSED;
     PAL_DBG(LOG_TAG, "Exit status: %d", status);
     return status;
 }
