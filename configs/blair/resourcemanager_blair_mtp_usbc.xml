@@ -763,7 +763,7 @@ ports not conflicting with other audio paths  -->
                     <!-- see kvh2xml.h -->
                     <kvpair key="0xAD000000" value="0xAD00000C"/>
                 </devicePP-metadata>
-                <param snd_name="va-mic-dmic" />
+                <param snd_name="va-mic-dmic-lpi" />
             </capture_profile>
             <capture_profile name="DUAL_MIC_16KHZ_16BIT_RAW_NLPI">
                 <param sample_rate="16000" />
