@@ -77,7 +77,6 @@
         <param key="signal_handler" value ="true" />
         <param key="device_mux_config" value ="false" />
         <param key="upd_virtual_port" value ="false" />
-        <param key="spkr_xmax_tmax_logging_enable" value ="false" />
     </config_params>
     <config_volume>
         <use_volume_set_param>0</use_volume_set_param>
@@ -288,9 +287,6 @@
             <ec_rx_device>
                 <id>PAL_DEVICE_OUT_HANDSET</id>
                 <id>PAL_DEVICE_OUT_SPEAKER</id>
-                <id>PAL_DEVICE_OUT_WIRED_HEADPHONE</id>
-                <id>PAL_DEVICE_OUT_USB_DEVICE</id>
-                <id>PAL_DEVICE_OUT_USB_HEADSET</id>
             </ec_rx_device>
         </in-device>
         <in-device>
@@ -428,7 +424,6 @@
             <ec_rx_device>
                 <id>PAL_DEVICE_OUT_WIRED_HEADSET</id>
                 <id>PAL_DEVICE_OUT_WIRED_HEADPHONE</id>
-                <id>PAL_DEVICE_OUT_SPEAKER</id>
             </ec_rx_device>
         </in-device>
         <in-device>
@@ -538,12 +533,11 @@
             </usecase>
             <ec_rx_device>
                 <id>PAL_DEVICE_OUT_USB_HEADSET</id>
-                <id>PAL_DEVICE_OUT_SPEAKER</id>
             </ec_rx_device>
         </in-device>
         <in-device>
             <id>PAL_DEVICE_IN_FM_TUNER</id>
-            <back_end_name>MI2S-LPAIF-TX-SECONDARY</back_end_name>
+            <back_end_name>MI2S-LPAIF-TX-PRIMARY</back_end_name>
             <max_channels>2</max_channels>
             <channels>2</channels>
             <snd_device_name>play-fm</snd_device_name>
@@ -567,10 +561,10 @@
             <id>PAL_DEVICE_IN_VI_FEEDBACK</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-TX-0</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>48000</samplerate>
             <bit_width>32</bit_width>
-            <snd_device_name>vi-feedback</snd_device_name>
+            <snd_device_name>vi-feedback-mono-2</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <channels>1</channels>
@@ -581,10 +575,10 @@
             <id>PAL_DEVICE_IN_CPS_FEEDBACK</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-TX-2</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>24000</samplerate>
             <bit_width>32</bit_width>
-            <snd_device_name>cps-feedback</snd_device_name>
+            <snd_device_name>cps-feedback-mono-2</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <channels>1</channels>
@@ -685,9 +679,9 @@
             <id>PAL_DEVICE_OUT_SPEAKER</id>
             <back_end_name>CODEC_DMA-LPAIF_WSA-RX-0</back_end_name>
             <max_channels>2</max_channels>
-            <channels>2</channels>
+            <channels>1</channels>
             <samplerate>48000</samplerate>
-            <snd_device_name>speaker</snd_device_name>
+            <snd_device_name>speaker-mono-2</snd_device_name>
             <speaker_protection_enabled>1</speaker_protection_enabled>
             <fractional_sr>0</fractional_sr>
             <!-- To enable external EC reference the flag extec_ref_enabled must be added as 1 -->
@@ -697,13 +691,13 @@
                          CPS streaming: 1
                          ADSP control mode: 2
             -->
-            <cps_mode>1</cps_mode>
+            <cps_mode>0</cps_mode>
             <vbat_enabled>1</vbat_enabled>
             <wsa2_enable>0</wsa2_enable>
             <!--wsa registers physical addresses in decimal notation -->
-            <wsa_wr_cmd_reg_phy_addr>112279584</wsa_wr_cmd_reg_phy_addr>
-            <wsa_rd_cmd_reg_phy_addr>112279588</wsa_rd_cmd_reg_phy_addr>
-            <wsa_rd_fifo_reg_phy_addr>112279616</wsa_rd_fifo_reg_phy_addr>
+            <wsa_wr_cmd_reg_phy_addr>52757248</wsa_wr_cmd_reg_phy_addr>
+            <wsa_rd_cmd_reg_phy_addr>52757252</wsa_rd_cmd_reg_phy_addr>
+            <wsa_rd_fifo_reg_phy_addr>52757272</wsa_rd_fifo_reg_phy_addr>
             <!--wsa2 registers physical addresses in decimal notation and to be updated only if wsa2 is enabled, else should be marked as 0-->
             <wsa2_wr_cmd_reg_phy_addr>0</wsa2_wr_cmd_reg_phy_addr>
             <wsa2_rd_cmd_reg_phy_addr>0</wsa2_rd_cmd_reg_phy_addr>
@@ -755,14 +749,14 @@
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_HANDSET</id>
-            <back_end_name>CODEC_DMA-LPAIF_WSA-RX-0</back_end_name>
+            <back_end_name>CODEC_DMA-LPAIF_RXTX-RX-1</back_end_name>
             <max_channels>2</max_channels>
             <channels>1</channels>
             <!-- To enable external EC reference the flag extec_ref_enabled must be added as 1 -->
             <ext_ec_ref_enabled>0</ext_ec_ref_enabled>
             <samplerate>48000</samplerate>
             <fractional_sr>0</fractional_sr>
-            <snd_device_name>handset</snd_device_name>
+            <snd_device_name>handset-wcd</snd_device_name>
             <handset_protection_enabled>0</handset_protection_enabled>
           <usecase>
               <name>PAL_STREAM_VOICE_CALL</name>
@@ -782,7 +776,6 @@
               <name>PAL_STREAM_ULTRASOUND</name>
               <priority>4</priority>
               <samplerate>96000</samplerate>
-              <bit_width>16</bit_width>
           </usecase>
         </out-device>
         <out-device>
@@ -920,12 +913,6 @@
             <channels>2</channels>
             <snd_device_name>display-port</snd_device_name>
             <fractional_sr>1</fractional_sr>
-            <!--specify the supported bit format on DP end point -->
-            <!--this should be in the form of pal_audio_fmt_id-->
-            <!--e.g <supported_bit_format >PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>-->
-            <!--We support 24 bit for DP as of now, as SPF needs to conform to IEC 60958 packet format -->
-            <!--This can be changed to PAL_AUDIO_FMT_PCM_S32_LE if 32 bit e2e support is required-->
-            <supported_bit_format>PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <priority>1</priority>
@@ -938,12 +925,6 @@
             <channels>2</channels>
             <fractional_sr>1</fractional_sr>
             <snd_device_name>display-port</snd_device_name>
-            <!--specify the supported bit format on HDMI end point -->
-            <!--this should be in the form of pal_audio_fmt_id-->
-            <!--e.g <supported_bit_format >PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>-->
-            <!--We support 24 bit for HDMI as of now, as SPF needs to conform to IEC 60958 packet format -->
-            <!--This can be changed to PAL_AUDIO_FMT_PCM_S32_LE if 32 bit e2e support is required-->
-            <supported_bit_format>PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <priority>1</priority>
@@ -980,12 +961,6 @@
             <channels>2</channels>
             <snd_device_name>display-port</snd_device_name>
             <fractional_sr>1</fractional_sr>
-            <!--specify the supported bit format on DP end point -->
-            <!--this should be in the form of pal_audio_fmt_id-->
-            <!--e.g <supported_bit_format >PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>-->
-            <!--We support 24 bit for DP as of now, as SPF needs to conform to IEC 60958 packet format -->
-            <!--This can be changed to PAL_AUDIO_FMT_PCM_S32_LE if 32 bit e2e support is required-->
-            <supported_bit_format>PAL_AUDIO_FMT_PCM_S24_3LE</supported_bit_format>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <priority>1</priority>
@@ -1499,6 +1474,7 @@
                 <sound_model_info>
                     <first_stage_module_params>
                         <param module_type="GMM" />
+                        <param lpi_supported="false"/>
                         <param load_sound_model_ids="0xC0000008, 0x0800104C" />
                         <param wakeup_config_ids="0xC0000008, 0x08001049" />
                         <param buffering_config_ids="0xC0000008, 0x08001044" />

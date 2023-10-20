@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: StreamPCM"
@@ -226,7 +229,9 @@ int32_t  StreamPCM::open()
             }
         }
 
+        rm->lockGraph();
         status = session->open(this);
+        rm->unlockGraph();
         if (0 != status) {
             PAL_ERR(LOG_TAG, "session open failed with status %d", status);
             goto exit;
@@ -307,7 +312,6 @@ int32_t  StreamPCM::close()
 
     rm->lockGraph();
     status = session->close(this);
-    rm->unlockGraph();
     if (0 != status) {
         PAL_ERR(LOG_TAG, "session close failed with status %d", status);
     }
@@ -320,6 +324,7 @@ int32_t  StreamPCM::close()
     }
     PAL_VERBOSE(LOG_TAG, "closed the devices successfully");
     currentState = STREAM_IDLE;
+    rm->unlockGraph();
     rm->checkAndSetDutyCycleParam();
     mStreamMutex.unlock();
 
@@ -1310,6 +1315,20 @@ int32_t StreamPCM::resume_l()
         goto exit;
     }
 
+    if (mStreamAttr->direction == PAL_AUDIO_OUTPUT &&
+        (mStreamAttr->type == PAL_STREAM_LOW_LATENCY ||
+         mStreamAttr->type == PAL_STREAM_PCM_OFFLOAD ||
+         mStreamAttr->type == PAL_STREAM_DEEP_BUFFER)) {
+            pal_param_device_rotation_t rotation;
+            rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                    PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+            status = session->setParameters(this, 0, PAL_PARAM_ID_DEVICE_ROTATION, &rotation);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "session setParameters for rotation failed with status %d",
+                        status);
+            }
+        }
+
     /* set ramp period to default */
     if (volRampPeriodms == 0) {
         ramp_param.ramp_period_ms = 0x28;
@@ -1637,8 +1656,10 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
         rm->lockGraph();
         for (int32_t i=0; i < mDevices.size(); i++) {
             if ((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
-                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)) {
-                PAL_DBG(LOG_TAG, "start BT A2DP/BLE device as to populate the full GKVs");
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)  ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_BLE)   ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
+                PAL_DBG(LOG_TAG, "start BT devices as to populate the full GKVs");
                 status = mDevices[i]->start();
                 if ((0 != status) && mDevices.size() == 1) {
                     PAL_ERR(LOG_TAG, "device start failed: %d", status);

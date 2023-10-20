@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -131,6 +131,7 @@ protected :
     spkr_prot_proc_state spkrProcessingState;
     int *spkerTempList;
     static bool isSpkrInUse;
+    static bool startXmaxLogging;
     static bool calThrdCreated;
     static bool isDynamicCalTriggered;
     static struct timespec spkrLastTimeUsed;
@@ -158,11 +159,13 @@ private :
 
 public:
     static std::thread mCalThread;
+    static std::thread XmaxTmaxLogThread;
     static std::condition_variable cv;
     static std::mutex cvMutex;
     std::mutex deviceMutex;
     static std::mutex calibrationMutex;
     void spkrCalibrationThread();
+    void startSpkrXmaxTmaxLogging();
     int getSpeakerTemperature(int spkr_pos);
     void spkrCalibrateWait();
     int spkrStartCalibration();
@@ -194,6 +197,7 @@ public:
     int getCpsDevNumber(std::string mixer);
     int32_t getCalibrationData(void **param);
     int32_t getFTMParameter(void **param);
+    int32_t getSpkrXmaxTmaxData();
     void disconnectFeandBe(std::vector<int> pcmDevIds, std::string backEndName);
 };
 

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: StreamCompress"
@@ -187,7 +190,9 @@ int32_t StreamCompress::open()
              }
         }
 
+        rm->lockGraph();
         status = session->open(this);
+        rm->unlockGraph();
         if (0 != status) {
            PAL_ERR(LOG_TAG,"session open failed with status %d", status);
            goto exit;
@@ -233,7 +238,6 @@ int32_t StreamCompress::close()
     }
     rm->lockGraph();
     status = session->close(this);
-    rm->unlockGraph();
     if (0 != status) {
         PAL_ERR(LOG_TAG,"session close failed with status %d", status);
     }
@@ -249,6 +253,7 @@ int32_t StreamCompress::close()
     }
     PAL_VERBOSE(LOG_TAG,"closed the devices successfully");
     currentState = STREAM_IDLE;
+    rm->unlockGraph();
     rm->checkAndSetDutyCycleParam();
     mStreamMutex.unlock();
 
@@ -981,6 +986,17 @@ int32_t StreamCompress::resume_l()
     if (0 != status) {
        PAL_ERR(LOG_TAG,"session setConfig for pause failed with status %d",status);
        goto exit;
+    }
+
+    if (mStreamAttr->direction == PAL_AUDIO_OUTPUT) {
+        pal_param_device_rotation_t rotation;
+        rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+        status = session->setParameters(this, 0, PAL_PARAM_ID_DEVICE_ROTATION, &rotation);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "session setParameters for rotation failed with status %d",
+                    status);
+        }
     }
 
     /* set ramp period to default */

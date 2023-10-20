@@ -147,7 +147,7 @@ public:
                             bool enable __unused) {
         return -ENOSYS;
     }
-
+    bool isStarted();
     void SetDetectedToEngines(bool detected);
     int32_t SetEngineDetectionState(int32_t state);
 
@@ -160,13 +160,12 @@ public:
     int32_t ConnectDevice(pal_device_id_t device_id) override;
     int32_t Resume() override;
     int32_t Pause() override;
-    int32_t ConcurrentResume() override;
-    int32_t ConcurrentPause() override;
     int32_t GetCurrentStateId();
     int32_t HandleConcurrentStream(bool active);
     int32_t EnableLPI(bool is_enable);
     int32_t setECRef(std::shared_ptr<Device> dev, bool is_enable) override;
     int32_t setECRef_l(std::shared_ptr<Device> dev, bool is_enable) override;
+    bool ConfigSupportLPI() override;
     void TransitTo(int32_t state_id);
 
     friend class PalRingBufferReader;
@@ -183,7 +182,6 @@ public:
               (GetCurrentStateId() == ST_STATE_BUFFERING);
     }
     struct st_uuid GetVendorUuid();
-
     void *GetGSLEngine() {
         if (gsl_engine_)
             return (void *)gsl_engine_.get();
@@ -588,7 +586,5 @@ private:
     // flag to indicate whether we should update common capture profile in RM
     bool common_cp_update_disable_;
     bool second_stage_processing_;
-    // flag to indicate whether current start/stop is called by client
-    bool is_client_start_stop_;
 };
 #endif // STREAMSOUNDTRIGGER_H_

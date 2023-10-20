@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -2591,8 +2591,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getStreamSelector()));
+                if (s->getStreamSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getStreamSelector()));
+
                 PAL_INFO(LOG_TAG, "VUI module type:%s", s->getStreamSelector().c_str());
                 break;
             case ACD_MODULE_TYPE_SEL:
@@ -2601,8 +2603,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getStreamSelector()));
+                if (s->getStreamSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getStreamSelector()));
+
                 PAL_INFO(LOG_TAG, "ACD module type:%s", s->getStreamSelector().c_str());
                 break;
             case DEVICEPP_TYPE_SEL:
@@ -2611,8 +2615,10 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                     goto free_sattr;
                 }
 
-                filled_selector_pairs.push_back(std::make_pair(selector_type,
-                    s->getDevicePPSelector()));
+                if (s->getDevicePPSelector().length() != 0)
+                    filled_selector_pairs.push_back(std::make_pair(selector_type,
+                        s->getDevicePPSelector()));
+
                 PAL_INFO(LOG_TAG, "devicePP_type:%s", s->getDevicePPSelector().c_str());
                 break;
             case STREAM_TYPE_SEL:
@@ -3938,6 +3944,23 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
                     channelMap[i] = i+1;
                 }
             }
+        break;
+        case PARAM_ID_SP_TMAX_XMAX_LOGGING:
+        {
+            param_id_sp_tmax_xmax_logging_t *data;
+            data = (param_id_sp_tmax_xmax_logging_t*)param;
+
+            payloadSize = sizeof(struct apm_module_param_data_t) +
+                sizeof(param_id_sp_tmax_xmax_logging_t) + (sizeof(sp_tmax_xmax_params_t) * data->num_ch);
+
+            padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+            payloadInfo = (uint8_t*)calloc(1, payloadSize + padBytes);
+            if (!payloadInfo) {
+                PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s", strerror(errno));
+                return;
+            }
+            header = (struct apm_module_param_data_t*)payloadInfo;
+        }
         break;
         default:
             {

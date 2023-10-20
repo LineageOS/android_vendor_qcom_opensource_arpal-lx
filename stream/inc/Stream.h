@@ -248,6 +248,7 @@ public:
                                    struct pal_mmap_buffer *info __unused) {return -EINVAL;}
     virtual int32_t GetMmapPosition(struct pal_mmap_position *position __unused) {return -EINVAL;}
     virtual int32_t getTagsWithModuleInfo(size_t *size __unused, uint8_t *payload __unused) {return -EINVAL;};
+    virtual bool ConfigSupportLPI() {return true;}; //Only LPI streams can update their vote to NLPI
     int32_t getStreamAttributes(struct pal_stream_attributes *sattr);
     int32_t getModifiers(struct modifier_kv *modifiers,uint32_t *noOfModifiers);
     const std::string& getStreamSelector() const;
@@ -306,8 +307,6 @@ public:
     /* Detection stream related APIs */
     virtual int32_t Resume() { return 0; }
     virtual int32_t Pause() { return 0; }
-    virtual int32_t ConcurrentPause() { return 0; }
-    virtual int32_t ConcurrentResume() { return 0; }
     virtual int32_t EnableLPI(bool is_enable) { return 0; }
     virtual int32_t HandleConcurrentStream(bool active) { return 0; }
     virtual int32_t DisconnectDevice(pal_device_id_t device_id) { return 0; }

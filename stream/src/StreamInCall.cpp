@@ -949,7 +949,9 @@ int32_t StreamInCall::ssrUpHandler()
             PAL_ERR(LOG_TAG, "stream open failed. status %d", status);
             goto exit;
         }
+        rm->unlockActiveStream();
         status = start();
+        rm->lockActiveStream();
         if (0 != status) {
             PAL_ERR(LOG_TAG, "stream start failed. status %d", status);
             goto exit;
@@ -968,7 +970,9 @@ int32_t StreamInCall::ssrUpHandler()
             PAL_ERR(LOG_TAG, "stream open failed. status %d", status);
             goto exit;
         }
+        rm->unlockActiveStream();
         status = start();
+        rm->lockActiveStream();
         if (0 != status) {
             PAL_ERR(LOG_TAG, "stream start failed. status %d", status);
             goto exit;

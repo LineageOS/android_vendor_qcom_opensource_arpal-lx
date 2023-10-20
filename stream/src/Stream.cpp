@@ -836,7 +836,9 @@ int32_t Stream::getTimestamp(struct pal_session_time *stime)
         PAL_ERR(LOG_TAG, "Sound card offline, status %d", status);
         goto exit;
     }
+    rm->lockResourceManagerMutex();
     status = session->getTimestamp(stime);
+    rm->unlockResourceManagerMutex();
     if (0 != status) {
         PAL_ERR(LOG_TAG, "Failed to get session timestamp status %d", status);
         if (errno == -ENETRESET &&
@@ -863,6 +865,16 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
     std::vector <Stream *> activeStreams;
 
     a2dpSuspend = false;
+
+    /* Check for BT device connected state */
+    for (int32_t i = 0; i < mDevices.size(); i++) {
+        pal_device_id_t dev_id = (pal_device_id_t)mDevices[i]->getSndDeviceId();
+        if (rm->isBtDevice(dev_id) && !(rm->isDeviceAvailable(dev_id))) {
+            PAL_ERR(LOG_TAG, "BT device %d not connected", dev_id);
+            status = -ENODEV;
+            goto exit;
+        }
+    }
 
     /* SCO device is not ready */
     if (rm->isDeviceAvailable(mDevices, PAL_DEVICE_OUT_BLUETOOTH_SCO) &&
@@ -892,8 +904,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
                 iter = mDevices.erase(iter);
+                rm->unlockGraph();
             }
         } else {
             PAL_ERR(LOG_TAG, "BT SCO output device is not ready");
@@ -960,8 +972,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
                 iter = mDevices.erase(iter);
+                rm->unlockGraph();
             }
         } else {
             // For non-combo device, mute the stream and route to speaker or handset
@@ -972,8 +984,8 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             suspendedDevIds.clear();
             suspendedDevIds.push_back(dattr.id);
 
+            rm->lockGraph();
             for (int i = 0; i < mDevices.size(); i++) {
-                rm->lockGraph();
                 status = session->disconnectSessionDevice(this, mStreamAttr->type, mDevices[i]);
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "disconnectSessionDevice failed:%d", status);
@@ -997,9 +1009,9 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                     rm->unlockGraph();
                     goto exit;
                 }
-                rm->unlockGraph();
             }
             mDevices.clear();
+            rm->unlockGraph();
             clearOutPalDevices(this);
 
             /* Check whether there's active stream associated with handset or speaker
@@ -1129,14 +1141,15 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
                     goto exit;
                 }
             }
-            rm->unlockGraph();
 
             status = mDevices[i]->close();
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "device close failed with status %d", status);
+                rm->unlockGraph();
                 goto exit;
             }
             mDevices.erase(mDevices.begin() + i);
+            rm->unlockGraph();
             break;
         }
     }
@@ -1371,6 +1384,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     int32_t connectCount = 0, disconnectCount = 0;
     bool isNewDeviceA2dp = false;
     bool isCurDeviceA2dp = false;
+    bool isCurDeviceSco = false;
     bool isCurrentDeviceProxyOut = false;
     bool isCurrentDeviceDpOut = false;
     bool matchFound = false;
@@ -1386,11 +1400,12 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     char CurrentSndDeviceName[DEVICE_NAME_MAX_SIZE] = {0};
     std::vector <Stream *> streamsToSwitch;
     struct pal_device streamDevAttr;
+    struct pal_device sco_Dattr = {};
     std::vector <Stream*>::iterator sIter;
     bool has_out_device = false, has_in_device = false;
     std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
-    pal_device_id_t curBtDevId;
+    pal_device_id_t curBtDevId = PAL_DEVICE_NONE;
     pal_device_id_t newBtDevId;
     bool isBtReady = false;
 
@@ -1420,6 +1435,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
             curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST) {
             isCurDeviceA2dp = true;
+            curBtDevId = curDevId;
+        }
+
+        if (curDevId == PAL_DEVICE_OUT_BLUETOOTH_SCO) {
+            isCurDeviceSco = true;
             curBtDevId = curDevId;
         }
 
@@ -1495,11 +1515,19 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
          * But the audioflinger continues to write data until standby time
          * (3sec). As BT is turned off, the write gets blocked.
          * Avoid this by routing audio to speaker until standby.
+         *
+         * If a stream is active on SCO and playback has ended, APM will send
+         * routing=0. Stream will be closed in PAL after standby time. If SCO
+         * device gets disconnected, this stream will not receive new routing
+         * and stream will remain with SCO for the time being. If SCO device
+         * gets connected again with different config in the meantime and
+         * capture stream tries to start ABR path, it will lead to error due to
+         * config mismatch. Added OUT_SCO device handling to resolve this.
          */
         // This assumes that PAL_DEVICE_NONE comes as single device
         if ((newDevices[i].id == PAL_DEVICE_NONE) &&
-            (((isCurDeviceA2dp == true) && (!rm->isDeviceReady(curBtDevId))) ||
-             (isCurrentDeviceProxyOut) || (isCurrentDeviceDpOut))) {
+            ((isCurrentDeviceProxyOut) || (isCurrentDeviceDpOut) ||
+             ((isCurDeviceA2dp || isCurDeviceSco) && (!rm->isDeviceReady(curBtDevId))))) {
             newDevices[i].id = PAL_DEVICE_OUT_SPEAKER;
 
             if (rm->getDeviceConfig(&newDevices[i], mStreamAttr)) {
@@ -1527,9 +1555,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             newBtDevId = newDevices[i].id;
             dev = Device::getInstance(&newDevices[i], rm);
             if (!dev) {
-                status = -ENODEV;
                 PAL_ERR(LOG_TAG, "failed to get a2dp/ble device object");
-                goto done;
+                mStreamMutex.unlock();
+                rm->unlockActiveStream();
+                return -ENODEV;
             }
             dev->getDeviceParameter(PAL_PARAM_ID_BT_A2DP_SUSPENDED,
                 (void**)&param_bt_a2dp);
@@ -1573,7 +1602,8 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         if (!dev) {
             PAL_ERR(LOG_TAG, "No device instance found");
             mStreamMutex.unlock();
-            return -EINVAL;
+            rm->unlockActiveStream();
+            return -ENODEV;
         }
         dev->insertStreamDeviceAttr(&newDevices[i], streamHandle);
         mPalDevices.push_back(dev);
@@ -1646,6 +1676,42 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                     matchFound = false;
                 }
             }
+            /*In case of SWB-->WB/NB SCO voip SHO, APM sends explicit routing separately
+            * for RX and TX path, it causes ar_osal timewait crash at the DSP to
+            * route just one RX/TX path with new GKV and add graph for feedback path
+            * since other TX/RX path still intact with SWB codec. Thus, forcedly route
+            * other path also to WB/NB if it's active on SCO device.
+            */
+            if (matchFound && ((strAttr.type == PAL_STREAM_VOIP_RX &&
+                newDeviceId == PAL_DEVICE_OUT_BLUETOOTH_SCO &&
+                rm->isDeviceActive(PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) ||
+                (strAttr.type == PAL_STREAM_VOIP_TX &&
+                    newDeviceId == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET &&
+                    rm->isDeviceActive(PAL_DEVICE_OUT_BLUETOOTH_SCO)))) {
+                std::shared_ptr<Device> scoDev = nullptr;
+                std::vector <Stream*> activeStreams;
+                if (newDeviceId == PAL_DEVICE_OUT_BLUETOOTH_SCO) {
+                    sco_Dattr.id = PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
+                } else {
+                    sco_Dattr.id = PAL_DEVICE_OUT_BLUETOOTH_SCO;
+                }
+                scoDev = Device::getInstance(&sco_Dattr, rm);
+                status = rm->getDeviceConfig(&sco_Dattr, NULL);
+                if (status) {
+                    PAL_ERR(LOG_TAG, "getDeviceConfig for bt-sco failed");
+                    mStreamMutex.unlock();
+                    rm->unlockActiveStream();
+                    return status;
+                }
+
+                rm->getActiveStream_l(activeStreams, scoDev);
+                for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
+                    (*sIter)->lockStreamMutex();
+                    streamDevDisconnect.push_back({ (*sIter), sco_Dattr.id });
+                    StreamDevConnect.push_back({ (*sIter), &sco_Dattr });
+                    (*sIter)->unlockStreamMutex();
+                }
+            }
         } else {
             rm->updateSndName(newDeviceId, deviceInfo.sndDevName);
             matchFound = true;
@@ -1698,7 +1764,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                             PAL_ERR(LOG_TAG,"getStreamAttributes Failed \n");
                             mStreamMutex.unlock();
                             rm->unlockActiveStream();
-                            goto done;
+                            return status;
                         }
 
                         if (sAttr.type == PAL_STREAM_ULTRASOUND &&
@@ -1717,7 +1783,9 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         /* Add device associated with current stream to streamDevDisconnect/StreamDevConnect list */
         for (int j = 0; j < disconnectCount; j++) {
             // check to make sure device direction is the same
-            if (rm->matchDevDir(mDevices[curDeviceSlots[j]]->getSndDeviceId(), newDeviceId)) {
+            // for shared BE, new device on the slot may change in compareSharedBEStreamDevAttr()
+            if (rm->matchDevDir(mDevices[curDeviceSlots[j]]->getSndDeviceId(), newDeviceId) &&
+                newDeviceId == newDevices[newDeviceSlots[i]].id) {
                 streamDevDisconnect.push_back({streamHandle, mDevices[curDeviceSlots[j]]->getSndDeviceId()});
                 // if something disconnected incoming device and current dev diff so push on a switchwe need to add the deivce
                 matchFound = true;
@@ -1783,7 +1851,6 @@ done:
         if (!volume) {
             PAL_ERR(LOG_TAG, "pal_volume_data memory allocation failure");
             mStreamMutex.unlock();
-            rm->unlockActiveStream();
             return -ENOMEM;
         }
         status = streamHandle->getVolumeData(volume);
