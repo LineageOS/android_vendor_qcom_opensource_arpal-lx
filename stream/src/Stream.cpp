@@ -1562,6 +1562,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         *  for 2 secs causing audioserver to stuck for processing
         *  disconnection. Thus check for isCurDeviceA2dp and a2dp_suspended
         *  state to avoid unnecessary sleep over 2 secs.
+        *
+        *  Also check for combo devices for the stream and do not retry for
+        *  combo streams. This will ensure seamless playback over Speaker
+        *  even if BT device is not ready.
         */
         if ((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
             (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
@@ -1586,8 +1590,9 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                         break;
                     } else if (isCurDeviceA2dp) {
                         break;
+                    } else if (rm->isDeviceAvailable(newDevices, numDev, PAL_DEVICE_OUT_SPEAKER)) {
+                        break;
                     }
-
                     usleep(retryPeriodMs * 1000);
                 }
             }
