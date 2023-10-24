@@ -4136,7 +4136,7 @@
          <ctl name= "VA DEC1 MUX" value="SWR_MIC" />
          <ctl name= "VA_DEC0 MODE" value="ADC_LOW_PWR" />
          <ctl name= "VA_DEC1 MODE" value="ADC_LOW_PWR" />
-         <ctl name="ADC2_BCS Disable" value="1" />
+         <ctl name= "ADC2_BCS Disable" value="1" />
          <ctl name= "ADC2 MUX" value="INP3" />
          <ctl name= "VA SMIC MUX0" value="SWR_MIC0" />
          <ctl name= "VA SMIC MUX1" value="SWR_MIC5" />
@@ -4149,6 +4149,11 @@
     <path name="va-mic-mono-lpi">
         <ctl name="LPI Enable" value="1" />
         <path name="va-mic-mono" />
+    </path>
+
+    <path name="va-mic-dmic-lpi">
+        <ctl name="LPI Enable" value="1" />
+        <path name="va-mic-dmic" />
     </path>
 
     <path name="headset-va-mic">
