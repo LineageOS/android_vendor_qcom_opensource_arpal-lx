@@ -66,6 +66,7 @@
 #include <set>
 #include <unistd.h>
 #include <stdlib.h>
+#include <mutex>
 #include <PalApi.h>
 #include "Stream.h"
 #include "Device.h"
@@ -83,6 +84,9 @@ class Stream;
 const char* pal_get_version( ){
     return PAL_VERSION;
 }
+
+static std::mutex pal_mutex;
+static uint32_t pal_init_ref_cnt = 0;
 
 static void notify_concurrent_stream(pal_stream_type_t type,
                                      pal_stream_direction_t dir,
@@ -113,6 +117,13 @@ int32_t pal_init(void)
     PAL_DBG(LOG_TAG, "Enter.");
     int32_t ret = 0;
     std::shared_ptr<ResourceManager> ri = NULL;
+
+    pal_mutex.lock();
+    if (pal_init_ref_cnt++ > 0) {
+        PAL_DBG(LOG_TAG, "PAL already initialized, cnt: %d", pal_init_ref_cnt);
+        goto exit;
+    }
+
     try {
         ri = ResourceManager::getInstance();
     } catch (const std::exception& e) {
@@ -135,6 +146,7 @@ int32_t pal_init(void)
     }
 
 exit:
+    pal_mutex.unlock();
     PAL_DBG(LOG_TAG, "Exit. exit status : %d ", ret);
     return ret;
 }
@@ -151,6 +163,17 @@ void pal_deinit(void)
 
     std::shared_ptr<ResourceManager> ri = NULL;
 
+    pal_mutex.lock();
+    if (pal_init_ref_cnt > 0) {
+        pal_init_ref_cnt--;
+        PAL_DBG(LOG_TAG, "decrease pal ref cnt to %d", pal_init_ref_cnt);
+        if (pal_init_ref_cnt > 0)
+            goto exit;
+    } else {
+        PAL_ERR(LOG_TAG, "pal not initialized yet");
+        goto exit;
+    }
+
     try {
         ri = ResourceManager::getInstance();
     } catch (const std::exception& e) {
@@ -159,6 +182,9 @@ void pal_deinit(void)
     ri->deInitContextManager();
 
     ResourceManager::deinit();
+
+exit:
+    pal_mutex.unlock();
     PAL_DBG(LOG_TAG, "Exit.");
     return;
 }
@@ -1143,22 +1169,23 @@ int32_t pal_stream_set_device(pal_stream_handle_t *stream_handle,
                 break;
         }
 
-      /*
-       * When USB headset is disconnected the music playback pauses
-       * and the policy manager sends routing=0. But if the USB is connected
-       * back before the standby time, it can not switch device to usb hs any more
-       * because current pal device is usb hs which equals new device when resuming playback.
-       * So routing to default device first during handling routing = 0 msg will guarantee
-       * the device switch to usb can be executed once USB is connected again.
-       */
-        bool curPalDevice_usb = curPalDevices.find(PAL_DEVICE_OUT_USB_DEVICE) != curPalDevices.end() ||
-                                curPalDevices.find(PAL_DEVICE_OUT_USB_HEADSET) != curPalDevices.end();
-        bool activeDevices_usb = activeDevices.find(PAL_DEVICE_OUT_USB_DEVICE) != activeDevices.end() ||
-                                 activeDevices.find(PAL_DEVICE_OUT_USB_HEADSET) != activeDevices.end();
-        bool usb_active = rm->isDeviceAvailable(PAL_DEVICE_OUT_USB_DEVICE) ||
-                          rm->isDeviceAvailable(PAL_DEVICE_OUT_USB_HEADSET);
+        /*
+        * When headset is disconnected the music playback pauses
+        * and the policy manager sends routing=0. But if the headset is connected
+        * back before the standby time, it can not switch device to headset any more
+        * because current pal device is headset which equals new device when resuming playback.
+        * So routing to default device first during handling routing = 0 msg will guarantee
+        * the device switch to headset can be executed once headset is connected again.
+        */
         if (devices[0].id == PAL_DEVICE_NONE &&
-            curPalDevice_usb && activeDevices_usb && !usb_active)
+            (rm->isDisconnectedDeviceStillActive(curPalDevices,activeDevices,
+            PAL_DEVICE_OUT_USB_DEVICE) ||
+            rm->isDisconnectedDeviceStillActive(curPalDevices,activeDevices,
+            PAL_DEVICE_OUT_USB_HEADSET) ||
+            rm->isDisconnectedDeviceStillActive(curPalDevices,activeDevices,
+            PAL_DEVICE_OUT_WIRED_HEADPHONE) ||
+            rm->isDisconnectedDeviceStillActive(curPalDevices,activeDevices,
+            PAL_DEVICE_OUT_WIRED_HEADSET)))
         {
             devices[0].id = PAL_DEVICE_OUT_SPEAKER;
         }

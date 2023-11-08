@@ -441,8 +441,14 @@ void PayloadBuilder::payloadVolumeConfig(uint8_t** payload, size_t* size,
     uint8_t* payloadInfo = NULL;
     size_t payloadSize = 0, padBytes = 0;
 
-    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",(voldata->volume_pair[0].vol));
-    voldB = (voldata->volume_pair[0].vol);
+    if (voldata->no_of_volpair == 1) {
+        voldB = (voldata->volume_pair[0].vol);
+    } else {
+        voldB = (voldata->volume_pair[0].vol + voldata->volume_pair[1].vol)/2;
+        PAL_DBG(LOG_TAG,"volume sent left:%f , right: %f \n",(voldata->volume_pair[0].vol),
+                  (voldata->volume_pair[1].vol));
+    }
+    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",voldB);
     vol = (long)(voldB * (PLAYBACK_VOLUME_MAX*1.0));
     payloadSize = sizeof(struct apm_module_param_data_t) +
                   sizeof(struct volume_ctrl_master_gain_t);
@@ -465,6 +471,51 @@ void PayloadBuilder::payloadVolumeConfig(uint8_t** payload, size_t* size,
     *size = payloadSize + padBytes;;
     *payload = payloadInfo;
     PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
+}
+
+void PayloadBuilder::payloadMultichVolumemConfig(uint8_t** payload, size_t* size,
+        uint32_t miid, struct pal_volume_data* voldata)
+{
+     const uint32_t PLAYBACK_MULTI_VOLUME_GAIN = 1 << 28;
+     struct apm_module_param_data_t* header = nullptr;
+     volume_ctrl_multichannel_gain_t *volConf = nullptr;
+     int numChannels;
+     uint8_t* payloadInfo = NULL;
+     size_t payloadSize = 0, padBytes = 0;
+
+     numChannels = voldata->no_of_volpair;
+     payloadSize = sizeof(struct apm_module_param_data_t) +
+                   sizeof(struct volume_ctrl_multichannel_gain_t) +
+                   numChannels * sizeof(volume_ctrl_channels_gain_config_t);
+     padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+     payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
+     if (!payloadInfo) {
+         PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s", strerror(errno));
+         return;
+     }
+     header = (struct apm_module_param_data_t*)payloadInfo;
+     header->module_instance_id = miid;
+     header->param_id = PARAM_ID_VOL_CTRL_MULTICHANNEL_GAIN;
+     header->error_code = 0x0;
+     header->param_size = payloadSize -  sizeof(struct apm_module_param_data_t);
+     volConf = (volume_ctrl_multichannel_gain_t *) (payloadInfo + sizeof(struct apm_module_param_data_t));
+     volConf->num_config = numChannels;
+     PAL_DBG(LOG_TAG, "num_config %d", numChannels);
+     /*
+      * Only L/R channel setting is supported. No need to convert channel_mask to channel_map.
+      * If other channel types support, the conversion is needed.
+      */
+     for (uint32_t i = 0; i < numChannels; i++) {
+          volConf->gain_data[i].channel_mask_lsb = (1 << voldata->volume_pair[i].channel_mask);
+          volConf->gain_data[i].channel_mask_msb = 0;
+          volConf->gain_data[i].gain = (uint32_t)((voldata->volume_pair[i].vol) * (PLAYBACK_MULTI_VOLUME_GAIN * 1.0));
+     }
+     PAL_DBG(LOG_TAG, "header params IID:%x param_id:%x error_code:%d param_size:%d",
+                   header->module_instance_id, header->param_id,
+                   header->error_code, header->param_size);
+     *size = payloadSize + padBytes;
+     *payload = payloadInfo;
+     PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
 }
 
 void PayloadBuilder::payloadVolumeCtrlRamp(uint8_t** payload, size_t* size,
@@ -1996,7 +2047,8 @@ void PayloadBuilder::payloadPcmCnvConfig(uint8_t** payload, size_t* size,
         mediaFmtPayload->alignment       = PCM_MSB_ALIGNED;
     } else {
         PAL_ERR(LOG_TAG, "invalid bit width %d", data->bit_width);
-        delete[] payloadInfo;
+        free(payloadInfo);
+        payloadInfo = NULL;
         *size = 0;
         *payload = NULL;
         return;
@@ -3181,6 +3233,7 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
     }
 
     long voldB = 0;
+    float vol = 0;
     struct pal_volume_data *voldata = NULL;
     voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
                       (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
@@ -3195,9 +3248,17 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
         goto error_1;
     }
 
-    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",(voldata->volume_pair[0].vol));
+    if (voldata->no_of_volpair == 1) {
+        vol = (voldata->volume_pair[0].vol);
+    } else {
+        vol = (voldata->volume_pair[0].vol + voldata->volume_pair[1].vol)/2;
+        PAL_VERBOSE(LOG_TAG,"volume sent left:%f , right: %f \n",(voldata->volume_pair[0].vol),
+                  (voldata->volume_pair[1].vol));
+    }
+
     /*scaling the volume by PLAYBACK_VOLUME_MAX factor*/
-    voldB = (long)((voldata->volume_pair[0].vol) * (PLAYBACK_VOLUME_MAX*1.0));
+    voldB = (long)(vol * (PLAYBACK_VOLUME_MAX*1.0));
+    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",voldB);
 
     switch (static_cast<uint32_t>(tag)) {
     case TAG_STREAM_VOLUME:
