@@ -48,7 +48,7 @@ void SndCardMonitor::monitorThreadLoop()
 {
     struct pollfd poll_fds;
     int rv = 0;
-    char buf[10];
+    char buf[12];
     int card_status = 0;
     int tries = MAX_SLEEP_RETRY;
 
