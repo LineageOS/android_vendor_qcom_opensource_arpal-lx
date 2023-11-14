@@ -2080,6 +2080,7 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
 
     memset(&mDeviceAttr, 0, sizeof(struct pal_device));
     memcpy(&mDeviceAttr, device, sizeof(struct pal_device));
+    memset(&spDevInfo, 0, sizeof(struct spDeviceInfo));
 
     threadExit = false;
     calThrdCreated = false;
