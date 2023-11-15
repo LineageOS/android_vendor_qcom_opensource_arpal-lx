@@ -49,9 +49,10 @@ class SVAInterface: public VoiceUIInterface {
                                   listen_model_indicator_enum type,
                                   int32_t *level);
 
-    void SetSecondStageDetLevels(void *s,
-                                 listen_model_indicator_enum type,
-                                 int32_t level);
+    void SetSecondStageDetStats(void *s,
+                               listen_model_indicator_enum type,
+                               struct st_det_engine_stats *info,
+                               int32_t level);
 
     int32_t ParseDetectionPayload(void *s, void *event, uint32_t size);
     void* GetDetectedStream(void *event);
@@ -59,7 +60,11 @@ class SVAInterface: public VoiceUIInterface {
     void GetKeywordIndex(void *s, struct keyword_index *index);
     void GetKeywordStats(void *s, struct keyword_stats *stats);
     void UpdateIndices(void * s, struct keyword_index index);
+    void UpdateFtrtData(void * s, uint8_t *data, uint32_t size);
     void UpdateDetectionResult(void *s, uint32_t result);
+    int32_t SetDetectionPropList(void *s, detection_prop_list_t *det_prop_list);
+    uint32_t GetExtendedPayloadSize(void *s);
+    void FillExtendedDetectionPayload(void *s, uint8_t *data, uint32_t size);
     int32_t GenerateCallbackEvent(void *s,
                                   struct pal_st_recognition_event **event,
                                   uint32_t *event_size);
@@ -135,6 +140,7 @@ class SVAInterface: public VoiceUIInterface {
     sound_model_info_map_t sm_info_map_;
     struct pal_stream_attributes str_attr_;
     SoundModelInfo *sound_model_info_;
+    bool perf_mode_;
 
     st_confidence_levels_info *st_conf_levels_;
     st_confidence_levels_info_v2 *st_conf_levels_v2_;
@@ -147,6 +153,8 @@ class SVAInterface: public VoiceUIInterface {
     struct detection_engine_config_voice_wakeup wakeup_config_;
     uint8_t *wakeup_payload_;
     uint32_t wakeup_payload_size_;
+    uint8_t *ftrt_data_;
+    uint32_t ftrt_data_size_;
 
     bool sm_merged_;
     struct detection_event {
