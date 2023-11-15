@@ -137,6 +137,25 @@ cps_reg_wr_values_t sp_cps_thrsh_values = {
     .value_lower_threshold_2 = {0x8F003049, 0xD000304A, 0x18003472}
 };
 
+int SpeakerProtection::updateVICustomPayload(void *payload, size_t size)
+{
+    if (!viCustomPayloadSize) {
+        viCustomPayload = calloc(1, size);
+    } else {
+        viCustomPayload = realloc(viCustomPayload, viCustomPayloadSize + size);
+    }
+
+    if (!viCustomPayload) {
+        PAL_ERR(LOG_TAG, "failed to allocate memory for custom payload for VI");
+        return -ENOMEM;
+    }
+
+    memcpy((uint8_t *)viCustomPayload + viCustomPayloadSize, payload, size);
+    viCustomPayloadSize += size;
+    PAL_INFO(LOG_TAG, "viCustomPayloadSize = %zu", viCustomPayloadSize);
+    return 0;
+}
+
 /* Function to check if Speaker is in use or not.
  * It returns the time as well for which speaker is not in use.
  */
@@ -3231,13 +3250,16 @@ int SpeakerProtection::viTxSetupThreadLoop()
             goto free_fe;
         }
 
+        viCustomPayloadSize = 0;
+        viCustomPayload = NULL;
+
         builder->payloadSPConfig(&payload, &payloadSize, miid,
                                 PARAM_ID_SP_VI_OP_MODE_CFG, (void*)&modeConfg);
         if (payloadSize) {
-            ret = updateCustomPayload(payload, payloadSize);
+            ret = updateVICustomPayload(payload, payloadSize);
             free(payload);
             if (ret != 0) {
-                PAL_ERR(LOG_TAG," updateCustomPayload Failed for VI_OP_MODE_CFG\n");
+                PAL_ERR(LOG_TAG," updateVICustomPayload Failed for VI_OP_MODE_CFG\n");
                 // Not fatal as by default VI module runs in Normal mode
                 ret = 0;
             }
@@ -3251,10 +3273,10 @@ int SpeakerProtection::viTxSetupThreadLoop()
         builder->payloadSPConfig(&payload, &payloadSize, miid,
                 PARAM_ID_SP_VI_CHANNEL_MAP_CFG,(void *)&viChannelMapConfg);
         if (payloadSize) {
-            ret = updateCustomPayload(payload, payloadSize);
+            ret = updateVICustomPayload(payload, payloadSize);
             free(payload);
             if (0 != ret) {
-                PAL_ERR(LOG_TAG," updateCustomPayload Failed for CHANNEL_MAP_CFG\n");
+                PAL_ERR(LOG_TAG," updateVICustomPayload Failed for CHANNEL_MAP_CFG\n");
             }
         }
 
@@ -3268,10 +3290,10 @@ int SpeakerProtection::viTxSetupThreadLoop()
         builder->payloadSPConfig(&payload, &payloadSize, miid,
                 PARAM_ID_SP_EX_VI_MODE_CFG,(void *)&viExModeConfg);
         if (payloadSize) {
-            ret = updateCustomPayload(payload, payloadSize);
+            ret = updateVICustomPayload(payload, payloadSize);
             free(payload);
             if (0 != ret) {
-                PAL_ERR(LOG_TAG," updateCustomPayload Failed for EX_VI_MODE_CFG\n");
+                PAL_ERR(LOG_TAG," updateVICustomPayload Failed for EX_VI_MODE_CFG\n");
                 ret = 0;
             }
         }
@@ -3287,7 +3309,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
                     builder->payloadSPConfig (&payload, &payloadSize, miid,
                             viParamId, (void *) &viFtmConfg);
                     if (payloadSize) {
-                        ret = updateCustomPayload(payload, payloadSize);
+                        ret = updateVICustomPayload(payload, payloadSize);
                         free(payload);
                         if (0 != ret) {
                             PAL_ERR(LOG_TAG," Payload Failed for FTM mode\n");
@@ -3298,7 +3320,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
                     builder->payloadSPConfig (&payload, &payloadSize, miid,
                             viParamId, (void *) &viFtmConfg);
                     if (payloadSize) {
-                        ret = updateCustomPayload(payload, payloadSize);
+                        ret = updateVICustomPayload(payload, payloadSize);
                         free(payload);
                         if (0 != ret) {
                             PAL_ERR(LOG_TAG," Payload Failed for FTM mode\n");
@@ -3311,7 +3333,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
                     builder->payloadSPConfig (&payload, &payloadSize, miid,
                             viParamId, (void *) &viFtmConfg);
                     if (payloadSize) {
-                        ret = updateCustomPayload(payload, payloadSize);
+                        ret = updateVICustomPayload(payload, payloadSize);
                         free(payload);
                         if (0 != ret) {
                             PAL_ERR(LOG_TAG," Payload Failed for FTM mode\n");
@@ -3364,11 +3386,11 @@ int SpeakerProtection::viTxSetupThreadLoop()
         builder->payloadSPConfig(&payload, &payloadSize, miid,
                 PARAM_ID_SP_TH_VI_R0T0_CFG,(void *)spR0T0confg);
         if (payloadSize) {
-            ret = updateCustomPayload(payload, payloadSize);
+            ret = updateVICustomPayload(payload, payloadSize);
             free(payload);
             free(spR0T0confg);
             if (0 != ret) {
-                PAL_ERR(LOG_TAG," updateCustomPayload Failed\n");
+                PAL_ERR(LOG_TAG," updateVICustomPayload Failed\n");
                 ret = 0;
             }
         }
@@ -3376,7 +3398,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
         // Setting the values for VI module
         if (customPayloadSize) {
             ret = SessionAlsaUtils::setDeviceCustomPayload(rm, backEndName,
-                            customPayload, customPayloadSize);
+                            viCustomPayload, viCustomPayloadSize);
             if (ret) {
                 PAL_ERR(LOG_TAG, "Unable to set custom param for mode");
                 goto free_fe;
@@ -3435,6 +3457,13 @@ exit:
        builder = NULL;
     }
     viTxSetupThrdCreated = false;
+
+    if (viCustomPayload) {
+        free(viCustomPayload);
+        viCustomPayload = NULL;
+        viCustomPayloadSize = 0;
+    }
+
     return ret;
 
 }
