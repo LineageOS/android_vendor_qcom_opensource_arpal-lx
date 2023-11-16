@@ -884,7 +884,6 @@ int USBCardConfig::readBestConfig(struct pal_media_config *config,
 
         if (!profile_list_ch.empty()) {
             /*3. get best Sample Rate */
-            int target_sample_rate = media_config.sample_rate;
             if (uhqa && is_playback) {
                 for (auto ch_iter = profile_list_ch.begin(); ch_iter!= profile_list_ch.end(); ++ch_iter) {
                     if ((*ch_iter)->isRateSupported(SAMPLINGRATE_192K)) {
