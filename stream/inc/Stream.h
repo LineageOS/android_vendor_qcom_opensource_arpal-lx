@@ -184,6 +184,7 @@ protected:
     int mGainLevel;
     int mOrientation = 0;
     std::mutex mStreamMutex;
+    std::mutex mGetParamMutex;
     static std::mutex mBaseStreamMutex; //TBD change this. as having a single static mutex for all instances of Stream is incorrect. Replace
     static std::shared_ptr<ResourceManager> rm;
     struct modifier_kv *mModifiers;
@@ -324,6 +325,8 @@ public:
         mStreamMutex.unlock();
     };
     bool isMutexLockedbyRm() { return mutexLockedbyRm; }
+    void lockGetParamMutex() { mGetParamMutex.lock(); };
+    void unlockGetParamMutex() { mGetParamMutex.unlock(); };
     /* GetPalDevice only applies to Sound Trigger streams */
     std::shared_ptr<Device> GetPalDevice(Stream *streamHandle, pal_device_id_t dev_id);
     void setCachedState(stream_state_t state);
