@@ -2843,7 +2843,7 @@ void SpeakerProtection::updateSPcustomPayload()
     }
     stream = static_cast<Stream *>(activeStreams[0]);
     stream->getAssociatedSession(&session);
-    for (int ch = numberOfChannels; ch != 0; ch == ch >> CHANNELS_2) {
+    for (int ch = numberOfChannels; ch != 0; ch = ch >> CHANNELS_2) {
         if (ch == CHANNELS_4)
             tagid = MODULE_SP2;
         else {
@@ -2999,7 +2999,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
         goto exit;
     }
 
-    for (int ch = numberOfChannels; ch != 0; ch == ch >> CHANNELS_2) {
+    for (int ch = numberOfChannels; ch != 0; ch = ch >> CHANNELS_2) {
 
         if (ch == CHANNELS_4)
             tagid = MODULE_VI2;
