@@ -29,7 +29,7 @@
 
 /*
 Changes from Qualcomm Innovation Center are provided under the following license:
-Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the
@@ -124,6 +124,8 @@ public:
     int setECRef(Stream *s, std::shared_ptr<Device> rx_dev, bool is_enable) {return 0;};
 private:
     int payloadCalKeys(Stream * s, uint8_t **payload, size_t *size);
+    int payloadCKVs(uint8_t **payload, size_t *size, uint32_t channels);
+    int setVoiceCKVS(Stream * s);
     int payloadTaged(Stream * s, configType type, int tag, int device, int dir);
     int payloadSetVSID(Stream* s);
     int payloadSetChannelInfo(Stream * s, uint8_t **payload, size_t *size);
