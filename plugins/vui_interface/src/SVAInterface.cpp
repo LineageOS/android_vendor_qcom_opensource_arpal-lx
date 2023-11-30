@@ -453,9 +453,9 @@ int32_t SVAInterface::ParseSoundModel(
 
                 ALOGI("%s: %d: type = %u, size = %u, version = %u.%u",
                     __func__, __LINE__, big_sm->type, big_sm->size,
-                    big_sm->versionMajor, big_sm->versionMinor);
+                    big_sm->versionMajor & 0xFF, big_sm->versionMinor & 0xFF);
                 if (big_sm->type == ST_SM_ID_SVA_F_STAGE_GMM) {
-                    *first_stage_type = (st_module_type_t)big_sm->versionMajor;
+                    *first_stage_type = (st_module_type_t)(big_sm->versionMajor & 0xFF);
                     sm_size = big_sm->size;
                     sm_data = (uint8_t *)calloc(1, sm_size);
                     if (!sm_data) {
