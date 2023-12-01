@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,6 +59,7 @@ class PalRingBufferReader {
          : ringBuffer_(buffer),
            unreadSize_(0),
            readOffset_(0),
+           requestedSize_(0),
            state_(READER_DISABLED) {}
 
     ~PalRingBufferReader() {};
@@ -70,6 +71,7 @@ class PalRingBufferReader {
     size_t getUnreadSize();
     void reset();
     bool isEnabled() { return state_ == READER_ENABLED; }
+    bool waitForBuffers(uint32_t buffer_size);
 
     friend class PalRingBuffer;
     friend class StreamSoundTrigger;
@@ -79,6 +81,9 @@ class PalRingBufferReader {
     size_t unreadSize_;
     size_t readOffset_;
     pal_ring_buffer_reader_state state_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    uint32_t requestedSize_;
 };
 
 class PalRingBuffer {
