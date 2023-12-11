@@ -371,7 +371,9 @@ int32_t Stream::getEffectParameters(void *effect_query)
     }
     pal_param_payload *pal_param = (pal_param_payload *)effect_query;
     effect_pal_payload_t *effectPayload = (effect_pal_payload_t *)pal_param->payload;
+    mGetParamMutex.lock();
     status = session->getEffectParameters(this, effectPayload);
+    mGetParamMutex.unlock();
     if (status) {
        PAL_ERR(LOG_TAG, "getParameters failed with %d", status);
     }
@@ -836,9 +838,9 @@ int32_t Stream::getTimestamp(struct pal_session_time *stime)
         PAL_ERR(LOG_TAG, "Sound card offline, status %d", status);
         goto exit;
     }
-    rm->lockResourceManagerMutex();
+    mGetParamMutex.lock();
     status = session->getTimestamp(stime);
-    rm->unlockResourceManagerMutex();
+    mGetParamMutex.unlock();
     if (0 != status) {
         PAL_ERR(LOG_TAG, "Failed to get session timestamp status %d", status);
         if (errno == -ENETRESET &&
