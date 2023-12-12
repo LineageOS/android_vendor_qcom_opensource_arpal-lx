@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1132,7 +1132,7 @@ typedef struct pal_bt_tws_payload_s {
  * Description : Used by PAL client to customize
  *               the device related information.
 */
-#define PAL_MAX_CUSTOM_KEY_SIZE 128
+#define PAL_MAX_CUSTOM_KEY_SIZE 256
 typedef struct pal_device_custom_config {
     char custom_key[PAL_MAX_CUSTOM_KEY_SIZE];
 } pal_device_custom_config_t;
