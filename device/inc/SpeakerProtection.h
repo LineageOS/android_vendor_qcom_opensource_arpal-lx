@@ -120,6 +120,8 @@ protected :
     static int numberOfRequest;
     static struct pal_device_info vi_device;
     struct spDeviceInfo spDevInfo;
+    void *viCustomPayload;
+    size_t viCustomPayloadSize;
 
 private :
     static bool isSharedBE;
@@ -167,6 +169,7 @@ public:
     static void handleSPCallback (uint64_t hdl, uint32_t event_id, void *event_data,
                                   uint32_t event_size);
     void updateCpsCustomPayload(int miid);
+    int updateVICustomPayload(void *payload, size_t size);
     int getCpsDevNumber(std::string mixer);
     int32_t getCalibrationData(void **param);
     int32_t getFTMParameter(void **param);
