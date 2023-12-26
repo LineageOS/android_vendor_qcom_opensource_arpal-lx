@@ -7747,7 +7747,11 @@ int32_t ResourceManager::a2dpResume()
             (*sIter)->getAssociatedDevices(devices);
             if (devices.size() > 0) {
                 for (auto device: devices) {
-                    streamDevDisconnect.push_back({(*sIter), device->getSndDeviceId()});
+                    if ((device->getSndDeviceId() > PAL_DEVICE_OUT_MIN &&
+                        device->getSndDeviceId() < PAL_DEVICE_OUT_MAX) &&
+                        ((*sIter)->suspendedDevIds.size() == 1 /* non combo */)) {
+                        streamDevDisconnect.push_back({(*sIter), device->getSndDeviceId()});
+                    }
                 }
             }
             restoredStreams.push_back((*sIter));
