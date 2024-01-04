@@ -4112,6 +4112,11 @@
         <path name="va-mic-mono" />
     </path>
 
+    <path name="va-mic-dmic-lpi">
+        <ctl name="LPI Enable" value="1" />
+        <path name="va-mic-dmic" />
+    </path>
+
     <path name="headset-va-mic">
         <ctl name="VA_AIF1_CAP Mixer DEC0" value="1" />
         <ctl name="VA DEC0 MUX" value="SWR_MIC" />
