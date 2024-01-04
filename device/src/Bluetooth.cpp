@@ -1734,6 +1734,9 @@ int BtA2dp::startPlayback()
         // session will be restarted after suspend completion
         PAL_INFO(LOG_TAG, "a2dp start requested during suspend state");
         return -ENOSYS;
+    } else if (a2dpState == A2DP_STATE_DISCONNECTED) {
+        PAL_INFO(LOG_TAG, "a2dp start requested when a2dp source stream is failed to open");
+        return -ENOSYS;
     }
 
     if (a2dpState != A2DP_STATE_STARTED && !totalActiveSessionRequests) {
@@ -2288,6 +2291,9 @@ int32_t BtA2dp::getDeviceParameter(uint32_t param_id, void **param)
             ((a2dpState != A2DP_STATE_STARTED) && (param_bt_a2dp.a2dp_suspended == true))) {
             param_bt_a2dp.is_force_switch = true;
             PAL_DBG(LOG_TAG, "a2dp reconfig or a2dp suspended/a2dpState is not started");
+        } else if (totalActiveSessionRequests == 0) {
+            param_bt_a2dp.is_force_switch = true;
+            PAL_DBG(LOG_TAG, "Force BT device switch for no total active BT sessions");
         } else {
             param_bt_a2dp.is_force_switch = false;
         }

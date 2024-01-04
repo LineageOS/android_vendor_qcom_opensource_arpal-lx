@@ -371,7 +371,9 @@ int32_t Stream::getEffectParameters(void *effect_query)
     }
     pal_param_payload *pal_param = (pal_param_payload *)effect_query;
     effect_pal_payload_t *effectPayload = (effect_pal_payload_t *)pal_param->payload;
+    mGetParamMutex.lock();
     status = session->getEffectParameters(this, effectPayload);
+    mGetParamMutex.unlock();
     if (status) {
        PAL_ERR(LOG_TAG, "getParameters failed with %d", status);
     }
@@ -836,9 +838,9 @@ int32_t Stream::getTimestamp(struct pal_session_time *stime)
         PAL_ERR(LOG_TAG, "Sound card offline, status %d", status);
         goto exit;
     }
-    rm->lockResourceManagerMutex();
+    mGetParamMutex.lock();
     status = session->getTimestamp(stime);
-    rm->unlockResourceManagerMutex();
+    mGetParamMutex.unlock();
     if (0 != status) {
         PAL_ERR(LOG_TAG, "Failed to get session timestamp status %d", status);
         if (errno == -ENETRESET &&
@@ -1071,6 +1073,19 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                 goto exit;
             }
 
+            /* Special handling for aaudio usecase on Speaker
+             * Speaker device start needs to be called before graph_open
+             * to start VI feedback graph and send SP payload to AGM.
+             */
+            if (dev->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER && isMMap) {
+                status = dev->start();
+                if (0 != status) {
+                    PAL_ERR(LOG_TAG, "Speaker device start failed with status %d", status);
+                    dev->close();
+                    mDevices.pop_back();
+                    goto exit;
+                }
+            }
             status = session->connectSessionDevice(this, mStreamAttr->type, dev);
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "connectSessionDevice failed:%d", status);
@@ -1130,9 +1145,10 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
              */
 
             if ((currentState != STREAM_INIT && currentState != STREAM_STOPPED) ||
-                (currentState == STREAM_INIT &&
+                ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
                 ((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
-                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)) &&
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
                  isMMap)) {
                 status = mDevices[i]->stop();
                 if (0 != status) {
@@ -1245,17 +1261,18 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
         goto dev_close;
     }
 
-    /* Special handling for aaudio usecase on A2DP/BLE.
-     * For mmap usecase, if device switch happens to A2DP/BLE device
-     * before stream_start then start A2DP/BLE dev. since it won't be
+    /* Special handling for aaudio usecase on A2DP/BLE/Speaker.
+     * For mmap usecase, if device switch happens to A2DP/BLE/Speaker device
+     * before stream_start then start A2DP/BLE/speaker dev. since it won't be
      * started again as a part of pal_stream_start().
      */
 
     rm->lockGraph();
     if ((currentState != STREAM_INIT && currentState != STREAM_STOPPED) ||
-        (currentState == STREAM_INIT &&
+        ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
         ((dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
-        (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE)) &&
+        (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+        (dev->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
         isMMap)) {
         status = dev->start();
         if (0 != status) {
@@ -1547,6 +1564,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         *  for 2 secs causing audioserver to stuck for processing
         *  disconnection. Thus check for isCurDeviceA2dp and a2dp_suspended
         *  state to avoid unnecessary sleep over 2 secs.
+        *
+        *  Also check for combo devices for the stream and do not retry for
+        *  combo streams. This will ensure seamless playback over Speaker
+        *  even if BT device is not ready.
         */
         if ((newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
             (newDevices[i].id == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
@@ -1571,8 +1592,9 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                         break;
                     } else if (isCurDeviceA2dp) {
                         break;
+                    } else if (rm->isDeviceAvailable(newDevices, numDev, PAL_DEVICE_OUT_SPEAKER)) {
+                        break;
                     }
-
                     usleep(retryPeriodMs * 1000);
                 }
             }

@@ -192,7 +192,7 @@ int USB::configureUsb()
     builder->payloadUsbAudioConfig(&payload, &payloadSize, miid, &cfg);
     if (payloadSize) {
         status = updateCustomPayload(payload, payloadSize);
-        delete[] payload;
+        freeCustomPayload(&payload, &payloadSize);
         if (0 != status) {
             PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
             goto exit;
@@ -508,13 +508,13 @@ int USBCardConfig::getCapability(usb_usecase_type_t type,
         check = true;
 
     while (str_start != NULL) {
-        str_start = strstr(str_start, "Altset");
+        str_start = strstr(str_start, "Altset ");
         if ((str_start == NULL) || (check  && (str_start >= str_end))) {
             PAL_VERBOSE(LOG_TAG,"done parsing %s\n", str_start);
             break;
         }
         PAL_VERBOSE(LOG_TAG,"remaining string %s\n", str_start);
-        str_start += sizeof("Altset");
+        str_start += sizeof("Altset ");
         std::shared_ptr<USBDeviceConfig> usb_device_info(new USBDeviceConfig());
         if (!usb_device_info) {
             PAL_ERR(LOG_TAG, "error unable to create usb device config object");
@@ -524,7 +524,7 @@ int USBCardConfig::getCapability(usb_usecase_type_t type,
         usb_device_info->setType(type);
         /* Bit bit_width parsing */
         bit_width_start = strstr(str_start, "Format: ");
-        if (bit_width_start == NULL) {
+        if (bit_width_start == NULL || (check && (bit_width_start >= str_end))) {
             PAL_INFO(LOG_TAG, "Could not find bit_width string");
             continue;
         }
@@ -558,7 +558,7 @@ int USBCardConfig::getCapability(usb_usecase_type_t type,
 
         /* channels parsing */
         channel_start = strstr(str_start, CHANNEL_NUMBER_STR);
-        if (channel_start == NULL) {
+        if (channel_start == NULL || (check && (channel_start >= str_end))) {
             PAL_INFO(LOG_TAG, "could not find Channels string");
             continue;
         }
@@ -567,7 +567,7 @@ int USBCardConfig::getCapability(usb_usecase_type_t type,
 
         /* Sample rates parsing */
         rates_str_start = strstr(str_start, "Rates: ");
-        if (rates_str_start == NULL) {
+        if (rates_str_start == NULL || (check && (rates_str_start >= str_end))) {
             PAL_INFO(LOG_TAG, "cant find rates string");
             continue;
         }

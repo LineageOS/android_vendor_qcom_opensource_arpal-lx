@@ -510,24 +510,22 @@ Return<void> PAL::ipc_pal_stream_open(const hidl_vec<PalStreamAttributes>& attr_
     }
 
     if (devs_hidl.size()) {
-        PalDevice *dev_hidl = NULL;
         devices = (struct pal_device *)calloc (1,
                                       sizeof(struct pal_device) * noOfDevices);
         if (!devices) {
             ALOGE("Not enough memory for devices");
             goto exit;
         }
-        dev_hidl = (PalDevice *)devs_hidl.data();
+
         for ( cnt = 0; cnt < noOfDevices; cnt++) {
-             devices[cnt].id = (pal_device_id_t)dev_hidl->id;
-             devices[cnt].config.sample_rate = dev_hidl->config.sample_rate;
-             devices[cnt].config.bit_width = dev_hidl->config.bit_width;
-             devices[cnt].config.ch_info.channels = dev_hidl->config.ch_info.channels;
-             memcpy(&devices[cnt].config.ch_info.ch_map, &dev_hidl->config.ch_info.ch_map,
+             devices[cnt].id = (pal_device_id_t)devs_hidl[cnt].id;
+             devices[cnt].config.sample_rate = devs_hidl[cnt].config.sample_rate;
+             devices[cnt].config.bit_width = devs_hidl[cnt].config.bit_width;
+             devices[cnt].config.ch_info.channels = devs_hidl[cnt].config.ch_info.channels;
+             memcpy(&devices[cnt].config.ch_info.ch_map, &devs_hidl[cnt].config.ch_info.ch_map,
                     sizeof(uint8_t [64]));
              devices[cnt].config.aud_fmt_id =
-                                  (pal_audio_fmt_t)dev_hidl->config.aud_fmt_id;
-             dev_hidl =  (PalDevice *)(dev_hidl + sizeof(PalDevice));
+                                  (pal_audio_fmt_t)devs_hidl[cnt].config.aud_fmt_id;
         }
     }
 
@@ -825,6 +823,14 @@ Return<int32_t> PAL::ipc_pal_stream_set_param(const uint64_t streamHandle, uint3
 {
     int32_t ret = 0;
     pal_param_payload *param_payload;
+    if (1 != paramPayload.size()) {
+        ALOGE("Invalid vector size");
+        return -EINVAL;
+    }
+    if (paramPayload.data()->size > paramPayload.data()->payload.size()) {
+        ALOGE("Invalid payload size");
+        return -EINVAL;
+    }
     param_payload = (pal_param_payload *)calloc (1,
                                     sizeof(pal_param_payload) + paramPayload.data()->size);
     if (!param_payload) {
@@ -873,25 +879,28 @@ Return<int32_t> PAL::ipc_pal_stream_set_device(const uint64_t streamHandle,
     struct pal_device *devices = NULL;
     int cnt = 0;
     int32_t ret = -ENOMEM;
+
+    if (noOfDevices > devs_hidl.size()) {
+        ALOGE("Invalid noOfDevices");
+        return -EINVAL;
+    }
     if (devs_hidl.size()) {
-        PalDevice *dev_hidl = NULL;
         devices = (struct pal_device *)calloc (1,
                                     sizeof(struct pal_device) * noOfDevices);
         if (!devices) {
             ALOGE("Not enough memory for devices");
             goto exit;
         }
-        dev_hidl = (PalDevice *)devs_hidl.data();
+
         for (cnt = 0; cnt < noOfDevices; cnt++) {
-            devices[cnt].id = (pal_device_id_t)dev_hidl->id;
-            devices[cnt].config.sample_rate = dev_hidl->config.sample_rate;
-            devices[cnt].config.bit_width = dev_hidl->config.bit_width;
-            devices[cnt].config.ch_info.channels = dev_hidl->config.ch_info.channels;
-            memcpy(&devices[cnt].config.ch_info.ch_map, &dev_hidl->config.ch_info.ch_map,
+            devices[cnt].id = (pal_device_id_t)devs_hidl[cnt].id;
+            devices[cnt].config.sample_rate = devs_hidl[cnt].config.sample_rate;
+            devices[cnt].config.bit_width = devs_hidl[cnt].config.bit_width;
+            devices[cnt].config.ch_info.channels = devs_hidl[cnt].config.ch_info.channels;
+            memcpy(&devices[cnt].config.ch_info.ch_map, &devs_hidl[cnt].config.ch_info.ch_map,
                    sizeof(uint8_t [64]));
             devices[cnt].config.aud_fmt_id =
-                                (pal_audio_fmt_t)dev_hidl->config.aud_fmt_id;
-            dev_hidl = (PalDevice *)(dev_hidl + sizeof(PalDevice));
+                                (pal_audio_fmt_t)devs_hidl[cnt].config.aud_fmt_id;
         }
     }
 
@@ -915,6 +924,14 @@ Return<int32_t> PAL::ipc_pal_stream_set_volume(const uint64_t streamHandle,
     struct pal_volume_data *volume = nullptr;
     uint32_t noOfVolPairs = vol.data()->noOfVolPairs;
     int32_t ret = -ENOMEM;
+    if (1 != vol.size()) {
+        ALOGE("Invalid vol pairs");
+        return -EINVAL;
+    }
+    if (noOfVolPairs > vol.data()->volPair.size()) {
+        ALOGE("Invalid vol vector size");
+        return -EINVAL;
+    }
     volume = (struct pal_volume_data *) calloc(1,
                                         sizeof(struct pal_volume_data) +
                                         noOfVolPairs * sizeof(pal_channel_vol_kv));

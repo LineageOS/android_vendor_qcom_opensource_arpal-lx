@@ -2182,12 +2182,17 @@ int SessionAlsaCompress::setParameters(Stream *s __unused, int tagId, uint32_t p
                 goto exit;
             }
 
-            builder->payloadVolumeConfig(&alsaParamData, &alsaPayloadSize, miid, vdata);
+            if (vdata->no_of_volpair == 2 && sAttr.out_media_config.ch_info.channels == 2) {
+                builder->payloadMultichVolumemConfig(&alsaParamData, &alsaPayloadSize, miid, vdata);
+            } else {
+                builder->payloadVolumeConfig(&alsaParamData, &alsaPayloadSize, miid, vdata);
+            }
+
             if (alsaPayloadSize) {
                 status = SessionAlsaUtils::setMixerParameter(mixer, device,
                                                alsaParamData, alsaPayloadSize);
                 PAL_INFO(LOG_TAG, "mixer set volume config status=%d\n", status);
-                delete [] alsaParamData;
+                freeCustomPayload(&alsaParamData, &alsaPayloadSize);
                 alsaPayloadSize = 0;
             }
         }
