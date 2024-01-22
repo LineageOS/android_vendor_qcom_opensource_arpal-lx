@@ -7149,6 +7149,252 @@ void ResourceManager::getBackEndNames(
         PAL_DBG(LOG_TAG, "getBackEndNames (TX): %s", txBackEndNames[i].second.c_str());
 }
 
+bool ResourceManager::isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId)
+{
+    struct pal_stream_attributes sAttr;
+    int status;
+    bool ret = true;
+
+    if (s == NULL || !isValidDevId(newDeviceId)) {
+        PAL_ERR(LOG_TAG, "Invalid input\n");
+        return false;
+    }
+
+    status = s->getStreamAttributes(&sAttr);
+    if (status) {
+        PAL_ERR(LOG_TAG,"getStreamAttributes Failed \n");
+        return false;
+    }
+
+    switch (sAttr.type) {
+    case PAL_STREAM_ULTRASOUND:
+        switch (newDeviceId) {
+        case PAL_DEVICE_OUT_HANDSET:
+        case PAL_DEVICE_OUT_SPEAKER:
+            ret = true;
+            /*
+             * if upd shares BE with handset, while handset doesn't
+             * share BE with speaker, then during device switch
+             * between handset and speaker, upd should still stay
+             * on handset
+             */
+            if (listAllBackEndIds[PAL_DEVICE_OUT_HANDSET].second !=
+                listAllBackEndIds[PAL_DEVICE_OUT_SPEAKER].second)
+                ret = false;
+            break;
+        default:
+            ret = false;
+            break;
+        }
+        break;
+    default:
+        if (!isValidStreamId(sAttr.type)) {
+            PAL_DBG(LOG_TAG, "Invalid stream type\n");
+            return false;
+        }
+        ret = true;
+        break;
+    }
+
+    if (!ret) {
+        PAL_DBG(LOG_TAG, "Skip switching stream %d (%s) to device %d (%s)\n",
+                sAttr.type, streamNameLUT.at(sAttr.type).c_str(),
+                newDeviceId, deviceNameLUT.at(newDeviceId).c_str());
+    }
+
+    return ret;
+}
+
+/*
+ * Due to compatibility challenges, some streams may not switch to the new device
+ * during device switching.
+ * Example: In the shared backend configuration, the UPD stream prevents switching
+ * to devices other than the handset or speaker.
+ * In this function, we compare the list of streams in streamDevDisconnectList
+ * to the streams that are currently active on that device.
+ * The streamsSkippingSwitch list consists of any stream that is present in the
+ * active streams list but missing from the list of disconnecting streams.
+ */
+int ResourceManager::findActiveStreamsNotInDisconnectList(
+        std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnectList,
+        std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch)
+{
+    std::set<Stream *> disconnectingStreams;
+    std::vector <std::tuple<Stream *, uint32_t>>::iterator iter;
+    std::shared_ptr<Device> devObj = nullptr;
+    struct pal_device dAttr;
+    std::vector<Stream*> activeStreams;
+    std::vector<Stream*>::iterator sIter;
+    int ret = 0;
+
+    if (streamDevDisconnectList.size() == 0) {
+        PAL_DBG(LOG_TAG, "Empty stream disconnect list");
+        return ret;
+    }
+
+    /*
+     * To facilitate comparisons against the list of active streams simpler,
+     * construct a set of streams that are disconnecting from streamDevDisconnectList
+     */
+    for (iter = streamDevDisconnectList.begin();
+            iter != streamDevDisconnectList.end(); iter++) {
+        disconnectingStreams.insert(std::get<0>(*iter));
+    }
+
+    /*
+     * Instance of a device object from which the active stream list is retrieved.
+     * It's the same device from which streams in 'disconnectingStreams' are
+     * disconnecting.
+     */
+    dAttr.id = (pal_device_id_t)std::get<1>(streamDevDisconnectList[0]);
+    devObj = Device::getInstance(&dAttr, rm);
+    if (devObj == nullptr) {
+        PAL_DBG(LOG_TAG, "Error getting device ( %s ) instance",
+                deviceNameLUT.at(dAttr.id).c_str());
+        return ret;
+    }
+
+    mActiveStreamMutex.lock();
+
+    ret = rm->getActiveStream_l(activeStreams, devObj);
+    if (ret)
+        goto done;
+
+    PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
+            deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
+
+    for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
+        if (disconnectingStreams.find(*sIter) != disconnectingStreams.end())
+            continue;
+
+        /*
+         * Stream that is present in the active streams list but not in the list
+         * of disconnecting streams, contribute to the streamsSkippingSwitch list.
+         */
+        streamsSkippingSwitch.push_back({(*sIter), dAttr.id});
+    }
+
+done:
+    mActiveStreamMutex.unlock();
+    return ret;
+}
+
+/*
+ * For shared backend setup, it's crucial to restore the correct device configuration
+ * for the UPD stream.
+ *
+ * Example 1: As music is being played on the speaker, the UPD stream begins (on
+ * the speaker). The Music stream switches to the new device when a wired headset
+ * or a BT device is connected. In this scenario, the UPD stream will be the only
+ * active stream on Speaker device. Thus, we must ensure to switch it from Speaker
+ * (NLPI) to Handset(LPI).
+ *
+ * Example 2: During a voice call concurrency with the UPD stream, when a wired
+ * headset or a BT device is connected, The voice call stream switches to the new
+ * device and the UPD continues to run on the handset device. In this case, we
+ * configure the handset device to make it compatible to UPD only stream.
+ */
+int ResourceManager::restoreDeviceConfigForUPD(
+        std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnect,
+        std::vector <std::tuple<Stream *, struct pal_device *>> &StreamDevConnect,
+        std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch)
+{
+    int ret = 0;
+    static struct pal_device dAttr; //struct reference is passed in StreamDevConnect.
+    struct pal_device curDevAttr = {};
+    std::shared_ptr<Device> hs_dev = nullptr;
+    uint32_t devId;
+    Stream *s;
+    struct pal_stream_attributes sAttr;
+
+    if (rm->IsDedicatedBEForUPDEnabled() || rm->IsVirtualPortForUPDEnabled()) {
+        PAL_DBG(LOG_TAG, "This UPD config requires no restoration");
+        return ret;
+    }
+
+    if (streamDevDisconnect.size() == 0) {
+        PAL_DBG(LOG_TAG, "Empty disconnect streams list. UPD backend needs no update");
+        return ret;
+    }
+
+    /*
+     * The streams that are skipping the switch to the new device are obtained
+     * using the findActiveStreamsNotInDisconnectList method if not obtained via
+     * the isValidDevicSwitchForStream path.
+     */
+    if (streamsSkippingSwitch.size() == 0) {
+        ret = findActiveStreamsNotInDisconnectList(streamDevDisconnect,
+                                                   streamsSkippingSwitch);
+        if (ret)
+            goto exit_on_error;
+    }
+
+    /*
+     * The UPD stream is allowed to continue running on the device it is configured
+     * for if the streamsSkippingSwitch size is greater than 1.
+     */
+    if (streamsSkippingSwitch.size() == 0 || streamsSkippingSwitch.size() > 1) {
+        PAL_DBG(LOG_TAG, "UPD backend needs no update");
+        return ret;
+    }
+
+    s = std::get<0>(streamsSkippingSwitch[0]);
+    devId = (pal_device_id_t)std::get<1>(streamsSkippingSwitch[0]);
+
+    ret = s->getStreamAttributes(&sAttr);
+    if (ret)
+        goto exit_on_error;
+
+    if (sAttr.type != PAL_STREAM_ULTRASOUND) {
+        PAL_DBG(LOG_TAG, "Not a UPD stream. No UPD backend to update");
+        return ret;
+    }
+
+    memset(&dAttr, 0, sizeof(struct pal_device));
+
+    dAttr.id = PAL_DEVICE_OUT_HANDSET;
+
+    ret = rm->getDeviceConfig(&dAttr, &sAttr);
+    if (ret) {
+        PAL_ERR(LOG_TAG, "Error getting deviceConfig");
+        goto exit_on_error;
+    }
+
+    hs_dev = Device::getObject(PAL_DEVICE_OUT_HANDSET);
+    if (hs_dev)
+        hs_dev->getDeviceAttributes(&curDevAttr);
+
+    if (!doDevAttrDiffer(&dAttr, &curDevAttr)) {
+        PAL_DBG(LOG_TAG, "No need to update device attr for UPD");
+        return ret;
+    }
+
+    /*
+     * We restore the device configuration appropriately if UPD is the only stream
+     * skipping the switch to the new device and will be the only active stream
+     * still present on the current device.
+     *
+     * If the current device is Speaker, the UPD stream is switched from speaker
+     * (NLPI) to handset (LPI).
+     *
+     * If the current device is handset, the device is configured to limit it's
+     * compatibility to UPD stream only.
+     */
+    PAL_DBG(LOG_TAG, "Skipping UPD stream switch to new device. %s",
+            (devId == PAL_DEVICE_OUT_SPEAKER) ?
+            "Restoring UPD from Speaker to Handset device." :
+            "Restoring UPD updating device config for Handset device.");
+
+    streamDevDisconnect.push_back(streamsSkippingSwitch[0]);
+    StreamDevConnect.push_back({s, &dAttr});
+
+    return ret;
+
+exit_on_error:
+    PAL_ERR(LOG_TAG, "Error updating UPD backend");
+    return ret;
+}
+
 int32_t ResourceManager::streamDevDisconnect(std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnectList){
     int status = 0;
     std::vector <std::tuple<Stream *, uint32_t>>::iterator sIter;
@@ -7486,7 +7732,7 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
 {
     int status = 0;
     std::vector <Stream *> activeStreams;
-    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect;
+    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect, streamsSkippingSwitch;
     std::vector <std::tuple<Stream *, struct pal_device *>> streamDevConnect;
     std::vector<Stream*>::iterator sIter;
 
@@ -7506,10 +7752,24 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
 
     // create dev switch vectors
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
+        if (!isValidDeviceSwitchForStream((*sIter), newDevAttr->id)) {
+            streamsSkippingSwitch.push_back({(*sIter), inDev->getSndDeviceId()});
+            continue;
+        }
+
         streamDevDisconnect.push_back({(*sIter), inDev->getSndDeviceId()});
         streamDevConnect.push_back({(*sIter), newDevAttr});
     }
+
     mActiveStreamMutex.unlock();
+
+    status = rm->restoreDeviceConfigForUPD(streamDevDisconnect, streamDevConnect,
+                                           streamsSkippingSwitch);
+    if (status) {
+        PAL_DBG(LOG_TAG, "Error restoring device config for UPD");
+        return status;
+    }
+
     status = streamDevSwitch(streamDevDisconnect, streamDevConnect);
     if (!status) {
         mActiveStreamMutex.lock();
@@ -7535,7 +7795,7 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
                                            std::vector<Stream*> prevActiveStreams)
 {
     int status = 0;
-    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect;
+    std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect, streamsSkippingSwitch;
     std::vector <std::tuple<Stream *, struct pal_device *>> streamDevConnect;
     std::vector<Stream*>::iterator sIter;
 
@@ -7548,11 +7808,25 @@ int32_t ResourceManager::forceDeviceSwitch(std::shared_ptr<Device> inDev,
     mActiveStreamMutex.lock();
     for (sIter = prevActiveStreams.begin(); sIter != prevActiveStreams.end(); sIter++) {
         if (((*sIter) != NULL) && isStreamActive((*sIter), mActiveStreams)) {
+            if (!isValidDeviceSwitchForStream((*sIter), newDevAttr->id)) {
+                streamsSkippingSwitch.push_back({(*sIter), inDev->getSndDeviceId()});
+                continue;
+            }
+
             streamDevDisconnect.push_back({(*sIter), inDev->getSndDeviceId()});
             streamDevConnect.push_back({(*sIter), newDevAttr});
         }
     }
+
     mActiveStreamMutex.unlock();
+
+    status = rm->restoreDeviceConfigForUPD(streamDevDisconnect, streamDevConnect,
+                                           streamsSkippingSwitch);
+    if (status) {
+        PAL_DBG(LOG_TAG, "Error restoring device config for UPD");
+        return status;
+    }
+
     status = streamDevSwitch(streamDevDisconnect, streamDevConnect);
     if (!status) {
         mActiveStreamMutex.lock();
@@ -7652,6 +7926,14 @@ bool ResourceManager::isValidDevId(int deviceId)
         return true;
 
     return false;
+}
+
+bool ResourceManager::isValidStreamId(int streamId)
+{
+    if (streamId < PAL_STREAM_LOW_LATENCY || streamId >= PAL_STREAM_MAX)
+        return false;
+
+    return true;
 }
 
 bool ResourceManager::isOutputDevId(int deviceId)
@@ -11810,8 +12092,8 @@ void ResourceManager::restoreDevice(std::shared_ptr<Device> dev)
         PAL_ERR(LOG_TAG, "invalid dev cannot restore device");
         goto exit;
     }
-
-    if (isPluginPlaybackDevice((pal_device_id_t)dev->getSndDeviceId())) {
+    if (isPluginPlaybackDevice((pal_device_id_t)dev->getSndDeviceId()) &&
+        (dev->getDeviceCount() != 0)) {
         PAL_ERR(LOG_TAG, "don't restore device for usb/3.5 hs playback");
         goto exit;
     }
