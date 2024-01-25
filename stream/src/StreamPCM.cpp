@@ -1180,6 +1180,10 @@ int32_t StreamPCM::mute(bool state)
 int32_t StreamPCM::pause_l()
 {
     int32_t status = 0;
+    uint8_t volSize = 0;
+    struct pal_vol_ctrl_ramp_param ramp_param;
+    struct pal_volume_data *voldata = NULL;
+    struct pal_volume_data *volume = NULL;
     std::unique_lock<std::mutex> pauseLock(pauseMutex);
     PAL_DBG(LOG_TAG, "Enter. session handle - %pK", session);
     if (rm->cardState == CARD_STATUS_OFFLINE) {
@@ -1192,6 +1196,45 @@ int32_t StreamPCM::pause_l()
     if (isPaused) {
         PAL_INFO(LOG_TAG, "Stream is already paused");
     } else {
+        //caching the volume before setting it to 0
+        voldata = (struct pal_volume_data *)calloc(1, (sizeof(uint32_t) +
+                          (sizeof(struct pal_channel_vol_kv) * (0xFFFF))));
+        if (!voldata) {
+            status = -ENOMEM;
+            goto exit;
+        }
+
+        status = this->getVolumeData(voldata);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG,"getVolumeData Failed \n");
+            goto exit;
+        }
+        /* set ramp period to 0 */
+        ramp_param.ramp_period_ms = 0;
+        status = session->setParameters(this, TAG_STREAM_VOLUME, PAL_PARAM_ID_VOLUME_CTRL_RAMP, &ramp_param);
+        if (0 != status)
+            PAL_ERR(LOG_TAG, "session setParam for vol ctrl ramp failed with status %d", status);
+
+        volSize = sizeof(uint32_t) + (sizeof(struct pal_channel_vol_kv) * (voldata->no_of_volpair));
+        status = 0; /* not fatal , reset status to 0 */
+        /* set volume to 0 */
+        volume = (struct pal_volume_data *)calloc(1, volSize);
+        if (!volume) {
+            PAL_ERR(LOG_TAG, "Failed to allocate mem for volume");
+            status = -ENOMEM;
+            goto exit;
+        }
+        ar_mem_cpy(volume, volSize, voldata, volSize);
+        for (int32_t i = 0; i < (voldata->no_of_volpair); i++) {
+            volume->volume_pair[i].vol = 0x0;
+        }
+        setVolume(volume);
+        ar_mem_cpy(mVolumeData, volSize, voldata, volSize);
+        free(volume);
+        free(voldata);
+        volume = NULL;
+        voldata = NULL;
+
         status = session->setConfig(this, MODULE, PAUSE_TAG);
         if (0 != status) {
            PAL_ERR(LOG_TAG, "session setConfig for pause failed with status %d",
