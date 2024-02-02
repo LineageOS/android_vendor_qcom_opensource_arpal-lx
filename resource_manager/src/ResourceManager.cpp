@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -6314,7 +6314,15 @@ void ResourceManager::getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream
         if (backEndName == listAllBackEndIds[i].second) {
             dev = Device::getObject((pal_device_id_t) i);
             if(dev) {
-                getActiveStream_l(activeStreams, dev);
+                std::list<Stream*>::iterator it;
+                for(it = mActiveStreams.begin(); it != mActiveStreams.end(); it++) {
+                    std::vector <std::shared_ptr<Device>> devices;
+                    (*it)->getAssociatedDevices(devices);
+                    typename std::vector<std::shared_ptr<Device>>::iterator result =
+                             std::find(devices.begin(), devices.end(), dev);
+                    if (result != devices.end())
+                        activeStreams.push_back(*it);
+                }
                 PAL_DBG(LOG_TAG, "got dev %d active streams on dev is %zu", i, activeStreams.size() );
                 for (int j=0; j < activeStreams.size(); j++) {
                     /*do not add if this is a dup*/
