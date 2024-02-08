@@ -916,9 +916,6 @@
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
                 </custom-config>
-                <custom-config key="44.1K">
-                    <samplerate>44100</samplerate>
-                </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
                 </custom-config>
@@ -929,8 +926,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -940,6 +946,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
             <usecase>
@@ -948,8 +975,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -959,6 +995,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
             <usecase>
@@ -967,8 +1024,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -978,6 +1044,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
         </out-device>
@@ -1004,9 +1091,6 @@
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
                 </custom-config>
-                <custom-config key="44.1K">
-                    <samplerate>44100</samplerate>
-                </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
                 </custom-config>
@@ -1017,8 +1101,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -1028,6 +1121,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
             <usecase>
@@ -1036,8 +1150,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -1047,6 +1170,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
             <usecase>
@@ -1055,8 +1199,17 @@
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
                 </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
                 <custom-config key="16K">
                     <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
                 </custom-config>
                 <custom-config key="32K">
                     <samplerate>32000</samplerate>
@@ -1066,6 +1219,27 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
                 </custom-config>
             </usecase>
         </out-device>
