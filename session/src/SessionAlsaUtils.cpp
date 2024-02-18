@@ -28,7 +28,8 @@
 *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -2321,6 +2322,26 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
                         goto exit;
                     }
                 }
+
+                if (strcmp(dAttr.custom_config.custom_key, "mspp") &&
+                    dAttr.id == PAL_DEVICE_OUT_SPEAKER &&
+                    ((sAttr.type == PAL_STREAM_LOW_LATENCY) ||
+                    (sAttr.type == PAL_STREAM_ULTRA_LOW_LATENCY) ||
+                    (sAttr.type == PAL_STREAM_PCM_OFFLOAD) ||
+                    (sAttr.type == PAL_STREAM_DEEP_BUFFER) ||
+                    (sAttr.type == PAL_STREAM_COMPRESSED))) {
+                    pal_param_device_rotation_t rotation;
+                    rotation.rotation_type = rm->mOrientation == ORIENTATION_270 ?
+                                            PAL_SPEAKER_ROTATION_RL : PAL_SPEAKER_ROTATION_LR;
+                    status = sess->handleDeviceRotation(streamHandle, rotation.rotation_type,
+                                                    pcmDevIds.at(0), mixerHandle, builder,
+                                                    aifBackEndsToConnect);
+                    if (status != 0) {
+                        PAL_ERR(LOG_TAG,"handleDeviceRotation failed");
+                        status = 0; //rotaton setting failed is not fatal.
+                    }
+                }
+
             } else {
                 PAL_ERR(LOG_TAG, "invalid session audio object");
                 status = -EINVAL;
