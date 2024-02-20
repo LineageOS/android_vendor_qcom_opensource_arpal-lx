@@ -544,7 +544,7 @@ int32_t pal_stream_set_volume(pal_stream_handle_t *stream_handle,
         return status;
     }
 
-    if (!stream_handle || !volume) {
+    if (!stream_handle || !volume || volume->no_of_volpair > PAL_MAX_CHANNELS_SUPPORTED) {
         status = -EINVAL;
         PAL_ERR(LOG_TAG,"Invalid input parameters status %d", status);
         return status;

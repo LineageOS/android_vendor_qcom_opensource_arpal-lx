@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -3671,6 +3671,7 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
                 memcpy(spThrshConf, data, sizeof(param_id_cps_lpass_swr_thresholds_cfg_t) +
                                 (sizeof(cps_reg_wr_values_t) * data->num_spkr));
             }
+        break;
         case PARAM_ID_SP_VI_CH_ENABLE:
             {
                 param_id_sp_vi_ch_enable_t *spConf = NULL;
@@ -3694,6 +3695,7 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
                     spConf->chan_en_flag[i] = data->chan_en_flag[i];
                 }
             }
+        break;
         case PARAM_ID_SP_RX_CH_ENABLE:
             {
                 param_id_sp_rx_ch_enable_t *spConf = NULL;
