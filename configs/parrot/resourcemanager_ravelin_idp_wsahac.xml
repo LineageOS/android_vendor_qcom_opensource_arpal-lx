@@ -125,6 +125,22 @@
                 </custom-config>
             </usecase>
             <usecase>
+                <name>PAL_STREAM_VOICE_RECOGNITION</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
                 <name>PAL_STREAM_VOIP_TX</name>
                 <priority>2</priority>
                 <custom-config key="8K">
@@ -209,6 +225,22 @@
                 </custom-config>
             </usecase>
             <usecase>
+                <name>PAL_STREAM_VOICE_RECOGNITION</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
                 <name>PAL_STREAM_VOIP_TX</name>
                 <priority>2</priority>
                 <custom-config key="8K">
@@ -260,6 +292,22 @@
             </usecase>
             <usecase>
                 <name>PAL_STREAM_DEEP_BUFFER</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_VOICE_RECOGNITION</name>
                 <priority>3</priority>
                 <custom-config key="8K">
                     <samplerate>8000</samplerate>
@@ -387,6 +435,10 @@
             <usecase>
                 <name>PAL_STREAM_ULTRA_LOW_LATENCY</name>
             </usecase>
+            <ec_rx_device>
+                <id>PAL_DEVICE_OUT_USB_DEVICE</id>
+                <id>PAL_DEVICE_OUT_USB_HEADSET</id>
+            </ec_rx_device>
         </in-device>
         <in-device>
             <id>PAL_DEVICE_IN_FM_TUNER</id>
@@ -861,6 +913,169 @@
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <priority>1</priority>
             </usecase>
+            <usecase>
+                <name>PAL_STREAM_VOIP_RX</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_DEEP_BUFFER</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_PCM_OFFLOAD</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_COMPRESSED</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
+            </usecase>
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_USB_HEADSET</id>
@@ -872,6 +1087,169 @@
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
                 <priority>1</priority>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_VOIP_RX</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_DEEP_BUFFER</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_PCM_OFFLOAD</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_COMPRESSED</name>
+                <priority>3</priority>
+                <custom-config key="8K">
+                    <samplerate>8000</samplerate>
+                </custom-config>
+                <custom-config key="11K">
+                    <samplerate>11025</samplerate>
+                </custom-config>
+                <custom-config key="16K">
+                    <samplerate>16000</samplerate>
+                </custom-config>
+                <custom-config key="22K">
+                    <samplerate>22050</samplerate>
+                </custom-config>
+                <custom-config key="24K">
+                    <samplerate>24000</samplerate>
+                </custom-config>
+                <custom-config key="32K">
+                    <samplerate>32000</samplerate>
+                </custom-config>
+                <custom-config key="44.1K">
+                    <samplerate>44100</samplerate>
+                </custom-config>
+                <custom-config key="48K">
+                    <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="64K">
+                    <samplerate>64000</samplerate>
+                </custom-config>
+                <custom-config key="88.2K">
+                    <samplerate>88200</samplerate>
+                </custom-config>
+                <custom-config key="96K">
+                    <samplerate>96000</samplerate>
+                </custom-config>
+                <custom-config key="176.4K">
+                    <samplerate>176400</samplerate>
+                </custom-config>
+                <custom-config key="192K">
+                    <samplerate>192000</samplerate>
+                </custom-config>
+                <custom-config key="352.8K">
+                    <samplerate>352800</samplerate>
+                </custom-config>
+                <custom-config key="384K">
+                    <samplerate>384000</samplerate>
+                </custom-config>
             </usecase>
         </out-device>
         <out-device>
