@@ -2349,6 +2349,26 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             return 0;
 
         }
+
+        case PAL_PARAM_ID_VOLUME_CTRL_RAMP:
+        {
+            struct pal_vol_ctrl_ramp_param *rampParam = (struct pal_vol_ctrl_ramp_param *)payload;
+            status = SessionAlsaUtils::getModuleInstanceId(mixer, device,
+                               rxAifBackEnds[0].second.data(), tagId, &miid);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", tagId, status);
+                return status;
+            }
+            builder->payloadVolumeCtrlRamp(&paramData, &paramSize,
+                 miid, rampParam->ramp_period_ms);
+            if (paramSize) {
+                status = SessionAlsaUtils::setMixerParameter(mixer, device,
+                                               paramData, paramSize);
+                PAL_INFO(LOG_TAG, "mixer set vol ctrl ramp status=%d\n", status);
+                freeCustomPayload(&paramData, &paramSize);
+            }
+            return 0;
+        }
         default:
             status = -EINVAL;
             PAL_ERR(LOG_TAG, "Unsupported param id %u status %d", param_id, status);
