@@ -803,6 +803,8 @@ int SessionAlsaPcm::populateECMFCPayload(Stream *s, size_t *payloadSize, uint8_t
                                 txAifBackEnds[0].second.data(), TAG_DEVICEPP_EC_MFC, &miid);
     if (status != 0) {
         PAL_ERR(LOG_TAG,"getModuleInstanceId failed\n");
+        /* Returning success status, as usecase will fail if tagged module is not present in ACDB */
+        status = 0;
         goto exit;
     }
 
@@ -1105,7 +1107,9 @@ int SessionAlsaPcm::start(Stream * s)
                     }
                 }
 
-                if (sAttr.type == PAL_STREAM_VOIP_TX) {
+                if ((sAttr.type == PAL_STREAM_VOIP_TX) ||
+                    ((sAttr.type == PAL_STREAM_DEEP_BUFFER) &&
+                     (sAttr.direction == PAL_AUDIO_INPUT))) {
                     status = populateECMFCPayload(s, &payloadSize, &payload);
                     if (status != 0) {
                         PAL_ERR(LOG_TAG, "populate EC MFC payload failed");
@@ -1906,13 +1910,15 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
         }
     }
 
-    if (streamType == PAL_STREAM_VOIP_TX) {
-        status = streamHandle->getStreamAttributes(&sAttr);
-        if (status != 0) {
-            PAL_ERR(LOG_TAG, "stream get attributes failed");
-            goto exit;
-        }
+    status = streamHandle->getStreamAttributes(&sAttr);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG, "stream get attributes failed");
+        goto exit;
+    }
 
+    if ((streamType == PAL_STREAM_VOIP_TX) ||
+        ((streamType == PAL_STREAM_DEEP_BUFFER) &&
+         (sAttr.direction == PAL_AUDIO_INPUT))) {
         status = populateECMFCPayload(streamHandle, &payloadSize, &payload);
         if (status != 0) {
             PAL_ERR(LOG_TAG, "Failed to populate EC MFC Payload");
