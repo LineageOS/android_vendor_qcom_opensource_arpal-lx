@@ -77,9 +77,10 @@
 #define PAL_DBG(LOG_TAG,...)  PAL_INFO(LOG_TAG,__VA_ARGS__)
 #endif
 
-#define ST_DEFERRED_STOP_DEALY_MS (1000)
-#define ST_MODEL_TYPE_SHIFT       (16)
-#define ST_MAX_FSTAGE_CONF_LEVEL  (100)
+#define ST_DEFERRED_STOP_DELAY_MS     (1000)
+#define ST_LAB_DEFERRED_STOP_DELAY_MS (10000)
+#define ST_MODEL_TYPE_SHIFT           (16)
+#define ST_MAX_FSTAGE_CONF_LEVEL      (100)
 
 ST_DBG_DECLARE(static int lab_cnt = 0);
 
@@ -384,6 +385,7 @@ int32_t StreamSoundTrigger::read(struct pal_buffer* buf) {
         lab_cnt++;
     }
     if (cur_state_ == st_buffering_ && !this->force_nlpi_vote) {
+        CancelDelayedStop();
         rm->voteSleepMonitor(this, true, true);
         this->force_nlpi_vote = true;
     }
@@ -958,8 +960,14 @@ void StreamSoundTrigger::TimerThread(StreamSoundTrigger& st_stream) {
         if (st_stream.exit_timer_thread_)
             break;
 
-        st_stream.timer_wait_cond_.wait_for(lck,
-            std::chrono::milliseconds(ST_DEFERRED_STOP_DEALY_MS));
+        if (st_stream.GetCurrentStateId() == ST_STATE_BUFFERING &&
+            !st_stream.second_stage_processing_) {
+            st_stream.timer_wait_cond_.wait_for(lck,
+                std::chrono::milliseconds(ST_LAB_DEFERRED_STOP_DELAY_MS));
+        } else {
+            st_stream.timer_wait_cond_.wait_for(lck,
+                std::chrono::milliseconds(ST_DEFERRED_STOP_DELAY_MS));
+        }
 
         if (!st_stream.timer_stop_waiting_ && !st_stream.exit_timer_thread_) {
             st_stream.timer_mutex_.unlock();
@@ -1895,6 +1903,8 @@ int32_t StreamSoundTrigger::notifyClient(bool detection) {
     ChronoSteadyClock_t notify_time;
     uint64_t total_process_duration = 0;
     bool lock_status = false;
+
+    PostDelayedStop();
 
     status = GenerateCallbackEvent(&rec_event, &event_size,
                                                 detection);
@@ -3737,9 +3747,6 @@ int32_t StreamSoundTrigger::StActive::ProcessEvent(
             if (!st_stream_.rec_config_->capture_requested &&
                 st_stream_.engines_.size() == 1) {
                 TransitTo(ST_STATE_DETECTED);
-                if (st_stream_.GetCurrentStateId() == ST_STATE_DETECTED) {
-                    st_stream_.PostDelayedStop();
-                }
             } else {
                 if (st_stream_.engines_.size() > 1)
                     st_stream_.second_stage_processing_ = true;
@@ -4432,9 +4439,6 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 if (st_stream_.st_info_->GetNotifySecondStageFailure()) {
                     st_stream_.rejection_notified_ = true;
                     st_stream_.notifyClient(false);
-                    if (!st_stream_.rec_config_->capture_requested &&
-                         st_stream_.GetCurrentStateId() == ST_STATE_BUFFERING)
-                    st_stream_.PostDelayedStop();
                 } else {
                     PAL_DBG(LOG_TAG, "Notification for second stage rejection is disabled");
                     for (auto& eng : st_stream_.engines_) {
@@ -4470,11 +4474,6 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                     TransitTo(ST_STATE_DETECTED);
                 }
                 st_stream_.notifyClient(true);
-                if (!st_stream_.rec_config_->capture_requested &&
-                    (st_stream_.GetCurrentStateId() == ST_STATE_BUFFERING ||
-                     st_stream_.GetCurrentStateId() == ST_STATE_DETECTED)) {
-                    st_stream_.PostDelayedStop();
-                }
             }
             break;
         }
