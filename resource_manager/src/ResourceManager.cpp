@@ -2361,8 +2361,14 @@ bool ResourceManager::isStreamSupported(struct pal_stream_attributes *attributes
         return result;
     }
     if (cur_sessions == max_sessions && type != PAL_STREAM_VOICE_CALL) {
-        PAL_ERR(LOG_TAG, "no new session allowed for stream %d", type);
-        return result;
+        if (type == PAL_STREAM_VOICE_RECOGNITION &&
+            active_streams_db.size() < MAX_SESSIONS_DEEP_BUFFER) {
+                attributes->type = PAL_STREAM_DEEP_BUFFER;
+                type = PAL_STREAM_DEEP_BUFFER;
+        } else {
+            PAL_ERR(LOG_TAG, "no new session allowed for stream %d", type);
+            return result;
+        }
     }
 
     // check if param supported by audio configruation
