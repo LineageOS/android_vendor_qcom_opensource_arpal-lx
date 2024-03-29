@@ -509,7 +509,6 @@ protected:
     static std::mutex mResourceManagerMutex;
     static std::mutex mGraphMutex;
     static std::mutex mActiveStreamMutex;
-    static std::mutex mValidStreamMutex;
     static std::mutex mSleepMonitorMutex;
     static std::mutex mListFrontEndsMutex;
     static int snd_virt_card;
@@ -814,6 +813,13 @@ public:
                           std::vector<std::pair<int32_t, std::string>> &txBackEndNames) const;
     bool updateDeviceConfig(std::shared_ptr<Device> *inDev,
              struct pal_device *inDevAttr, const pal_stream_attributes* inStrAttr);
+    int findActiveStreamsNotInDisconnectList(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnectList,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
+    int restoreDeviceConfigForUPD(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnect,
+            std::vector <std::tuple<Stream *, struct pal_device *>> &StreamDevConnect,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr,
                               std::vector <Stream *> prevActiveStreams);
@@ -922,6 +928,7 @@ public:
     static bool isLpiLoggingEnabled();
     static void processConfigParams(const XML_Char **attr);
     static bool isValidDevId(int deviceId);
+    static bool isValidStreamId(int streamId);
     static bool isOutputDevId(int deviceId);
     static bool isInputDevId(int deviceId);
     static bool matchDevDir(int devId1, int devId2);
@@ -951,8 +958,6 @@ public:
     void unlockGraph() { mGraphMutex.unlock(); };
     void lockActiveStream() { mActiveStreamMutex.lock(); };
     void unlockActiveStream() { mActiveStreamMutex.unlock(); };
-    void lockValidStreamMutex() { mValidStreamMutex.lock(); };
-    void unlockValidStreamMutex() { mValidStreamMutex.unlock(); };
     void lockResourceManagerMutex() {mResourceManagerMutex.lock();};
     void unlockResourceManagerMutex() {mResourceManagerMutex.unlock();};
     void getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream *, uint32_t>> &activeStreamDevs,
@@ -1004,6 +1009,7 @@ public:
                              struct pal_device *streamDevAttr);
     static void sendCrashSignal(int signal, pid_t pid, uid_t uid);
     void checkAndSetDutyCycleParam();
+    bool isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId);
 };
 
 #endif

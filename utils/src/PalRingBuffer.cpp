@@ -25,6 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -71,6 +76,11 @@ void PalRingBuffer::updateUnReadSize(size_t writtenSize)
     for (it = readOffsets_.begin(); it != readOffsets_.end(); it++, i++) {
         (*(it))->unreadSize_ += writtenSize;
         PAL_VERBOSE(LOG_TAG, "Reader (%d), unreadSize(%zu)", i, (*(it))->unreadSize_);
+
+        if ((*(it))->requestedSize_ > 0 &&
+            (*(it))->unreadSize_ >= (*(it))->requestedSize_) {
+             (*(it))->cv_.notify_one();
+        }
     }
 }
 
@@ -146,6 +156,21 @@ void PalRingBuffer::resizeRingBuffer(size_t bufferSize)
     }
     buffer_ = (char *)new char[bufferSize];
     bufferEnd_ = bufferSize;
+}
+
+bool PalRingBufferReader::waitForBuffers(uint32_t buffer_size)
+{
+    std::unique_lock<std::mutex> lck(mutex_);
+    if (state_ == READER_ENABLED) {
+        if (unreadSize_ >= buffer_size)
+            goto exit;
+        requestedSize_ = buffer_size;
+        cv_.wait_for(lck, std::chrono::milliseconds(3000));
+    }
+
+exit:
+    requestedSize_ = 0;
+    return unreadSize_ >= buffer_size;
 }
 
 int32_t PalRingBufferReader::read(void* readBuffer, size_t bufferSize)
@@ -283,6 +308,8 @@ void PalRingBufferReader::reset()
     unreadSize_ = 0;
     state_ = READER_DISABLED;
     ringBuffer_->mutex_.unlock();
+    requestedSize_ = 0;
+    cv_.notify_all();
 }
 
 PalRingBufferReader* PalRingBuffer::newReader()
