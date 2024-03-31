@@ -16,6 +16,24 @@
       "message": "Breaks ingot, need to find the exact commit",
       "revId": "7bd889e426a3ff689ef22336b980c7bffe907b2b",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f931bba_2f1f0017",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2024-03-31T19:40:18Z",
+      "side": 1,
+      "message": "https://review.lineageos.org/c/LineageOS/android_vendor_qcom_opensource_arpal-lx/+/388233",
+      "parentUuid": "f0c47928_e4dcd683",
+      "revId": "7bd889e426a3ff689ef22336b980c7bffe907b2b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
