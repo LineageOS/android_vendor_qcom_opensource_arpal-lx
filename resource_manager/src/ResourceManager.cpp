@@ -6992,6 +6992,16 @@ bool ResourceManager::compareSharedBEStreamDevAttr(std::vector <std::tuple<Strea
                         PAL_DBG(LOG_TAG, "incoming dev: %d priority: 0x%x has same or higher priority than cur dev:%d priority: 0x%x",
                                             newDevAttr->id, newDevPrio, curDevAttr.id, curDevPrio);
                         switchStreams = true;
+                    } else if (isBtA2dpDevice(newDevAttr->id) && isBtScoDevice(curDevAttr.id) &&
+                               !curDev->isDeviceReady()) {
+                        /* At the time of VOIP call end, it might happen that Voip Rx stream
+                         * will go to standby after a delay. After SCO is disabled, APM will
+                         * send routing for streams to A2DP device. At this time due to high
+                         * priority stream being active on SCO, routing to A2DP will be ignored.
+                         * Special handling to handle such scenarios and route all existing SCO
+                         * streams to A2DP as well.
+                         */
+                        switchStreams = true;
                     } else {
                         PAL_DBG(LOG_TAG, "incoming dev: %d priority: 0x%x has lower priority than cur dev:%d priority: 0x%x,"
                                         " switching incoming stream to cur dev",
@@ -10949,6 +10959,18 @@ bool ResourceManager::isDeviceReady(pal_device_id_t id)
     }
 
     return is_ready;
+}
+
+bool ResourceManager::isBtA2dpDevice(pal_device_id_t id)
+{
+    if (id == PAL_DEVICE_OUT_BLUETOOTH_A2DP ||
+        id == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
+        id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST ||
+        id == PAL_DEVICE_IN_BLUETOOTH_A2DP ||
+        id == PAL_DEVICE_IN_BLUETOOTH_BLE)
+        return true;
+    else
+        return false;
 }
 
 bool ResourceManager::isBtScoDevice(pal_device_id_t id)
