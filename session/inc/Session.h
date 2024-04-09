@@ -26,8 +26,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -73,6 +73,9 @@ typedef enum {
 
 #define EVENT_ID_SOFT_PAUSE_PAUSE_COMPLETE 0x0800103F
 
+#define MSPP_SOFT_PAUSE_DELAY 150
+#define DEFAULT_RAMP_PERIOD 0x28
+
 class Stream;
 class ResourceManager;
 class Session
@@ -99,6 +102,7 @@ protected:
     static int extECRefCnt;
     static std::mutex extECMutex;
     bool frontEndIdAllocated = false;
+    int32_t setInitialVolume();
 public:
     bool isMixerEventCbRegd;
     bool isPauseRegistrationDone;

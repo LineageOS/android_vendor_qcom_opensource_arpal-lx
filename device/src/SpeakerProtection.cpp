@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -2414,8 +2414,8 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
         keyVector.clear();
         calVector.clear();
 
+        this->Device::getDeviceAttributes(&dattr);
         if (mDeviceAttr.id == PAL_DEVICE_OUT_HANDSET) {
-            this->Device::getDeviceAttributes(&dattr);
             spDevInfo.dev_vi_device.channels = dattr.config.ch_info.channels;
             spDevInfo.numChannels = dattr.config.ch_info.channels;
         }
@@ -2437,6 +2437,7 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
             break;
         }
 
+        spDevInfo.dev_vi_device.samplerate = dattr.config.sample_rate;
         device.config.ch_info = ch_info;
         device.config.sample_rate = spDevInfo.dev_vi_device.samplerate;
         device.config.bit_width = spDevInfo.dev_vi_device.bit_width;
@@ -3042,6 +3043,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
     param_id_sp_vi_channel_map_cfg_t viChannelMapConfg;
     param_id_sp_ex_vi_mode_cfg_t viExModeConfg;
     PayloadBuilder* builder = new PayloadBuilder();
+    struct pal_device rxDevAttr;
 
     PAL_DBG(LOG_TAG, "Enter: %s", __func__);
         rm = ResourceManager::getInstance();
@@ -3086,6 +3088,8 @@ int SpeakerProtection::viTxSetupThreadLoop()
                  ch_info.ch_map[0] = PAL_CHMAP_CHANNEL_FL;
 
 
+        this->Device::getDeviceAttributes(&rxDevAttr);
+        vi_device.samplerate = rxDevAttr.config.sample_rate;
         device.config.ch_info = ch_info;
         device.config.sample_rate = vi_device.samplerate;
         device.config.bit_width = vi_device.bit_width;
