@@ -117,6 +117,10 @@
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
                 </custom-config>
+                <custom-config key="dual-mic-eans">
+                    <channels>2</channels>
+                    <snd_device_name>handset-dmic-endfire</snd_device_name>
+                </custom-config>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_VOICE_RECOGNITION</name>
@@ -216,6 +220,10 @@
                 </custom-config>
                 <custom-config key="48K">
                     <samplerate>48000</samplerate>
+                </custom-config>
+                <custom-config key="dual-mic-eans">
+                    <channels>2</channels>
+                    <snd_device_name>speaker-dmic-endfire</snd_device_name>
                 </custom-config>
             </usecase>
             <usecase>
