@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: Headphone"
@@ -73,6 +77,11 @@ int32_t Headphone::isSampleRateSupported(uint32_t sampleRate)
         return rc;
 
     switch (sampleRate) {
+#ifdef DYNAMIC_SR_ENABLED
+        case SAMPLINGRATE_8K:
+        case SAMPLINGRATE_16K:
+        case SAMPLINGRATE_32K:
+#endif
         case SAMPLINGRATE_44K:
         case SAMPLINGRATE_48K:
         case SAMPLINGRATE_96K:
@@ -144,7 +153,16 @@ int32_t Headphone::checkAndUpdateSampleRate(uint32_t *sampleRate)
     if ((*sampleRate % SAMPLINGRATE_44K == 0) &&
         (NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_DSP == ResourceManager::getNativeAudioSupport())) {
         PAL_DBG(LOG_TAG, "napb: setting sampling rate to %d", *sampleRate);
-    } else if (*sampleRate <= SAMPLINGRATE_48K)
+    }
+#ifdef DYNAMIC_SR_ENABLED
+    else if (*sampleRate == SAMPLINGRATE_8K)
+        *sampleRate = SAMPLINGRATE_8K;
+    else if (*sampleRate == SAMPLINGRATE_16K)
+        *sampleRate = SAMPLINGRATE_16K;
+    else if (*sampleRate == SAMPLINGRATE_32K)
+        *sampleRate = SAMPLINGRATE_32K;
+#endif
+    else if (*sampleRate <= SAMPLINGRATE_48K)
         *sampleRate = SAMPLINGRATE_48K;
     else if (*sampleRate > SAMPLINGRATE_48K && *sampleRate <= SAMPLINGRATE_96K)
         *sampleRate = SAMPLINGRATE_96K;

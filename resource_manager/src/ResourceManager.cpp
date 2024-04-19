@@ -1634,9 +1634,11 @@ bool ResourceManager::getEcRefStatus(pal_stream_type_t tx_streamtype,pal_stream_
     return ecref_status;
 }
 
-void ResourceManager::getDeviceInfo(pal_device_id_t deviceId, pal_stream_type_t type, std::string key, struct pal_device_info *devinfo)
+void ResourceManager::getDeviceInfo(pal_device_id_t deviceId, pal_stream_type_t type, std::string customKey, struct pal_device_info *devinfo)
 {
     bool found = false;
+    std::istringstream keys(customKey);
+    std::string key;
 
     for (int32_t i = 0; i < deviceInfo.size(); i++) {
         if (deviceId == deviceInfo[i].deviceId) {
@@ -1694,57 +1696,59 @@ void ResourceManager::getDeviceInfo(pal_device_id_t deviceId, pal_stream_type_t 
                                 type,
                                 deviceNameLUT.at(deviceId).c_str());
                     }
-                    /*parse custom config if there*/
-                    for (int32_t k = 0; k < deviceInfo[i].usecase[j].config.size(); k++) {
-                        if (!deviceInfo[i].usecase[j].config[k].key.compare(key)) {
-                            /*overwrite the channels if needed*/
-                            if (deviceInfo[i].usecase[j].config[k].channel) {
-                                devinfo->channels = deviceInfo[i].usecase[j].config[k].channel;
-                                devinfo->channels_overwrite = true;
-                                PAL_VERBOSE(LOG_TAG, "got overwritten channels %d for custom key %s usecase %d for dev %s",
-                                        devinfo->channels,
-                                        key.c_str(),
-                                        type,
-                                        deviceNameLUT.at(deviceId).c_str());
+                    while (std::getline(keys, key, ';')) {
+                        /*parse custom config if there*/
+                        for (int32_t k = 0; k < deviceInfo[i].usecase[j].config.size(); k++) {
+                            if (!deviceInfo[i].usecase[j].config[k].key.compare(key)) {
+                                /*overwrite the channels if needed*/
+                                if (deviceInfo[i].usecase[j].config[k].channel) {
+                                    devinfo->channels = deviceInfo[i].usecase[j].config[k].channel;
+                                    devinfo->channels_overwrite = true;
+                                    PAL_VERBOSE(LOG_TAG, "got overwritten channels %d for custom key %s usecase %d for dev %s",
+                                            devinfo->channels,
+                                            key.c_str(),
+                                            type,
+                                            deviceNameLUT.at(deviceId).c_str());
+                                }
+                                if (deviceInfo[i].usecase[j].config[k].samplerate) {
+                                    devinfo->samplerate = deviceInfo[i].usecase[j].config[k].samplerate;
+                                    devinfo->samplerate_overwrite = true;
+                                    PAL_VERBOSE(LOG_TAG, "got overwritten samplerate %d for custom key %s usecase %d for dev %s",
+                                            devinfo->samplerate,
+                                            key.c_str(),
+                                            type,
+                                            deviceNameLUT.at(deviceId).c_str());
+                                }
+                                if (!(deviceInfo[i].usecase[j].config[k].sndDevName).empty()) {
+                                    devinfo->sndDevName = deviceInfo[i].usecase[j].config[k].sndDevName;
+                                    devinfo->sndDevName_overwrite = true;
+                                    PAL_VERBOSE(LOG_TAG, "got overwitten snd dev %s for custom key %s usecase %d for dev %s",
+                                            devinfo->sndDevName.c_str(),
+                                            key.c_str(),
+                                            type,
+                                            deviceNameLUT.at(deviceId).c_str());
+                                }
+                                if (deviceInfo[i].usecase[j].config[k].priority &&
+                                    deviceInfo[i].usecase[j].config[k].priority != MIN_USECASE_PRIORITY) {
+                                    devinfo->priority = deviceInfo[i].usecase[j].config[k].priority;
+                                    PAL_VERBOSE(LOG_TAG, "got priority %d for custom key %s usecase %d for dev %s",
+                                            devinfo->priority,
+                                            key.c_str(),
+                                            type,
+                                            deviceNameLUT.at(deviceId).c_str());
+                                }
+                                if (deviceInfo[i].usecase[j].config[k].bit_width) {
+                                    devinfo->bit_width = deviceInfo[i].usecase[j].config[k].bit_width;
+                                    devinfo->bit_width_overwrite = true;
+                                    PAL_VERBOSE(LOG_TAG, "got overwritten bit width %d for custom key %s usecase %d for dev %s",
+                                            devinfo->bit_width,
+                                            key.c_str(),
+                                            type,
+                                            deviceNameLUT.at(deviceId).c_str());
+                                }
+                                found = true;
+                                break;
                             }
-                            if (deviceInfo[i].usecase[j].config[k].samplerate) {
-                                devinfo->samplerate = deviceInfo[i].usecase[j].config[k].samplerate;
-                                devinfo->samplerate_overwrite = true;
-                                PAL_VERBOSE(LOG_TAG, "got overwritten samplerate %d for custom key %s usecase %d for dev %s",
-                                        devinfo->samplerate,
-                                        key.c_str(),
-                                        type,
-                                        deviceNameLUT.at(deviceId).c_str());
-                            }
-                            if (!(deviceInfo[i].usecase[j].config[k].sndDevName).empty()) {
-                                devinfo->sndDevName = deviceInfo[i].usecase[j].config[k].sndDevName;
-                                devinfo->sndDevName_overwrite = true;
-                                PAL_VERBOSE(LOG_TAG, "got overwitten snd dev %s for custom key %s usecase %d for dev %s",
-                                        devinfo->sndDevName.c_str(),
-                                        key.c_str(),
-                                        type,
-                                        deviceNameLUT.at(deviceId).c_str());
-                            }
-                            if (deviceInfo[i].usecase[j].config[k].priority &&
-                                deviceInfo[i].usecase[j].config[k].priority != MIN_USECASE_PRIORITY) {
-                                devinfo->priority = deviceInfo[i].usecase[j].config[k].priority;
-                                PAL_VERBOSE(LOG_TAG, "got priority %d for custom key %s usecase %d for dev %s",
-                                        devinfo->priority,
-                                        key.c_str(),
-                                        type,
-                                        deviceNameLUT.at(deviceId).c_str());
-                            }
-                            if (deviceInfo[i].usecase[j].config[k].bit_width) {
-                                devinfo->bit_width = deviceInfo[i].usecase[j].config[k].bit_width;
-                                devinfo->bit_width_overwrite = true;
-                                PAL_VERBOSE(LOG_TAG, "got overwritten bit width %d for custom key %s usecase %d for dev %s",
-                                        devinfo->bit_width,
-                                        key.c_str(),
-                                        type,
-                                        deviceNameLUT.at(deviceId).c_str());
-                            }
-                            found = true;
-                            break;
                         }
                     }
                 }
@@ -2356,8 +2360,14 @@ bool ResourceManager::isStreamSupported(struct pal_stream_attributes *attributes
         return result;
     }
     if (cur_sessions == max_sessions && type != PAL_STREAM_VOICE_CALL) {
-        PAL_ERR(LOG_TAG, "no new session allowed for stream %d", type);
-        return result;
+        if (type == PAL_STREAM_VOICE_RECOGNITION &&
+            active_streams_db.size() < MAX_SESSIONS_DEEP_BUFFER) {
+                attributes->type = PAL_STREAM_DEEP_BUFFER;
+                type = PAL_STREAM_DEEP_BUFFER;
+        } else {
+            PAL_ERR(LOG_TAG, "no new session allowed for stream %d", type);
+            return result;
+        }
     }
 
     // check if param supported by audio configruation

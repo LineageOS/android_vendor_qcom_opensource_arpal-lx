@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: HeadsetMic"
@@ -70,6 +74,11 @@ int32_t HeadsetMic::isSampleRateSupported(uint32_t sampleRate)
     PAL_DBG(LOG_TAG, "sampleRate %u", sampleRate);
     switch (sampleRate) {\
        //check what all need to be added
+#ifdef DYNAMIC_SR_ENABLED
+        case SAMPLINGRATE_8K:
+        case SAMPLINGRATE_16K:
+        case SAMPLINGRATE_32K:
+#endif
         case SAMPLINGRATE_48K:
         case SAMPLINGRATE_96K:
             break;
@@ -135,8 +144,19 @@ int32_t HeadsetMic::checkAndUpdateSampleRate(uint32_t *sampleRate)
     int32_t rc = 0;
 
     /* TODO: support native 44.1 later */
+#ifdef DYNAMIC_SR_ENABLED
+    if (*sampleRate == SAMPLINGRATE_8K)
+        *sampleRate = SAMPLINGRATE_8K;
+    else if (*sampleRate == SAMPLINGRATE_16K)
+        *sampleRate = SAMPLINGRATE_16K;
+    else if (*sampleRate == SAMPLINGRATE_32K)
+        *sampleRate = SAMPLINGRATE_32K;
+    else if (*sampleRate <= SAMPLINGRATE_48K)
+        *sampleRate = SAMPLINGRATE_48K;
+#else
     if (*sampleRate < SAMPLINGRATE_48K)
         *sampleRate = SAMPLINGRATE_48K;
+#endif
     else if (*sampleRate > SAMPLINGRATE_48K && *sampleRate < SAMPLINGRATE_96K)
         *sampleRate = SAMPLINGRATE_96K;
     else if (*sampleRate > SAMPLINGRATE_96K && *sampleRate < SAMPLINGRATE_192K)

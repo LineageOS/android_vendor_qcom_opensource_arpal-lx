@@ -29,7 +29,7 @@
 
 /*
 Changes from Qualcomm Innovation Center are provided under the following license:
-Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the
@@ -651,6 +651,72 @@ int SessionAlsaVoice::setTaggedSlotMask(Stream * s)
     return status;
 }
 
+int SessionAlsaVoice::setVoiceCKVS(Stream * s)
+{
+    int status = 0;
+    struct pal_device dAttr;
+    std::vector<std::shared_ptr<Device>> associatedDevices;
+    int dev_id = 0;
+    int idx = 0;
+    uint8_t* paramData = NULL;
+    size_t paramSize = 0;
+
+    memset(&dAttr, 0, sizeof(struct pal_device));
+    status = s->getAssociatedDevices(associatedDevices);
+    if ((0 != status) || (associatedDevices.size() == 0)) {
+        PAL_ERR(LOG_TAG, "getAssociatedDevices fails or empty associated devices");
+        return status;
+    }
+
+    for (idx = 0; idx < associatedDevices.size(); idx++) {
+        dev_id = associatedDevices[idx]->getSndDeviceId();
+        if (rm->isOutputDevId(dev_id)) {
+            status = associatedDevices[idx]->getDeviceAttributes(&dAttr);
+            break;
+        }
+    }
+    if (dAttr.id == 0) {
+        PAL_ERR(LOG_TAG, "Failed to get device attributes");
+        status = -EINVAL;
+        return status;
+    }
+
+    PAL_INFO(LOG_TAG, "fire ckv for number of channels");
+
+    if (dAttr.id == PAL_DEVICE_OUT_HANDSET || dAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+
+        if (dAttr.config.ch_info.channels == 2) {
+                /* fire ckv for 2 channels */
+                PAL_DBG(LOG_TAG,"Set %d channels and fire %d ckv to support dual channels for voice call", dAttr.config.ch_info.channels, NUM_CHAN_2);
+                status = payloadCKVs(&paramData, &paramSize, NUM_CHAN_2);
+        } else {
+                /* fire ckv for 1 channel */
+                PAL_DBG(LOG_TAG,"Set %d channels and fire %d ckv to support mono channel for voice call", dAttr.config.ch_info.channels, NUM_CHAN_1);
+                status = payloadCKVs(&paramData, &paramSize, NUM_CHAN_1);
+            }
+
+        if (!paramData) {
+            status = -ENOMEM;
+            PAL_ERR(LOG_TAG, "failed to get payload status %d", status);
+            goto exit;
+        }
+
+        status = setVoiceMixerParameter(streamHandle, mixer, paramData, paramSize,
+                                        RX_HOSTLESS);
+
+        if (status) {
+            PAL_ERR(LOG_TAG, "Failed to set voice params status = %d",
+                    status);
+        }
+    }
+
+exit:
+if (paramData) {
+    free(paramData);
+}
+    return status;
+}
+
 int SessionAlsaVoice::start(Stream * s)
 {
     struct pcm_config config;
@@ -794,6 +860,13 @@ int SessionAlsaVoice::start(Stream * s)
     status = setTaggedSlotMask(s);
     if (status != 0) {
         PAL_ERR(LOG_TAG,"setTaggedSlotMask failed");
+        goto err_pcm_open;
+    }
+
+    /* set CKV's to configure voice call*/
+    status = setVoiceCKVS(s);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG,"setVoiceCKVS failed");
         goto err_pcm_open;
     }
 
@@ -1497,6 +1570,53 @@ exit:
     return status;
 }
 
+int SessionAlsaVoice::payloadCKVs(uint8_t **payload, size_t *size, uint32_t channels)
+{
+    int status = 0;
+    apm_module_param_data_t* header;
+    uint8_t* payloadInfo = NULL;
+    size_t payloadSize = 0, padBytes = 0;
+    uint8_t *ch_pl;
+    vcpm_param_cal_keys_payload_t cal_keys;
+    vcpm_ckv_pair_t cal_key_pair[1];
+
+    payloadSize = sizeof(apm_module_param_data_t) +
+                  sizeof(vcpm_param_cal_keys_payload_t) +
+                  sizeof(vcpm_ckv_pair_t)*1;
+    padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+
+    payloadInfo = new uint8_t[payloadSize + padBytes]();
+    if (!payloadInfo) {
+        PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s", strerror(errno));
+        return -EINVAL;
+    }
+    header = (apm_module_param_data_t*)payloadInfo;
+    header->module_instance_id = VCPM_MODULE_INSTANCE_ID;
+    header->param_id = VCPM_PARAM_ID_CAL_KEYS;
+    header->error_code = 0x0;
+    header->param_size = payloadSize - sizeof(struct apm_module_param_data_t);
+    cal_keys.vsid = vsid;
+    cal_keys.num_ckv_pairs = 1;
+
+    /*cal key for number of channels*/
+    cal_key_pair[0].cal_key_id = VCPM_CAL_KEY_ID_NUM_CHANNELS;
+    cal_key_pair[0].value = channels;
+
+    ch_pl = (uint8_t*)payloadInfo + sizeof(apm_module_param_data_t);
+    ar_mem_cpy(ch_pl, sizeof(vcpm_param_cal_keys_payload_t),
+                     &cal_keys, sizeof(vcpm_param_cal_keys_payload_t));
+
+    ch_pl += sizeof(vcpm_param_cal_keys_payload_t);
+    ar_mem_cpy(ch_pl, sizeof(vcpm_ckv_pair_t)*1,
+                     &cal_key_pair, sizeof(vcpm_ckv_pair_t)*1);
+
+    *size = payloadSize + padBytes;
+    *payload = payloadInfo;
+    PAL_DBG(LOG_TAG, "Number of channels: %d", channels);
+
+    return status;
+}
+
 int SessionAlsaVoice::payloadSetTTYMode(uint8_t **payload, size_t *size, uint32_t mode){
     int status = 0;
     apm_module_param_data_t* header;
@@ -1757,6 +1877,11 @@ int SessionAlsaVoice::connectSessionDevice(Stream* streamHandle,
                PAL_ERR(LOG_TAG,"enabling sidetone failed");
            }
         }
+    }
+    /* set and fire CKV's to configure voice call in device switch*/
+    status = setVoiceCKVS(streamHandle);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG,"setVoiceCKVS failed in connectsession");
     }
     return status;
 }

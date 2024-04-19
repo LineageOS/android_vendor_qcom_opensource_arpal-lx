@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -189,6 +189,8 @@ public:
     void payloadDpAudioConfig(uint8_t** payload, size_t* size,
                            uint32_t miid,
                            struct dpAudioConfig *data);
+    void payloadVolumeCtrlRamp(uint8_t** payload, size_t* size,
+         uint32_t miid, uint32_t ramp_period_ms);
     void payloadMFCConfig(uint8_t** payload, size_t* size,
                            uint32_t miid,
                            struct sessionToPayloadParam* data);

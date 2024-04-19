@@ -82,6 +82,17 @@ struct volume_ctrl_master_gain_t
 /* Structure type def for above payload. */
 typedef struct volume_ctrl_master_gain_t volume_ctrl_master_gain_t;
 
+#define PARAM_ID_VOL_CTRL_GAIN_RAMP_PARAMETERS 0x08001037
+#define PARAM_VOL_CTRL_RAMPINGCURVE_LINEAR 0
+
+/* Structure for holding soft stepping volume parameters. */
+struct volume_ctrl_gain_ramp_params_t
+{
+   uint32_t period_ms;
+   uint32_t step_us;
+   uint32_t ramping_curve;
+};
+
 /* ID of the Output Media Format parameters used by MODULE_ID_MFC */
 #define PARAM_ID_MFC_OUTPUT_MEDIA_FORMAT            0x08001024
 #include "spf_begin_pack.h"
@@ -170,6 +181,8 @@ std::vector<allKVs> PayloadBuilder::all_streams;
 std::vector<allKVs> PayloadBuilder::all_streampps;
 std::vector<allKVs> PayloadBuilder::all_devices;
 std::vector<allKVs> PayloadBuilder::all_devicepps;
+
+uint32_t getSamplerateKv(uint32_t samplerate);
 
 template <typename T>
 void PayloadBuilder::populateChannelMap(T pcmChannel, uint8_t numChannel)
@@ -388,6 +401,40 @@ void PayloadBuilder::payloadMultichVolumemConfig(uint8_t** payload, size_t* size
      *size = payloadSize + padBytes;
      *payload = payloadInfo;
      PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
+}
+
+void PayloadBuilder::payloadVolumeCtrlRamp(uint8_t** payload, size_t* size,
+        uint32_t miid, uint32_t ramp_period_ms)
+{
+    struct apm_module_param_data_t* header = NULL;
+    struct volume_ctrl_gain_ramp_params_t *rampParams;
+    uint8_t* payloadInfo = NULL;
+    size_t payloadSize = 0, padBytes = 0;
+
+    payloadSize = sizeof(struct apm_module_param_data_t) +
+                  sizeof(struct volume_ctrl_gain_ramp_params_t);
+    padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
+    payloadInfo = new uint8_t[payloadSize + padBytes]();
+    if (!payloadInfo) {
+        PAL_ERR(LOG_TAG, "payloadInfo malloc failed %s", strerror(errno));
+        return;
+    }
+    header = (struct apm_module_param_data_t*)payloadInfo;
+    header->module_instance_id = miid;
+    header->param_id = PARAM_ID_VOL_CTRL_GAIN_RAMP_PARAMETERS;
+    header->error_code = 0x0;
+    header->param_size = payloadSize -  sizeof(struct apm_module_param_data_t);
+    rampParams = (struct volume_ctrl_gain_ramp_params_t*) (payloadInfo + sizeof(struct apm_module_param_data_t));
+    rampParams->period_ms = ramp_period_ms;
+    rampParams->step_us = 0;
+    rampParams->ramping_curve = PARAM_VOL_CTRL_RAMPINGCURVE_LINEAR;
+    PAL_VERBOSE(LOG_TAG, "header params IID:%x param_id:%x error_code:%d param_size:%d",
+                  header->module_instance_id, header->param_id,
+                  header->error_code, header->param_size);
+    *size = payloadSize + padBytes;;
+    *payload = payloadInfo;
+    PAL_DBG(LOG_TAG, "payload %pK size %zu", *payload, *size);
+
 }
 
 void PayloadBuilder::payloadMFCConfig(uint8_t** payload, size_t* size,
@@ -2884,6 +2931,61 @@ exit:
     return status;
 }
 
+uint32_t getSamplerateKv(uint32_t samplerate)
+{
+    uint32_t value = 0;
+
+    switch (samplerate)
+    {
+        case 8000:
+            value = SAMPLINGRATE_8K;
+        break;
+        case 11025:
+            value = SAMPLINGRATE_11K;
+        break;
+        case 16000:
+            value = SAMPLINGRATE_16K;
+        break;
+        case 22050:
+            value = SAMPLINGRATE_22K;
+        break;
+        case 32000:
+            value = SAMPLINGRATE_32K;
+        break;
+        case 44100:
+            value = SAMPLINGRATE_44K;
+        break;
+        case 48000:
+            value = SAMPLINGRATE_48K;
+        break;
+        case 64000:
+            value = SAMPLINGRATE_64K;
+        break;
+        case 88200:
+            value = SAMPLINGRATE_88K;
+        break;
+        case 96000:
+            value = SAMPLINGRATE_96K;
+        break;
+        case 176400:
+            value = SAMPLINGRATE_176K;
+        break;
+        case 192000:
+            value = SAMPLINGRATE_192K;
+        break;
+        case 352800:
+            value = SAMPLINGRATE_352K;
+        break;
+        case 384000:
+            value = SAMPLINGRATE_384K;
+        break;
+        default:
+            break;
+    }
+    return value;
+}
+
+
 int PayloadBuilder::populateDevicePPCkv(Stream *s, std::vector <std::pair<int,int>> &keyVector)
 {
     int status = 0;
@@ -2891,6 +2993,7 @@ int PayloadBuilder::populateDevicePPCkv(Stream *s, std::vector <std::pair<int,in
     std::vector<std::shared_ptr<Device>> associatedDevices;
     struct pal_device dAttr;
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+    uint32_t sampleRateKv = 0;
 
     PAL_DBG(LOG_TAG,"Enter");
     sattr = new struct pal_stream_attributes;
@@ -2962,9 +3065,49 @@ int PayloadBuilder::populateDevicePPCkv(Stream *s, std::vector <std::pair<int,in
                     keyVector.push_back(std::make_pair(GAIN, GAIN_0));
                 }
 
+                if ((dAttr.id == PAL_DEVICE_OUT_SPEAKER) ||
+                    (dAttr.id == PAL_DEVICE_OUT_HANDSET) ||
+                    (dAttr.id == PAL_DEVICE_OUT_WIRED_HEADSET) ||
+                    (dAttr.id == PAL_DEVICE_OUT_WIRED_HEADPHONE) ||
+                    (dAttr.id == PAL_DEVICE_OUT_USB_HEADSET) ||
+                    (dAttr.id == PAL_DEVICE_OUT_USB_DEVICE) ||
+                    (dAttr.id == PAL_DEVICE_IN_SPEAKER_MIC) ||
+                    (dAttr.id == PAL_DEVICE_IN_HANDSET_MIC) ||
+                    (dAttr.id == PAL_DEVICE_IN_WIRED_HEADSET) ||
+                    (dAttr.id == PAL_DEVICE_IN_USB_HEADSET)) {
+                    if ((sampleRateKv = getSamplerateKv(dAttr.config.sample_rate)) != 0)
+                        keyVector.push_back(std::make_pair(SAMPLINGRATE, sampleRateKv));
+                    PAL_DBG(LOG_TAG,"stream type %d Sample Rate[%d]\n", sattr->type, dAttr.config.sample_rate);
+                }
+
                 /* TBD: Push Channels for these types once Channels are added */
                 //keyVector.push_back(std::make_pair(CHANNELS,
                 //                                   dAttr.config.ch_info.channels));
+                break;
+           case PAL_STREAM_VOIP_RX:
+                if ((dAttr.id != PAL_DEVICE_OUT_SPEAKER) &&
+                    (dAttr.id != PAL_DEVICE_OUT_HANDSET) &&
+                    (dAttr.id != PAL_DEVICE_OUT_WIRED_HEADSET) &&
+                    (dAttr.id != PAL_DEVICE_OUT_WIRED_HEADPHONE) &&
+                    (dAttr.id != PAL_DEVICE_OUT_USB_HEADSET) &&
+                    (dAttr.id != PAL_DEVICE_OUT_USB_DEVICE))
+                    break;
+
+                PAL_DBG(LOG_TAG,"VoiP_RX Sample Rate[%d]\n", dAttr.config.sample_rate);
+                if ((sampleRateKv = getSamplerateKv(dAttr.config.sample_rate)) != 0)
+                    keyVector.push_back(std::make_pair(SAMPLINGRATE, sampleRateKv));
+                break;
+           case PAL_STREAM_VOIP_TX:
+           case PAL_STREAM_VOICE_RECOGNITION:
+                if ((dAttr.id != PAL_DEVICE_IN_SPEAKER_MIC) &&
+                    (dAttr.id != PAL_DEVICE_IN_HANDSET_MIC) &&
+                    (dAttr.id != PAL_DEVICE_IN_WIRED_HEADSET) &&
+                    (dAttr.id != PAL_DEVICE_IN_USB_HEADSET))
+                    break;
+
+                PAL_DBG(LOG_TAG,"stream type %d Sample Rate[%d]\n", sattr->type, dAttr.config.sample_rate);
+                if ((sampleRateKv = getSamplerateKv(dAttr.config.sample_rate)) != 0)
+                    keyVector.push_back(std::make_pair(SAMPLINGRATE, sampleRateKv));
                 break;
             default:
                 PAL_VERBOSE(LOG_TAG,"stream type %d doesn't support DevicePP CKV ", sattr->type);

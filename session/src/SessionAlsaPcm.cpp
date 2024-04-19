@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,9 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -792,6 +791,61 @@ void SessionAlsaPcm::releaseAdmFocus(Stream *s)
         rm->admAbandonFocusFn(rm->admData, static_cast<void *>(s));
 }
 
+int SessionAlsaPcm::populateECMFCPayload(Stream *s, size_t *payloadSize, uint8_t **payload)
+{
+    int status = 0;
+    uint32_t miid;
+    std::vector<std::shared_ptr<Device>> associatedDevices;
+    struct pal_device dAttr = {};
+    struct sessionToPayloadParam streamData = {};
+
+    status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
+                                txAifBackEnds[0].second.data(), TAG_DEVICEPP_EC_MFC, &miid);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG,"getModuleInstanceId failed\n");
+        /* Returning success status, as usecase will fail if tagged module is not present in ACDB */
+        status = 0;
+        goto exit;
+    }
+
+    PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
+    status = s->getAssociatedDevices(associatedDevices);
+    if (0 != status) {
+        PAL_ERR(LOG_TAG,"getAssociatedDevices Failed\n");
+        goto exit;
+    }
+
+    for (int i = 0; i < associatedDevices.size();i++) {
+        status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG,"get Device Attributes Failed\n");
+            goto exit;
+        }
+
+        if ((dAttr.id == PAL_DEVICE_IN_BLUETOOTH_A2DP) ||
+                (dAttr.id == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
+            struct pal_media_config codecConfig;
+            status = associatedDevices[i]->getCodecConfig(&codecConfig);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "getCodecConfig Failed \n");
+                goto exit;
+            }
+            streamData.sampleRate = codecConfig.sample_rate;
+            streamData.bitWidth   = AUDIO_BIT_WIDTH_DEFAULT_16;
+            streamData.numChannel = 0xFFFF;
+        } else {
+            streamData.sampleRate = dAttr.config.sample_rate;
+            streamData.bitWidth   = AUDIO_BIT_WIDTH_DEFAULT_16;
+            streamData.numChannel = 0xFFFF;
+        }
+
+        builder->payloadMFCConfig(payload, payloadSize, miid, &streamData);
+    }
+
+exit:
+    return status;
+}
+
 int SessionAlsaPcm::start(Stream * s)
 {
     struct pcm_config config;
@@ -1053,51 +1107,21 @@ int SessionAlsaPcm::start(Stream * s)
                     }
                 }
 
-                if (sAttr.type == PAL_STREAM_VOIP_TX) {
-                    status = SessionAlsaUtils::getModuleInstanceId(mixer, pcmDevIds.at(0),
-                                                txAifBackEnds[0].second.data(), TAG_DEVICEPP_EC_MFC, &miid);
+                if ((sAttr.type == PAL_STREAM_VOIP_TX) ||
+                    ((sAttr.type == PAL_STREAM_DEEP_BUFFER) &&
+                     (sAttr.direction == PAL_AUDIO_INPUT))) {
+                    status = populateECMFCPayload(s, &payloadSize, &payload);
                     if (status != 0) {
-                        PAL_ERR(LOG_TAG,"getModuleInstanceId failed\n");
+                        PAL_ERR(LOG_TAG, "populate EC MFC payload failed");
                         goto set_mixer;
                     }
-                    PAL_INFO(LOG_TAG, "miid : %x id = %d\n", miid, pcmDevIds.at(0));
-                    status = s->getAssociatedDevices(associatedDevices);
-                    if (0 != status) {
-                        PAL_ERR(LOG_TAG,"getAssociatedDevices Failed\n");
-                        goto set_mixer;
-                    }
-                    for (int i = 0; i < associatedDevices.size();i++) {
-                        status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+
+                    if (payloadSize && payload) {
+                        status = updateCustomPayload(payload, payloadSize);
+                        freeCustomPayload(&payload, &payloadSize);
                         if (0 != status) {
-                            PAL_ERR(LOG_TAG,"get Device Attributes Failed\n");
+                            PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
                             goto set_mixer;
-                        }
-
-                        if ((dAttr.id == PAL_DEVICE_IN_BLUETOOTH_A2DP) ||
-                                (dAttr.id == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET)) {
-                            struct pal_media_config codecConfig;
-                            status = associatedDevices[i]->getCodecConfig(&codecConfig);
-                            if (0 != status) {
-                                PAL_ERR(LOG_TAG, "getCodecConfig Failed \n");
-                                goto set_mixer;
-                            }
-                            streamData.sampleRate = codecConfig.sample_rate;
-                            streamData.bitWidth   = AUDIO_BIT_WIDTH_DEFAULT_16;
-                            streamData.numChannel = 0xFFFF;
-                        } else {
-                            streamData.sampleRate = dAttr.config.sample_rate;
-                            streamData.bitWidth   = AUDIO_BIT_WIDTH_DEFAULT_16;
-                            streamData.numChannel = 0xFFFF;
-                        }
-
-                        builder->payloadMFCConfig(&payload, &payloadSize, miid, &streamData);
-                        if (payloadSize && payload) {
-                            status = updateCustomPayload(payload, payloadSize);
-                            freeCustomPayload(&payload, &payloadSize);
-                            if (0 != status) {
-                                PAL_ERR(LOG_TAG,"updateCustomPayload Failed\n");
-                                goto set_mixer;
-                            }
                         }
                     }
                 }
@@ -1257,8 +1281,11 @@ set_mixer:
                     }
                 }
             }
-
 pcm_start:
+            status = setInitialVolume();
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "setVolume failed");
+            }
             memset(&lpm_info, 0, sizeof(struct disable_lpm_info));
             rm->getDisableLpmInfo(&lpm_info);
             isStreamAvail = (find(lpm_info.streams_.begin(),
@@ -1365,37 +1392,8 @@ pcm_start:
             }
            break;
     }
-    memset(&vol_set_param_info, 0, sizeof(struct volume_set_param_info));
-    rm->getVolumeSetParamInfo(&vol_set_param_info);
-    isStreamAvail = (find(vol_set_param_info.streams_.begin(),
-                vol_set_param_info.streams_.end(), sAttr.type) !=
-                vol_set_param_info.streams_.end());
-    if (isStreamAvail && vol_set_param_info.isVolumeUsingSetParam) {
-        // apply if there is any cached volume
-        if (s->mVolumeData) {
-            volSize = (sizeof(struct pal_volume_data) +
-                    (sizeof(struct pal_channel_vol_kv) * (s->mVolumeData->no_of_volpair)));
-            volPayload = new uint8_t[sizeof(pal_param_payload) +
-                volSize]();
-            pal_param_payload *pld = (pal_param_payload *)volPayload;
-            pld->payload_size = sizeof(struct pal_volume_data);
-            memcpy(pld->payload, s->mVolumeData, volSize);
-            status = setParameters(s, TAG_STREAM_VOLUME,
-                    PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
-            delete[] volPayload;
-        }
-    } else {
-        // Setting the volume as in stream open, no default volume is set.
-        if (sAttr.type != PAL_STREAM_ACD &&
-            sAttr.type != PAL_STREAM_VOICE_UI &&
-            sAttr.type != PAL_STREAM_CONTEXT_PROXY &&
-            sAttr.type != PAL_STREAM_ULTRASOUND &&
-            sAttr.type != PAL_STREAM_SENSOR_PCM_DATA &&
-            sAttr.type != PAL_STREAM_HAPTICS) {
-            if (setConfig(s, CALIBRATION, TAG_STREAM_VOLUME) != 0) {
-                PAL_ERR(LOG_TAG,"Setting volume failed");
-            }
-        }
+    if (sAttr.direction != PAL_AUDIO_OUTPUT) {
+        status = setInitialVolume();
     }
 
     mState = SESSION_STARTED;
@@ -1842,6 +1840,9 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
     std::vector<std::pair<int32_t, std::string>> rxAifBackEndsToConnect;
     std::vector<std::pair<int32_t, std::string>> txAifBackEndsToConnect;
     int32_t status = 0;
+    uint8_t *payload = NULL;
+    size_t payloadSize = 0;
+    struct pal_stream_attributes sAttr;
 
     deviceList.push_back(deviceToConnect);
     rm->getBackEndNames(deviceList, rxAifBackEndsToConnect,
@@ -1883,6 +1884,34 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
         }
     }
 
+    status = streamHandle->getStreamAttributes(&sAttr);
+    if (status != 0) {
+        PAL_ERR(LOG_TAG, "stream get attributes failed");
+        goto exit;
+    }
+
+    if ((streamType == PAL_STREAM_VOIP_TX) ||
+        ((streamType == PAL_STREAM_DEEP_BUFFER) &&
+         (sAttr.direction == PAL_AUDIO_INPUT))) {
+        status = populateECMFCPayload(streamHandle, &payloadSize, &payload);
+        if (status != 0) {
+            PAL_ERR(LOG_TAG, "Failed to populate EC MFC Payload");
+            status = 0;
+            goto exit;
+        }
+
+        if (payloadSize && payload) {
+          status = SessionAlsaUtils::setMixerParameter(mixer, pcmDevIds.at(0), payload, payloadSize);
+            freeCustomPayload(&payload, &payloadSize);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "Failed to set ecref mfc payload");
+                status = 0;
+                goto exit;
+            }
+        }
+    }
+
+exit:
     return status;
 }
 
@@ -2293,6 +2322,26 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             }
             return 0;
 
+        }
+
+        case PAL_PARAM_ID_VOLUME_CTRL_RAMP:
+        {
+            struct pal_vol_ctrl_ramp_param *rampParam = (struct pal_vol_ctrl_ramp_param *)payload;
+            status = SessionAlsaUtils::getModuleInstanceId(mixer, device,
+                               rxAifBackEnds[0].second.data(), tagId, &miid);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", tagId, status);
+                return status;
+            }
+            builder->payloadVolumeCtrlRamp(&paramData, &paramSize,
+                 miid, rampParam->ramp_period_ms);
+            if (paramSize) {
+                status = SessionAlsaUtils::setMixerParameter(mixer, device,
+                                               paramData, paramSize);
+                PAL_INFO(LOG_TAG, "mixer set vol ctrl ramp status=%d\n", status);
+                freeCustomPayload(&paramData, &paramSize);
+            }
+            return 0;
         }
         default:
             status = -EINVAL;
@@ -3107,3 +3156,4 @@ exit:
     PAL_DBG(LOG_TAG, "Exit status: %d", status);
     return status;
 }
+
