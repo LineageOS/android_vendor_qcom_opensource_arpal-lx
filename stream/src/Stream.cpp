@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,8 +26,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1117,7 +1116,13 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
     int32_t status = 0;
 
     if (currentState == STREAM_IDLE) {
-        PAL_DBG(LOG_TAG, "stream is in %d state, no need to switch device", currentState);
+        for (int i = 0; i < mDevices.size(); i++) {
+            if (dev_id == mDevices[i]->getSndDeviceId()) {
+                mDevices.erase(mDevices.begin() + i);
+                PAL_DBG(LOG_TAG, "stream is in IDLE state, erase device: %d", dev_id);
+                break;
+            }
+        }
         status = 0;
         goto exit;
     }
@@ -1207,7 +1212,8 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
     dev->setDeviceAttributes(*dattr);
 
     if (currentState == STREAM_IDLE) {
-        PAL_DBG(LOG_TAG, "stream is in %d state, no need to switch device", currentState);
+        PAL_DBG(LOG_TAG, "stream is in IDLE state, insert %d to mDevices", dev->getSndDeviceId());
+        mDevices.push_back(dev);
         status = 0;
         goto exit;
     }
