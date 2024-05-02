@@ -2404,8 +2404,10 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
         {
             pal_param_device_rotation_t *rotation =
                                          (pal_param_device_rotation_t *)payload;
-            status = handleDeviceRotation(streamHandle, rotation->rotation_type,
-                                          device, mixer, builder, rxAifBackEnds);
+            if (!rxAifBackEnds.empty()) {
+                status = handleDeviceRotation(streamHandle, rotation->rotation_type,
+                                              device, mixer, builder, rxAifBackEnds);
+            }
             goto exit;
         }
         case PAL_PARAM_ID_LOAD_SOUND_MODEL:
