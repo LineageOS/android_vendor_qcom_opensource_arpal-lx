@@ -939,17 +939,43 @@ int SessionAlsaCompress::connectSessionDevice(Stream* streamHandle, pal_stream_t
     deviceToConnect->getDeviceAttributes(&dAttr);
 
     if (!rxAifBackEndsToConnect.empty()) {
-        status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
-            dAttr, compressDevIds, rxAifBackEndsToConnect);
         for (const auto &elem : rxAifBackEndsToConnect)
             rxAifBackEnds.push_back(elem);
+        status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
+            dAttr, compressDevIds, rxAifBackEndsToConnect);
+        if (status) {
+            int cnt = 0;
+            for (const auto &elem : rxAifBackEnds) {
+                cnt++;
+                for (const auto &connectElem : rxAifBackEndsToConnect) {
+                    if (std::get<0>(elem) == std::get<0>(connectElem)) {
+                        rxAifBackEnds.erase(rxAifBackEnds.begin() + cnt - 1, rxAifBackEnds.begin() + cnt);
+                        cnt--;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (!txAifBackEndsToConnect.empty()) {
-        status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
-            dAttr, compressDevIds, txAifBackEndsToConnect);
         for (const auto &elem : txAifBackEndsToConnect)
             txAifBackEnds.push_back(elem);
+        status = SessionAlsaUtils::connectSessionDevice(this, streamHandle, streamType, rm,
+            dAttr, compressDevIds, txAifBackEndsToConnect);
+        if (status) {
+            int cnt = 0;
+            for (const auto &elem : txAifBackEnds) {
+                cnt++;
+                for (const auto &connectElem : txAifBackEndsToConnect) {
+                    if (std::get<0>(elem) == std::get<0>(connectElem)) {
+                        txAifBackEnds.erase(txAifBackEnds.begin() + cnt - 1, txAifBackEnds.begin() + cnt);
+                        cnt--;
+                        break;
+                    }
+                }
+            }
+        }
 
     }
 
