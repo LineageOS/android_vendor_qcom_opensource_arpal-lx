@@ -10,6 +10,7 @@
 
 #include "VoiceUIInterface.h"
 #include "detection_cmn_api.h"
+#include "mma_api.h"
 #include "ar_osal_mem_op.h"
 
 class SVAInterface: public VoiceUIInterface {
@@ -68,6 +69,11 @@ class SVAInterface: public VoiceUIInterface {
     int32_t GenerateCallbackEvent(void *s,
                                   struct pal_st_recognition_event **event,
                                   uint32_t *event_size);
+    int32_t PackSVADetectionOpaqueData(void *s,
+                                    uint8_t *opaque_data,
+                                    uint32_t ext_payload_size);
+    int32_t PackMMADetectionOpaqueData(void *s,
+                                    uint8_t *opaque_data);
 
     int32_t UpdateEngineModel(void *s, uint8_t *data,
                 uint32_t data_size, bool add);
@@ -89,6 +95,7 @@ class SVAInterface: public VoiceUIInterface {
                                  uint32_t version);
     int32_t ParseDetectionPayloadPDK(void *s, void *event_data);
     int32_t ParseDetectionPayloadGMM(void *s, void *event_data);
+    int32_t ParseDetectionPayloadMMA(void *s, void *event_data);
     void UpdateKeywordIndex(void *s, uint64_t kwd_start_timestamp,
                             uint64_t kwd_end_timestamp,
                             uint64_t ftrt_start_timestamp);
@@ -104,6 +111,7 @@ class SVAInterface: public VoiceUIInterface {
     void CheckAndSetDetectionConfLevels(void *s);
     void* GetPDKDetectedStream(void *event);
     void* GetGMMDetectedStream(void *event);
+    void* GetMMADetectedStream(void *event);
 
     int32_t AddSoundModel(void *s, uint8_t *data, uint32_t data_size);
     int32_t DeleteSoundModel(void *s);
@@ -151,6 +159,8 @@ class SVAInterface: public VoiceUIInterface {
     struct param_id_detection_engine_multi_model_buffering_config_t buffering_config_;
     struct param_id_detection_engine_per_model_reset_t per_model_reset_config_;
     struct detection_engine_config_voice_wakeup wakeup_config_;
+    struct param_id_mma_context_ml_model_config_t *mma_model_;
+    struct param_id_mma_history_buffer_size_t mma_buffering_config_;
     uint8_t *wakeup_payload_;
     uint32_t wakeup_payload_size_;
     uint8_t *ftrt_data_;
@@ -161,6 +171,7 @@ class SVAInterface: public VoiceUIInterface {
         union {
             struct detection_event_info event_info_;
             struct detection_event_info_pdk pdk_event_info_;
+            struct detection_event_info_mma mma_event_info_;
         };
         uint32_t det_model_id_;
         uint64_t ftrt_size_us_;
