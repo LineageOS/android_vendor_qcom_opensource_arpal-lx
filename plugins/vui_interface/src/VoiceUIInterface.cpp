@@ -32,6 +32,7 @@ int32_t GetVUIInterface(struct vui_intf_t *intf, vui_intf_param_t *model) {
     switch (config->module_type) {
         case ST_MODULE_TYPE_GMM:
         case ST_MODULE_TYPE_PDK:
+        case ST_MODULE_TYPE_MMA:
             intf->interface = SVAInterface::GetInstance(model);
             break;
         case ST_MODULE_TYPE_HW:
