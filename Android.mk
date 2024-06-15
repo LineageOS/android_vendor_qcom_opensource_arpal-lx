@@ -180,7 +180,6 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/utils/inc
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_USE_VNDK := true
 
 LOCAL_C_INCLUDES     := $(call project-path-for,qcom-audio)/pal
 
