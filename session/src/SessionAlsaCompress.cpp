@@ -59,9 +59,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1418,7 +1418,7 @@ int SessionAlsaCompress::start(Stream * s)
                      rxAifBackEnds[0].second.data(), STREAM_SPR, &spr_miid);
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", STREAM_SPR, status);
-                goto exit;;
+                goto exit;
             }
             setCustomFormatParam(audio_fmt);
             for (int i = 0; i < associatedDevices.size();i++) {
