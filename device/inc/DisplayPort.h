@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -130,8 +130,10 @@ class DisplayPort : public Device
     uint32_t dp_stream;
 protected:
     int configureDpEndpoint();
-    static std::shared_ptr<Device> objRx;
+    static std::shared_ptr<Device> dpObjRx;
+    static std::shared_ptr<Device> hdmiObjRx;
     static std::shared_ptr<Device> objTx;
+    static const char * const extDispMixerTable[PAL_DEVICE_IN_MAX];
     DisplayPort(struct pal_device *device, std::shared_ptr<ResourceManager> Rm);
 public:
     int start();
@@ -147,11 +149,16 @@ public:
     static int32_t checkAndUpdateSampleRate(uint32_t *sampleRate);
     static bool isDisplayPortEnabled ();
     void resetEdidInfo();
+    static const char* getExtDispMixerString(pal_device_id_t device);
     static int32_t getDisplayPortCtlIndex(int controller, int stream);
-    static int32_t setExtDisplayDevice(struct audio_mixer *mixer, int controller, int stream);
-    static int32_t getExtDispType(struct audio_mixer *mixer, int controller, int stream);
-    static int getEdidInfo(struct audio_mixer *mixer, int controller, int stream);
-    static void cacheEdid(struct audio_mixer *mixer, int controller, int stream);
+    static int32_t setExtDisplayDevice(struct audio_mixer *mixer, int controller,
+                                       int stream, pal_device_id_t device);
+    static int32_t getExtDispType(struct audio_mixer *mixer, int controller,
+                                  int stream, pal_device_id_t device);
+    static int getEdidInfo(struct audio_mixer *mixer, int controller,
+                           int stream);
+    static void cacheEdid(struct audio_mixer *mixer, int controller,
+                          int stream);
     static const char * edidFormatToStr(unsigned char format);
     static bool isSampleRateSupported(unsigned char srByte, int samplingRate);
     static unsigned char getEdidBpsByte(unsigned char byte, unsigned char format);
@@ -173,8 +180,10 @@ public:
     int getHighestSupportedBps();
     int updateSysfsNode(const char *path, const char *data, size_t len);
     int getExtDispSysfsNodeIndex(int ext_disp_type);
-    int updateExtDispSysfsNode(int node_value, int controller, int stream);
-    int updateAudioAckState(int node_value, int controller, int stream);
+    int updateExtDispSysfsNode(int node_value, int controller, int stream,
+                               pal_device_id_t device);
+    int updateAudioAckState(int node_value, int controller, int stream,
+                            pal_device_id_t device);
     int getDeviceAttributes (struct pal_device *dattr,
                             Stream* streamHandle = NULL) override;
 };
