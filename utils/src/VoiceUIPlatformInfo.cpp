@@ -85,9 +85,9 @@ void VUISecondStageConfig::HandleStartTag(const char *tag, const char **attribs)
 }
 
 VUIFirstStageConfig::VUIFirstStageConfig() :
+    lpi_supported_(true),
     module_type_(ST_MODULE_TYPE_GMM),
-    module_name_("GMM"),
-    lpi_supported_(true)
+    module_name_("GMM")
 {
     for (int i = 0; i < MAX_PARAM_IDS; i++) {
         module_tag_ids_[i] = 0;
@@ -246,7 +246,7 @@ void VUIStreamConfig::ReadDetectionPropertyList(const char *prop_string)
 {
     int ret = 0;
     char *token = nullptr;
-    char *delims = ",";
+    char delims[] = ",";
     char *save = nullptr;
 
     PAL_VERBOSE(LOG_TAG, "Detection property list %s", prop_string);
