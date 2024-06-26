@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -73,8 +73,8 @@ class PalRingBufferReader {
          : ringBuffer_(buffer),
            unreadSize_(0),
            readOffset_(0),
-           requestedSize_(0),
-           state_(READER_DISABLED) {}
+           state_(READER_DISABLED),
+           requestedSize_(0) {}
 
     ~PalRingBufferReader() {};
 
