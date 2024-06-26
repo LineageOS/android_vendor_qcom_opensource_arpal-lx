@@ -1436,6 +1436,7 @@ int32_t SpeakerProtectionwsa885x::spkrProtProcessingMode(bool flag)
                 goto cps_dev_setup;
             case 2:
                 // place holer for cps_mode 2
+                [[fallthrough]];
             default:
                 // Free up the local variables
                 goto exit;
