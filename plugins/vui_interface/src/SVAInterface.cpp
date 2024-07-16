@@ -3858,7 +3858,9 @@ void SVAInterface::DeregisterModel(void *s) {
         if (sm_info_map_[s]->info)
             delete(sm_info_map_[s]->info);
         sm_info_map_[s]->sec_threshold.clear();
+        sm_info_map_[s]->sec_threshold.shrink_to_fit();
         sm_info_map_[s]->sec_det_level.clear();
+        sm_info_map_[s]->sec_det_level.shrink_to_fit();
 
         for (int i = 0; i < sm_info_map_[s]->model_list.size(); i++) {
             sm_data = sm_info_map_[s]->model_list[i];
@@ -3869,6 +3871,7 @@ void SVAInterface::DeregisterModel(void *s) {
             }
         }
         sm_info_map_[s]->model_list.clear();
+        sm_info_map_[s]->model_list.shrink_to_fit();
         free(sm_info_map_[s]);
         sm_info_map_.erase(iter);
     } else {
