@@ -6992,6 +6992,16 @@ bool ResourceManager::compareSharedBEStreamDevAttr(std::vector <std::tuple<Strea
                         PAL_DBG(LOG_TAG, "incoming dev: %d priority: 0x%x has same or higher priority than cur dev:%d priority: 0x%x",
                                             newDevAttr->id, newDevPrio, curDevAttr.id, curDevPrio);
                         switchStreams = true;
+                    } else if (isBtA2dpDevice(newDevAttr->id) && isBtScoDevice(curDevAttr.id) &&
+                               !curDev->isDeviceReady()) {
+                        /* At the time of VOIP call end, it might happen that Voip Rx stream
+                         * will go to standby after a delay. After SCO is disabled, APM will
+                         * send routing for streams to A2DP device. At this time due to high
+                         * priority stream being active on SCO, routing to A2DP will be ignored.
+                         * Special handling to handle such scenarios and route all existing SCO
+                         * streams to A2DP as well.
+                         */
+                        switchStreams = true;
                     } else {
                         PAL_DBG(LOG_TAG, "incoming dev: %d priority: 0x%x has lower priority than cur dev:%d priority: 0x%x,"
                                         " switching incoming stream to cur dev",
@@ -9791,6 +9801,17 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     sco_tx_dev = Device::getInstance(&sco_tx_dattr, rm);
                     getActiveStream_l(activestreams, sco_tx_dev);
                     if (activestreams.size() > 0) {
+                        /* Mark streams over IN_SCO, so as to give them chance
+                         * to resume over A2DP/BLE if a2dpCatureSuspend=false is
+                         * received at later stage.
+                         */
+                        for (sIter = activestreams.begin(); sIter != activestreams.end(); sIter++) {
+                            (*sIter)->suspendedDevIds.clear();
+                            if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_A2DP))
+                                (*sIter)->suspendedDevIds.push_back(PAL_DEVICE_IN_BLUETOOTH_A2DP);
+                            else if (isDeviceAvailable(PAL_DEVICE_IN_BLUETOOTH_BLE))
+                                (*sIter)->suspendedDevIds.push_back(PAL_DEVICE_IN_BLUETOOTH_BLE);
+                        }
                         PAL_DBG(LOG_TAG, "a2dp resumed, switch bt sco mic to handset mic");
                         stream = static_cast<Stream *>(activestreams[0]);
                         stream->getStreamAttributes(&sAttr);
@@ -10016,6 +10037,17 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     sco_rx_dev = Device::getInstance(&sco_rx_dattr, rm);
                     getActiveStream_l(activestreams, sco_rx_dev);
                     if (activestreams.size() > 0) {
+                        /* Mark streams over OUT_SCO, so as to give them chance
+                         * to resume over A2DP/BLE if a2dpSuspend=false is
+                         * received at later stage.
+                         */
+                        for (sIter = activestreams.begin(); sIter != activestreams.end(); sIter++) {
+                            (*sIter)->suspendedDevIds.clear();
+                            if (isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_A2DP))
+                                (*sIter)->suspendedDevIds.push_back(PAL_DEVICE_OUT_BLUETOOTH_A2DP);
+                            else if (isDeviceAvailable(PAL_DEVICE_OUT_BLUETOOTH_BLE))
+                                (*sIter)->suspendedDevIds.push_back(PAL_DEVICE_OUT_BLUETOOTH_BLE);
+                        }
                         stream = static_cast<Stream*>(activestreams[0]);
                         stream->getStreamAttributes(&sAttr);
                         getDeviceConfig(&speaker_dattr, &sAttr);
@@ -10927,6 +10959,18 @@ bool ResourceManager::isDeviceReady(pal_device_id_t id)
     }
 
     return is_ready;
+}
+
+bool ResourceManager::isBtA2dpDevice(pal_device_id_t id)
+{
+    if (id == PAL_DEVICE_OUT_BLUETOOTH_A2DP ||
+        id == PAL_DEVICE_OUT_BLUETOOTH_BLE ||
+        id == PAL_DEVICE_OUT_BLUETOOTH_BLE_BROADCAST ||
+        id == PAL_DEVICE_IN_BLUETOOTH_A2DP ||
+        id == PAL_DEVICE_IN_BLUETOOTH_BLE)
+        return true;
+    else
+        return false;
 }
 
 bool ResourceManager::isBtScoDevice(pal_device_id_t id)

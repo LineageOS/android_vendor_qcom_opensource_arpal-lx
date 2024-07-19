@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -65,8 +65,20 @@ static struct extDispState {
     int type = EXT_DISPLAY_TYPE_NONE;
 } extDisp[MAX_CONTROLLERS][MAX_STREAMS_PER_CONTROLLER];
 
-std::shared_ptr<Device> DisplayPort::objRx = nullptr;
+std::shared_ptr<Device> DisplayPort::dpObjRx = nullptr;
+std::shared_ptr<Device> DisplayPort::hdmiObjRx = nullptr;
 std::shared_ptr<Device> DisplayPort::objTx = nullptr;
+
+const char* DisplayPort::getExtDispMixerString(pal_device_id_t device)
+{
+    if ((device == PAL_DEVICE_OUT_AUX_DIGITAL) ||
+        (device == PAL_DEVICE_OUT_AUX_DIGITAL_1))
+        return "External Display";
+    else if (device == PAL_DEVICE_OUT_HDMI)
+        return "External HDMI";
+
+    return NULL;
+}
 
 std::shared_ptr<Device> DisplayPort::getInstance(struct pal_device *device,
                                              std::shared_ptr<ResourceManager> Rm)
@@ -77,31 +89,41 @@ std::shared_ptr<Device> DisplayPort::getInstance(struct pal_device *device,
     PAL_DBG(LOG_TAG, "Enter, device id %d", device->id);
 
     if ((device->id == PAL_DEVICE_OUT_AUX_DIGITAL) ||
-        (device->id == PAL_DEVICE_OUT_AUX_DIGITAL_1) ||
-        (device->id == PAL_DEVICE_OUT_HDMI)) {
-        if (!objRx) {
+        (device->id == PAL_DEVICE_OUT_AUX_DIGITAL_1)) {
+        if (!dpObjRx) {
             std::shared_ptr<Device> sp(new DisplayPort(device, Rm));
-            objRx = sp;
+            dpObjRx = sp;
         }
-        return objRx;
-    } else if (device->id == PAL_DEVICE_IN_AUX_DIGITAL) {
+        return dpObjRx;
+    } else if (device->id == PAL_DEVICE_OUT_HDMI) {
+        if (!hdmiObjRx) {
+            std::shared_ptr<Device> sp(new DisplayPort(device, Rm));
+            hdmiObjRx = sp;
+        }
+        return hdmiObjRx;
+    } else if(device->id == PAL_DEVICE_IN_AUX_DIGITAL) {
         if (!objTx) {
             std::shared_ptr<Device> sp(new DisplayPort(device, Rm));
             objTx = sp;
         }
         return objTx;
     }
+
     return NULL;
 }
 
 std::shared_ptr<Device> DisplayPort::getObject(pal_device_id_t id)
 {
     if ((id == PAL_DEVICE_OUT_AUX_DIGITAL) ||
-        (id == PAL_DEVICE_OUT_AUX_DIGITAL_1) ||
-        (id == PAL_DEVICE_OUT_HDMI)) {
-        if (objRx) {
-            if (objRx->getSndDeviceId() == id)
-                return objRx;
+        (id == PAL_DEVICE_OUT_AUX_DIGITAL_1)) {
+        if (dpObjRx) {
+            if (dpObjRx->getSndDeviceId() == id)
+                return dpObjRx;
+        }
+    } else if (id == PAL_DEVICE_OUT_HDMI) {
+        if (hdmiObjRx) {
+            if (hdmiObjRx->getSndDeviceId() == id)
+                return hdmiObjRx;
         }
     } else if (id == PAL_DEVICE_IN_AUX_DIGITAL) {
         if (objTx) {
@@ -109,6 +131,7 @@ std::shared_ptr<Device> DisplayPort::getObject(pal_device_id_t id)
                 return objTx;
         }
     }
+
     return NULL;
 }
 
@@ -180,11 +203,13 @@ int DisplayPort::start()
 
     customPayload = NULL;
     customPayloadSize = 0;
-
-    status = configureDpEndpoint();
-    if (status != 0) {
-        PAL_ERR(LOG_TAG,"Endpoint Configuration Failed");
-        return status;
+    if ((deviceAttr.id == PAL_DEVICE_OUT_AUX_DIGITAL) ||
+            (deviceAttr.id == PAL_DEVICE_OUT_AUX_DIGITAL_1)) {
+        status = configureDpEndpoint();
+        if (status != 0) {
+            PAL_ERR(LOG_TAG,"Endpoint Configuration Failed");
+            return status;
+        }
     }
     status = Device::start();
     return status;
@@ -291,7 +316,8 @@ int DisplayPort::getExtDispSysfsNodeIndex(int ext_disp_type)
     return -1;
 }
 
-int DisplayPort::updateExtDispSysfsNode(int node_value, int controller, int stream)
+int DisplayPort::updateExtDispSysfsNode(int node_value, int controller,
+                                        int stream, pal_device_id_t device)
 {
     char ext_disp_ack_path[80] = {0};
     char ext_disp_ack_value[3] = {0};
@@ -306,7 +332,7 @@ int DisplayPort::updateExtDispSysfsNode(int node_value, int controller, int stre
          return status;
     }
 
-    ext_disp_type = getExtDispType(mixer, controller, stream);
+    ext_disp_type = getExtDispType(mixer, controller, stream, device);
     if (ext_disp_type < 0) {
         PAL_ERR(LOG_TAG, "Unable to get the external display type, err:%d", ext_disp_type);
         return -EINVAL;
@@ -328,12 +354,13 @@ int DisplayPort::updateExtDispSysfsNode(int node_value, int controller, int stre
     return ret;
 }
 
-int DisplayPort::updateAudioAckState(int node_value, int controller, int stream)
+int DisplayPort::updateAudioAckState(int node_value, int controller,
+                                     int stream, pal_device_id_t device)
 {
     int ret = 0;
     int ctl_index = 0;
     struct mixer_ctl *ctl = NULL;
-    const char *ctl_prefix = "External Display";
+    const char *ctl_prefix = getExtDispMixerString(device);
     const char *ctl_suffix = "Audio Ack";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
     struct mixer *mixer;
@@ -351,7 +378,7 @@ int DisplayPort::updateAudioAckState(int node_value, int controller, int stream)
         return -EINVAL;
     }
 
-    if (0 == ctl_index)
+    if ((0 == ctl_index) || (device == PAL_DEVICE_OUT_HDMI))
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_prefix, ctl_suffix);
     else
@@ -364,7 +391,7 @@ int DisplayPort::updateAudioAckState(int node_value, int controller, int stream)
     if (!ctl) {
         PAL_DBG(LOG_TAG, "could not get ctl for mixer cmd(%s), use sysfs node instead\n",
               mixer_ctl_name);
-        ret = updateExtDispSysfsNode(node_value, controller, stream);
+        ret = updateExtDispSysfsNode(node_value, controller, stream, device);
     } else {
         char *ack_str = NULL;
 
@@ -403,8 +430,10 @@ int DisplayPort::init(pal_param_device_connection_t device_conn)
     dp_controller = dp_config->controller;
     dp_stream = dp_config->stream;
     PAL_DBG(LOG_TAG," DP contr: %d  stream: %d", dp_controller, dp_stream);
-    setExtDisplayDevice(mixer, dp_config->controller, dp_config->stream);
-    status = getExtDispType(mixer, dp_config->controller, dp_config->stream);
+    setExtDisplayDevice(mixer, dp_config->controller, dp_config->stream,
+                        device_conn.id);
+    status = getExtDispType(mixer, dp_config->controller, dp_config->stream,
+                            device_conn.id);
     if (status < 0) {
         PAL_ERR(LOG_TAG," Failed to query disp type, status:%d", status);
     } else {
@@ -412,17 +441,20 @@ int DisplayPort::init(pal_param_device_connection_t device_conn)
     }
     if (is_hdmi_sysfs_node_init == false) {
         is_hdmi_sysfs_node_init = true;
-        updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_ENABLE, dp_controller, dp_stream);
+        updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_ENABLE, dp_controller,
+                            dp_stream, device_conn.id);
     }
-    updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_CONNECT, dp_controller, dp_stream);
+    updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_CONNECT, dp_controller,
+                        dp_stream, device_conn.id);
 
     PAL_DBG(LOG_TAG," Exit");
     return 0;
 }
 
-int DisplayPort::deinit(pal_param_device_connection_t device_conn __unused)
+int DisplayPort::deinit(pal_param_device_connection_t device_conn)
 {
-    updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_DISCONNECT, dp_controller, dp_stream);
+    updateAudioAckState(EXT_DISPLAY_PLUG_STATUS_NOTIFY_DISCONNECT, dp_controller,
+                        dp_stream, device_conn.id);
     //To-Do : Have to invalidate the cahed EDID
     return 0;
 }
@@ -481,11 +513,12 @@ int32_t DisplayPort::getDisplayPortCtlIndex(int controller, int stream)
             (stream % MAX_STREAMS_PER_CONTROLLER);
 }
 
-int32_t DisplayPort::setExtDisplayDevice(struct audio_mixer *mixer, int controller, int stream)
+int32_t DisplayPort::setExtDisplayDevice(struct audio_mixer *mixer, int controller,
+                                         int stream, pal_device_id_t device)
 {
     struct mixer_ctl *ctl = NULL;
     int ctlIndex = 0;
-    const char *ctlNamePrefix = "External Display";
+    const char *ctlNamePrefix = getExtDispMixerString(device);
     const char *ctlNameSuffix = "Audio Device";
     char mixerCtlName[MIXER_PATH_MAX_LENGTH] = {0};
     long deviceValues[2] = {-1, -1};
@@ -498,7 +531,7 @@ int32_t DisplayPort::setExtDisplayDevice(struct audio_mixer *mixer, int controll
 
     PAL_DBG(LOG_TAG," ctlIndex: %d controller: %d stream: %d", ctlIndex, controller, stream);
 
-    if (0 == ctlIndex)
+    if ((0 == ctlIndex) || (device == PAL_DEVICE_OUT_HDMI))
         snprintf(mixerCtlName, sizeof(mixerCtlName),
                  "%s %s", ctlNamePrefix, ctlNameSuffix);
     else
@@ -521,7 +554,8 @@ int32_t DisplayPort::setExtDisplayDevice(struct audio_mixer *mixer, int controll
     return mixer_ctl_set_array(ctl, deviceValues, ARRAY_SIZE(deviceValues));
 }
 
-int32_t DisplayPort::getExtDispType(struct audio_mixer *mixer, int controller, int stream)
+int32_t DisplayPort::getExtDispType(struct audio_mixer *mixer, int controller,
+                                    int stream, pal_device_id_t device)
 {
     int dispType = EXT_DISPLAY_TYPE_NONE;
     int ctlIndex = 0;
@@ -540,39 +574,35 @@ int32_t DisplayPort::getExtDispType(struct audio_mixer *mixer, int controller, i
          return disp->type;
     }
 
-    if (isDisplayPortEnabled()) {
-        struct mixer_ctl *ctl = NULL;
-        const char *ctlNamePrefix = "External Display";
-        const char *ctlNameSuffix = "Type";
-        char mixerCtlName[MIXER_PATH_MAX_LENGTH] = {0};
+    struct mixer_ctl *ctl = NULL;
+    const char *ctlNamePrefix = getExtDispMixerString(device);
+    const char *ctlNameSuffix = "Type";
+    char mixerCtlName[MIXER_PATH_MAX_LENGTH] = {0};
 
-        if (0 == ctlIndex)
-            snprintf(mixerCtlName, sizeof(mixerCtlName),
-                     "%s %s", ctlNamePrefix, ctlNameSuffix);
-        else
-            snprintf(mixerCtlName, sizeof(mixerCtlName),
-                     "%s%d %s", ctlNamePrefix, ctlIndex, ctlNameSuffix);
+    if ((0 == ctlIndex) || (device == PAL_DEVICE_OUT_HDMI))
+        snprintf(mixerCtlName, sizeof(mixerCtlName),
+                 "%s %s", ctlNamePrefix, ctlNameSuffix);
+    else
+        snprintf(mixerCtlName, sizeof(mixerCtlName),
+                 "%s%d %s", ctlNamePrefix, ctlIndex, ctlNameSuffix);
 
-        PAL_VERBOSE(LOG_TAG,"mixer ctl name: %s", mixerCtlName);
+    PAL_VERBOSE(LOG_TAG,"mixer ctl name: %s", mixerCtlName);
 
-        ctl = mixer_get_ctl_by_name(mixer, mixerCtlName);
-        if (!ctl) {
-            PAL_ERR(LOG_TAG,"Could not get ctl for mixer cmd - %s", mixerCtlName);
-            return -EINVAL;
-        }
+    ctl = mixer_get_ctl_by_name(mixer, mixerCtlName);
+    if (!ctl) {
+        PAL_ERR(LOG_TAG,"Could not get ctl for mixer cmd - %s", mixerCtlName);
+        return -EINVAL;
+    }
 
-        dispType = mixer_ctl_get_value(ctl, 0);
-        if (dispType == EXT_DISPLAY_TYPE_NONE) {
-            PAL_ERR(LOG_TAG,"Invalid external display type: %d", dispType);
-            return -EINVAL;
-        }
-    } else {
-        dispType = EXT_DISPLAY_TYPE_HDMI;
+    dispType = mixer_ctl_get_value(ctl, 0);
+    if (dispType < 0) {
+        PAL_ERR(LOG_TAG,"Invalid external display type: %d", dispType);
+        return -EINVAL;
     }
 
     disp->type = dispType;
 
-    PAL_DBG(LOG_TAG," ext disp type: %s", (dispType == EXT_DISPLAY_TYPE_DP) ? "DisplayPort" : "HDMI");
+    PAL_DBG(LOG_TAG," ext disp type: %d", dispType );
 
     return dispType;
 }

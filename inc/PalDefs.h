@@ -973,7 +973,7 @@ typedef enum {
 
 /** HDMI/DP */
 // START: MST ==================================================
-#define MAX_CONTROLLERS 1
+#define MAX_CONTROLLERS 2
 #define MAX_STREAMS_PER_CONTROLLER 2
 // END: MST ==================================================
 
