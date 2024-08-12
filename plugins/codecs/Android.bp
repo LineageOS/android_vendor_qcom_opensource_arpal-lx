@@ -1,5 +1,8 @@
 cc_library_shared {
     name: "lib_bt_bundle",
+    defaults: [
+        "android_hardware_qtiaudio_config_defaults",
+    ],
     owner: "qti",
     vendor: true,
 
@@ -29,6 +32,9 @@ cc_library_shared {
 
 cc_library_shared {
     name: "lib_bt_aptx",
+    defaults: [
+        "android_hardware_qtiaudio_config_defaults",
+    ],
     owner: "qti",
     vendor: true,
 
@@ -58,6 +64,9 @@ cc_library_shared {
 
 cc_library_shared {
     name: "lib_bt_ble",
+    defaults: [
+        "android_hardware_qtiaudio_config_defaults",
+    ],
     owner: "qti",
     vendor: true,
 
