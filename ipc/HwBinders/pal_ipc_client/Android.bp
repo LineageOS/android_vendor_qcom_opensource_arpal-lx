@@ -1,5 +1,8 @@
 cc_library_shared {
     name: "libpalclient",
+    defaults: [
+        "android_hardware_audio_config_defaults",
+    ],
     owner: "qti",
     vendor: true,
 
