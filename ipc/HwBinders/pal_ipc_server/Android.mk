@@ -4,6 +4,10 @@ ifneq ($(QCPATH),)
 
 include $(CLEAR_VARS)
 
+ifeq ($(SOONG_CONFIG_android_hardware_audio_run_64bit), true)
+LOCAL_MULTILIB := 64
+endif
+
 LOCAL_MODULE := vendor.qti.hardware.pal@1.0-impl
 LOCAL_MODULE_OWNER := qti
 LOCAL_VENDOR_MODULE := true
