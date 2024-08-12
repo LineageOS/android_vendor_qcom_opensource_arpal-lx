@@ -1,6 +1,9 @@
 cc_library_static {
 
     name: "libpalaidltypeconverter",
+    defaults: [
+        "android_hardware_qtiaudio_config_defaults",
+    ],
     vendor: true,
 
     cflags: [
