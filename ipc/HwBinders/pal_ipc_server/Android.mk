@@ -21,11 +21,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc
 
-ifeq ($(QCPATH),)
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/../../..
-endif
-
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
@@ -36,6 +31,9 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     vendor.qti.hardware.pal@1.0 \
     libar-pal
+
+LOCAL_HEADER_LIBRARIES := \
+    libarpal_headers
 
 include $(BUILD_SHARED_LIBRARY)
 
