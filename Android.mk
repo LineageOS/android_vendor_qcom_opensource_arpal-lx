@@ -133,7 +133,7 @@ LOCAL_HEADER_LIBRARIES := \
     libcapiv2_headers \
     libagm_headers \
     libacdb_headers \
-    libpal_headers
+    libarpal_headers
 
 LOCAL_SHARED_LIBRARIES := \
     libar-gsl\
