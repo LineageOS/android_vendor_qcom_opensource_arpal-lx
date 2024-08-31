@@ -913,7 +913,7 @@
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_HDMI</id>
-            <back_end_name>MI2S-LPAIF-RX-SECONDARY</back_end_name>
+            <back_end_name>MI2S-LPAIF_RXTX-RX-PRIMARY</back_end_name>
             <max_channels>2</max_channels>
             <channels>2</channels>
             <fractional_sr>1</fractional_sr>
