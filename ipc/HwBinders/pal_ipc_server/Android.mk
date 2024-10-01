@@ -39,4 +39,14 @@ LOCAL_HEADER_LIBRARIES := \
 
 include $(BUILD_SHARED_LIBRARY)
 
+else
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libpalserver_headers
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc
+LOCAL_VENDOR_MODULE := true
+
+include $(BUILD_HEADER_LIBRARY)
+
 endif
