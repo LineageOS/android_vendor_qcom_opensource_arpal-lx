@@ -1,0 +1,5 @@
+cc_library_headers {
+    name: "peripheralstate_headers",
+    export_include_dirs: ["inc"],
+    vendor: true,
+}
