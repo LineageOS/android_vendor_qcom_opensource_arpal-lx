@@ -231,8 +231,10 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
+include $(PAL_BASE_PATH)/peripheral_utils/Android.mk
 include $(PAL_BASE_PATH)/plugins/Android.mk
 include $(PAL_BASE_PATH)/ipc/HwBinders/Android.mk
+include $(PAL_BASE_PATH)/vui_dmgr/Android.mk
 
 endif #TARGET_USES_QCOM_MM_AUDIO
 endif #AUDIO_USE_STUB_HAL
