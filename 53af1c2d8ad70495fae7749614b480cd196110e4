@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa9ead23_b26884ad",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 34167
+      },
+      "writtenOn": "2024-10-16T06:07:19Z",
+      "side": 1,
+      "message": "Ref:\nhttps://gist.github.com/ThEMarD/cca92e89ce635e94614bb2bd89bea42d\n\nTest:\nManual. Build, boot.",
+      "revId": "53af1c2d8ad70495fae7749614b480cd196110e4",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
