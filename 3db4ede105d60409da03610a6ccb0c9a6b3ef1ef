@@ -16,6 +16,23 @@
       "message": "Why? This is built from source on ingot",
       "revId": "3db4ede105d60409da03610a6ccb0c9a6b3ef1ef",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d711e0d3_62665c5b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 30416
+      },
+      "writtenOn": "2024-11-07T15:43:00Z",
+      "side": 1,
+      "message": "I am able to work around this by not including this in shared libs and disabling checkelf for audio.primary.taro",
+      "revId": "3db4ede105d60409da03610a6ccb0c9a6b3ef1ef",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
