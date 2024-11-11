@@ -39,6 +39,28 @@
 #include <unistd.h>
 #include <chrono>
 
+void StreamPCM::handleSessionCallBack(uint64_t hdl, uint32_t event_id,
+                                        void *data, uint32_t event_size)
+{
+    Stream *s = (Stream *) hdl;
+    pal_device_id_t dev_id;
+
+    PAL_DBG(LOG_TAG,"Event id %x ", event_id);
+
+    if (!rm) {
+        rm = ResourceManager::getInstance();
+        if (!rm) {
+            PAL_ERR(LOG_TAG, "ResourceManager getInstance failed");
+            return;
+        }
+    }
+
+    if (event_id == EVENT_ID_MIC_OCCLUSION_STATUS_INFO) {
+        PAL_DBG(LOG_TAG,"LOG_AS: Mic Occlusion info received");
+        rm->updateMicOcclusionInfo(s, data);
+     }
+}
+
 StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_device *dattr,
                     const uint32_t no_of_devices, const struct modifier_kv *modifiers,
                     const uint32_t no_of_modifiers, const std::shared_ptr<ResourceManager> rm)
@@ -175,6 +197,11 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
     if (mStreamAttr->direction == PAL_AUDIO_OUTPUT )
         session->registerCallBack(handleSoftPauseCallBack, (uint64_t)this);
 
+    //Register for Mic Occlusion events for capture voip & voice call
+    if ((mStreamAttr->direction == PAL_AUDIO_INPUT) ||
+            (mStreamAttr->direction == PAL_AUDIO_INPUT_OUTPUT)) {
+        session->registerCallBack(handleSessionCallBack, (uint64_t)this);
+    }
     mStreamMutex.unlock();
     PAL_DBG(LOG_TAG, "Exit. state %d", currentState);
     return;

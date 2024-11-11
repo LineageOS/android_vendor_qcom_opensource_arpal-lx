@@ -81,6 +81,8 @@ public:
    static int32_t isSampleRateSupported(uint32_t sampleRate);
    static int32_t isChannelSupported(uint32_t numChannels);
    static int32_t isBitWidthSupported(uint32_t bitWidth);
+   static void handleSessionCallBack(uint64_t hdl, uint32_t event_id, void *data,
+                                                           uint32_t event_size);
 };
 
 #endif//STREAMPCM_H_

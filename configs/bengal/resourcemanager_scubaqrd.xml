@@ -26,9 +26,9 @@
 <!--  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN     -->
 <!--  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE                               -->
 
-<!-- Changes from Qualcomm Innovation Center are provided under the following license: -->
+<!-- Changes from Qualcomm Innovation Center, Inc. are provided under the following license: -->
 <!--                                                                                   -->
-<!-- Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.          -->
+<!-- Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.          -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear                                       -->
 <resource_manager_info>
     <config_params>
@@ -40,9 +40,10 @@
         <!-- Revisit, default is 2 -->
         <param key="max_nonTunnel_sessions" value="4"/>  
         <param key="logging_level" value ="3" />
-        <param key="context_manager_enable" value ="false" />
+        <param key="context_manager_enable" value ="true" />
         <!-- Revisit later, used for PAL_STREAM_ULTRASOUND -->
         <param key="upd_dedicated_be" value ="false" />
+        <param key="upd_set_custom_gain" value ="false" />
         <param key="upd_duty_cycle_enable" value="false" />
         <param key="dual_mono" value ="false" />
         <param key="signal_handler" value ="true" />
@@ -270,6 +271,18 @@ should always be in sync with it -->
             <samplerate>44100</samplerate>
             <bit_width>16</bit_width>
         </in-device>
+        <in-device>
+            <id>PAL_DEVICE_IN_ULTRASOUND_MIC</id>
+            <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-4</back_end_name>
+            <max_channels>2</max_channels>
+            <channels>1</channels>
+            <samplerate>96000</samplerate>
+            <bit_width>16</bit_width>
+            <snd_device_name>ultrasound-mic</snd_device_name>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+            </usecase>
+        </in-device>
         <out-device>
             <id>PAL_DEVICE_OUT_SPEAKER</id>
             <back_end_name>CODEC_DMA-LPAIF_RXTX-RX-0</back_end_name>
@@ -293,6 +306,11 @@ should always be in sync with it -->
             <speaker_mono_right>0</speaker_mono_right>
             <!-- Time in seconds for Quick cal. Set 0 to disable -->
             <quick_cal_time>0</quick_cal_time>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+                <priority>1</priority>
+                <samplerate>96000</samplerate>
+            </usecase>
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_HANDSET</id>
@@ -302,6 +320,11 @@ should always be in sync with it -->
             <samplerate>48000</samplerate>
             <bit_width>16</bit_width>
             <snd_device_name>handset</snd_device_name>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+                <priority>1</priority>
+                <samplerate>96000</samplerate>
+            </usecase>
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_BLUETOOTH_A2DP</id>

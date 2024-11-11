@@ -28,13 +28,16 @@
 
 <!-- Changes from Qualcomm Innovation Center are provided under the following license: -->
 <!--                                                                                   -->
-<!-- Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.       -->
+<!-- Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.       -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear                                       -->
 <resource_manager_info>
     <config_params>
         <param key="native_audio_mode" value="multiple_mix_dsp"/>
         <param key="max_sessions" value="128"/>
         <param key="logging_level" value ="3" />
+        <param key="context_manager_enable" value ="true" />
+        <param key="upd_dedicated_be" value ="false" />
+        <param key="upd_set_custom_gain" value ="false" />
     </config_params>
     <config_gapless key="gapless_supported" value="1"/>
     <bt_codecs>
@@ -414,6 +417,18 @@ should always be in sync with it -->
             </usecase>
         </in-device>
         <in-device>
+            <id>PAL_DEVICE_IN_ULTRASOUND_MIC</id>
+            <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-4</back_end_name>
+            <max_channels>2</max_channels>
+            <channels>1</channels>
+            <samplerate>96000</samplerate>
+            <bit_width>16</bit_width>
+            <snd_device_name>ultrasound-mic</snd_device_name>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+            </usecase>
+        </in-device>
+        <in-device>
             <id>PAL_DEVICE_IN_ECHO_REF</id>
             <back_end_name>PCM_DUMMY-TX-0</back_end_name>
             <snd_device_name>echo-ref-record</snd_device_name>
@@ -472,6 +487,11 @@ should always be in sync with it -->
                 <samplerate>16000</samplerate>
                 <priority>3</priority>
             </usecase>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+                <priority>1</priority>
+                <samplerate>96000</samplerate>
+            </usecase>
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_HANDSET</id>
@@ -490,6 +510,11 @@ should always be in sync with it -->
                 <name>PAL_STREAM_VOIP_RX</name>
                 <priority>3</priority>
                 <snd_device_name>voice-handset</snd_device_name>
+            </usecase>
+            <usecase>
+                <name>PAL_STREAM_ULTRASOUND</name>
+                <priority>1</priority>
+                <samplerate>96000</samplerate>
             </usecase>
         </out-device>
         <out-device>

@@ -920,6 +920,8 @@ typedef enum {
     PAL_PARAM_ID_TIMESTRETCH_PARAMS = 72,
     PAL_PARAM_ID_LATENCY_MODE = 73,
     PAL_PARAM_ID_PROXY_RECORD_SESSION = 74,
+    PAL_PARAM_ID_MIC_OCCLUSION_INFO = 75,
+    PAL_PARAM_ID_ULTRASOUND_SET_GAIN = 76,
 } pal_param_id_type_t;
 
 /** HDMI/DP */
@@ -1128,6 +1130,16 @@ typedef struct pal_bt_tws_payload_s {
     uint32_t codecFormat;
 } pal_bt_tws_payload;
 
+/* Payload For ID: PAL_PARAM_ID_MIC_OCCLUSION_INFO
+ * Description   : mic occlusion related information.
+*/
+typedef struct pal_param_mic_occlusion_info {
+    pal_device_id_t   id;                 /**< Pal device id */
+    bool              is_occluded;        /**< currently is mic occluded?*/
+    uint32_t          num_of_occlusion;   /**< number of occlusions */
+    uint32_t          num_of_recovery;    /**< number of recoveries after occlusion. */
+} pal_param_mic_occlusion_info_t;
+
 /* Payload For Custom Config
  * Description : Used by PAL client to customize
  *               the device related information.
@@ -1144,6 +1156,13 @@ typedef struct pal_bt_lc3_payload_s {
 typedef struct pal_param_haptics_intensity {
     int intensity;
 } pal_param_haptics_intensity_t;
+
+/* Type of Ultrasound Gain */
+typedef enum {
+    PAL_ULTRASOUND_GAIN_MUTE = 0,
+    PAL_ULTRASOUND_GAIN_LOW,
+    PAL_ULTRASOUND_GAIN_HIGH,
+} pal_ultrasound_gain_t;
 
 /**< PAL device */
 struct pal_device {

@@ -28,37 +28,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef RESOURCE_MANAGER_H
@@ -94,6 +65,12 @@ typedef enum {
     TX_HOSTLESS,
 } hostless_dir_t;
 
+typedef enum {
+    MIC_OCC_STATE_NO_OCCLUSION = 0,
+    MIC_OCC_STATE_MIC1_BLOCKED,
+    MIC_OCC_STATE_MIC0_BLOCKED,
+} mic_occlusion_states_t;
+
 #define ARRAX_SOC_ID 585
 #define audio_mixer mixer
 #define MAX_SND_CARD 10
@@ -108,6 +85,7 @@ typedef enum {
 #define AUDIO_PARAMETER_KEY_HIFI_FILTER "hifi_filter"
 #define AUDIO_PARAMETER_KEY_LPI_LOGGING "lpi_logging_enable"
 #define AUDIO_PARAMETER_KEY_UPD_DEDICATED_BE "upd_dedicated_be"
+#define AUDIO_PARAMETER_KEY_UPD_SET_CUSTOM_GAIN "upd_set_custom_gain"
 #define AUDIO_PARAMETER_KEY_DUAL_MONO "dual_mono"
 #define AUDIO_PARAMETER_KEY_SIGNAL_HANDLER "signal_handler"
 #define MAX_PCM_NAME_SIZE 50
@@ -458,6 +436,7 @@ private:
     void onChargingStateChange();
     void onVUIStreamRegistered();
     void onVUIStreamDeregistered();
+    int setUltrasoundGain(pal_ultrasound_gain_t gain, Stream *s);
 protected:
     std::list <Stream*> mActiveStreams;
     std::list <StreamPCM*> active_streams_ll;
@@ -534,6 +513,7 @@ protected:
     static std::map<std::string, uint32_t> btFmtTable;
     static std::map<std::string, int> spkrPosTable;
     static std::map<int, std::string> spkrTempCtrlsMap;
+    std::unordered_map<Stream *, std::vector<pal_param_mic_occlusion_info_t>> micOcclusionInfoMap;
     static std::map<uint32_t, uint32_t> btSlimClockSrcMap;
     static std::map<std::string, int> handsetPosTable;
     static std::map<pal_device_id_t, std::vector<std::string>> deviceTempCtrlsMap;
@@ -578,6 +558,7 @@ protected:
     int32_t scoOutConnectCount = 0;
     int32_t scoInConnectCount = 0;
     std::shared_ptr<SignalHandler> mSigHandler;
+    int getPcmIdByDevInfoName(char *mixer_str);
 public:
     ~ResourceManager();
     static bool mixerClosed;
@@ -614,6 +595,8 @@ public:
     static bool isVIRecordStarted;
     /* Flag to indicate if shared backend is enabled for UPD */
     static bool isUpdDedicatedBeEnabled;
+    /* Flag to indicate whether to send custom gain commands to UPD modules or not? */
+    static bool isUpdSetCustomGainEnabled;
     /* Variable to store max volume index for voice call */
     static int max_voice_vol;
     uint64_t cookie;
@@ -640,6 +623,10 @@ public:
     static std::shared_ptr<group_dev_config_t> activeGroupDevConfig;
     static std::shared_ptr<group_dev_config_t> currentGroupDevConfig;
 
+    /** Update mic occlusion info when event is detected */
+    int32_t updateMicOcclusionInfo(Stream* stream_hdl, void* data);
+    void addMicOcclusionInfo(Stream *s);
+    void removeMicOcclusionInfo(Stream *s);
     /* checks config for both stream and device */
     bool isStreamSupported(struct pal_stream_attributes *attributes,
                            struct pal_device *devices, int no_of_devices);
@@ -730,7 +717,8 @@ public:
     int getActiveStream_l(std::vector<Stream*> &activestreams,std::shared_ptr<Device> d = nullptr);
     int getOrphanStream(std::vector<Stream*> &orphanstreams, std::vector<Stream*> &retrystreams);
     int getOrphanStream_l(std::vector<Stream*> &orphanstreams, std::vector<Stream*> &retrystreams);
-    int getActiveDevices(std::vector<std::shared_ptr<Device>> &deviceList);
+    void getActiveDevices(std::vector<std::shared_ptr<Device>> &deviceList);
+    void getActiveDevices_l(std::vector<std::shared_ptr<Device>> &deviceList);
     int getSndDeviceName(int deviceId, char *device_name);
     int getDeviceEpName(int deviceId, std::string &epName);
     int getBackendName(int deviceId, std::string &backendName);
@@ -754,6 +742,13 @@ public:
                           std::vector<std::pair<int32_t, std::string>> &txBackEndNames) const;
     bool updateDeviceConfig(std::shared_ptr<Device> *inDev,
              struct pal_device *inDevAttr, const pal_stream_attributes* inStrAttr);
+    int findActiveStreamsNotInDisconnectList(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnectList,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
+    int restoreDeviceConfigForUPD(
+            std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnect,
+            std::vector <std::tuple<Stream *, struct pal_device *>> &StreamDevConnect,
+            std::vector <std::tuple<Stream *, uint32_t>> &streamsSkippingSwitch);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr);
     int32_t forceDeviceSwitch(std::shared_ptr<Device> inDev, struct pal_device *newDevAttr,
                               std::vector <Stream *> prevActiveStreams);
@@ -767,6 +762,7 @@ public:
     bool IsVoipConcurrencySupported(pal_stream_type_t type);
     bool IsTransitToNonLPIOnChargingSupported();
     bool IsDedicatedBEForUPDEnabled();
+    bool IsCustomGainEnabledForUPD();
     void GetSoundTriggerConcurrencyCount(pal_stream_type_t type, int32_t *enable_count, int32_t *disable_count);
     void GetSoundTriggerConcurrencyCount_l(pal_stream_type_t type, int32_t *enable_count, int32_t *disable_count);
     bool GetChargingState() const { return charging_state_; }
@@ -848,11 +844,13 @@ public:
     static int setContextManagerEnableParam(struct str_parms *parms,char *value, int len);
     static int setLpiLoggingParams(struct str_parms *parms, char *value, int len);
     static int setUpdDedicatedBeEnableParam(struct str_parms *parms,char *value, int len);
+    static int setUpdCustomGainParam(struct str_parms *parms,char *value, int len);
     static int setDualMonoEnableParam(struct str_parms *parms,char *value, int len);
     static int setSignalHandlerEnableParam(struct str_parms *parms,char *value, int len);
     static bool isLpiLoggingEnabled();
     static void processConfigParams(const XML_Char **attr);
     static bool isValidDevId(int deviceId);
+    static bool isValidStreamId(int streamId);
     static bool isOutputDevId(int deviceId);
     static bool isInputDevId(int deviceId);
     static bool matchDevDir(int devId1, int devId2);
@@ -943,6 +941,7 @@ public:
                              std::vector<Stream*> &streamsToSwitch,
                              struct pal_device *streamDevAttr);
     static void sendCrashSignal(int signal, pid_t pid, uid_t uid);
+    bool isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId);
 };
 
 static int getSocId() {
