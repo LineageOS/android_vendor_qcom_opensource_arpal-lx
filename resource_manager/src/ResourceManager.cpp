@@ -7275,9 +7275,7 @@ int ResourceManager::findActiveStreamsNotInDisconnectList(
 
     mActiveStreamMutex.lock();
 
-    ret = rm->getActiveStream_l(activeStreams, devObj);
-    if (ret)
-        goto done;
+    rm->getActiveStream_l(activeStreams, devObj);
 
     PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
             deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
