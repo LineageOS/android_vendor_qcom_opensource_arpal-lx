@@ -178,11 +178,6 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
     if (mStreamAttr->direction == PAL_AUDIO_OUTPUT )
         session->registerCallBack(handleSoftPauseCallBack, (uint64_t)this);
 
-    //Register for Mic Occlusion events for capture voip & voice call
-    if ((mStreamAttr->direction == PAL_AUDIO_INPUT) ||
-            (mStreamAttr->direction == PAL_AUDIO_INPUT_OUTPUT)) {
-        session->registerCallBack(handleSessionCallBack, (uint64_t)this);
-    }
     mStreamMutex.unlock();
     PAL_DBG(LOG_TAG, "Exit. state %d", currentState);
     return;

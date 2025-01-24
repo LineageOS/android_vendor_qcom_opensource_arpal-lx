@@ -94,12 +94,6 @@ typedef enum {
     TX_HOSTLESS,
 } hostless_dir_t;
 
-typedef enum {
-    MIC_OCC_STATE_NO_OCCLUSION = 0,
-    MIC_OCC_STATE_MIC1_BLOCKED,
-    MIC_OCC_STATE_MIC0_BLOCKED,
-} mic_occlusion_states_t;
-
 #define ARRAX_SOC_ID 585
 #define audio_mixer mixer
 #define MAX_SND_CARD 10
@@ -540,7 +534,6 @@ protected:
     static std::map<std::string, uint32_t> btFmtTable;
     static std::map<std::string, int> spkrPosTable;
     static std::map<int, std::string> spkrTempCtrlsMap;
-    std::unordered_map<Stream *, std::vector<pal_param_mic_occlusion_info_t>> micOcclusionInfoMap;
     static std::map<uint32_t, uint32_t> btSlimClockSrcMap;
     static std::map<std::string, int> handsetPosTable;
     static std::map<pal_device_id_t, std::vector<std::string>> deviceTempCtrlsMap;
@@ -585,7 +578,6 @@ protected:
     int32_t scoOutConnectCount = 0;
     int32_t scoInConnectCount = 0;
     std::shared_ptr<SignalHandler> mSigHandler;
-    int getPcmIdByDevInfoName(char *mixer_str);
 public:
     ~ResourceManager();
     static bool mixerClosed;
@@ -648,10 +640,6 @@ public:
     static std::shared_ptr<group_dev_config_t> activeGroupDevConfig;
     static std::shared_ptr<group_dev_config_t> currentGroupDevConfig;
 
-    /** Update mic occlusion info when event is detected */
-    int32_t updateMicOcclusionInfo(Stream* stream_hdl, void* data);
-    void addMicOcclusionInfo(Stream *s);
-    void removeMicOcclusionInfo(Stream *s);
     /* checks config for both stream and device */
     bool isStreamSupported(struct pal_stream_attributes *attributes,
                            struct pal_device *devices, int no_of_devices);

@@ -45,7 +45,8 @@
 #include <errno.h>
 #include "PalCommon.h"
 #include "Device.h"
-#include "fluence_ffv_common_calibration.h"
+
+
 
 typedef enum {
     GRAPH = 0,
@@ -71,6 +72,7 @@ typedef enum {
 } pmQosVote;
 
 #define EVENT_ID_SOFT_PAUSE_PAUSE_COMPLETE 0x0800103F
+
 #define MSPP_SOFT_PAUSE_DELAY 150
 #define DEFAULT_RAMP_PERIOD 0x28
 
@@ -104,7 +106,6 @@ protected:
 public:
     bool isMixerEventCbRegd;
     bool isPauseRegistrationDone;
-    bool isMicOcclusionRegistrationDone;
     virtual ~Session();
     static Session* makeSession(const std::shared_ptr<ResourceManager>& rm, const struct pal_stream_attributes *sAttr);
     static Session* makeACDBSession(const std::shared_ptr<ResourceManager>& rm, const struct pal_stream_attributes *sAttr);

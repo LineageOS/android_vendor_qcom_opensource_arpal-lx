@@ -95,7 +95,6 @@
 #include <mutex>
 #include "kvh2xml.h"
 #include <sys/ioctl.h>
-#include "fluence_ffv_common_calibration.h"
 #ifdef EC_REF_CAPTURE_ENABLED
 #include "ECRefDevice.h"
 #endif
@@ -108,9 +107,6 @@
 #define XML_FILE_EXT ".xml"
 #define XML_PATH_MAX_LENGTH 100
 #define HW_INFO_ARRAY_MAX_SIZE 32
-
-#define PRIMARY_MIC 0
-#define SECONDARY_MIC 1
 
 #define VBAT_BCL_SUFFIX "-vbat"
 
@@ -683,64 +679,6 @@ void ResourceManager::sendCrashSignal(int signal, pid_t pid, uid_t uid)
     ALOGV("%s: signal %d, pid %u, uid %u", __func__, signal, pid, uid);
     struct agm_dump_info dump_info = {signal, (uint32_t)pid, (uint32_t)uid};
     agm_dump(&dump_info);
-}
-
-int32_t ResourceManager::updateMicOcclusionInfo(Stream *s, void *data)
-{
-    PAL_DBG(LOG_TAG, "Enter %s", __func__);
-
-    event_id_mic_occlusion_status_info_t *mic_info = nullptr;
-    uint16_t occlusionState;
-
-    mic_info = (struct event_id_mic_occlusion_status_info_t *)data;
-    occlusionState = mic_info->occlusion_state;
-
-    auto it = micOcclusionInfoMap.find(s);
-
-    if (it == micOcclusionInfoMap.end()) {
-        /*if didn't find entry add new and update*/
-        addMicOcclusionInfo(s);
-    }
-
-    switch (occlusionState) {
-        case MIC_OCC_STATE_NO_OCCLUSION:
-            PAL_DBG(LOG_TAG," mic occ state: %d", occlusionState);
-            for (int i = 0; i < micOcclusionInfoMap[s].size(); i++) {
-                if (micOcclusionInfoMap[s][i].is_occluded) {
-                    /* previously mic was occluded , mark recovered*/
-                    micOcclusionInfoMap[s][i].is_occluded = false;
-                    micOcclusionInfoMap[s][i].num_of_recovery++;
-                }
-            }
-        break;
-        case MIC_OCC_STATE_MIC0_BLOCKED:
-            PAL_DBG(LOG_TAG," mic occ state: %d", occlusionState);
-            if (micOcclusionInfoMap[s][SECONDARY_MIC].is_occluded) {
-                /* previously secondary mic was occluded , mark it recovered.*/
-                micOcclusionInfoMap[s][SECONDARY_MIC].is_occluded = false;
-                micOcclusionInfoMap[s][SECONDARY_MIC].num_of_recovery++;
-            } /* previously none of the mic occluded */
-
-            micOcclusionInfoMap[s][PRIMARY_MIC].is_occluded = true;
-            micOcclusionInfoMap[s][PRIMARY_MIC].num_of_occlusion++;
-        break;
-        case MIC_OCC_STATE_MIC1_BLOCKED:
-            PAL_DBG(LOG_TAG," mic occ state: %d", occlusionState);
-            if (micOcclusionInfoMap[s][PRIMARY_MIC].is_occluded) {
-                /* previously primary mic was occluded , mark it recovered. */
-                micOcclusionInfoMap[s][PRIMARY_MIC].is_occluded = false;
-                micOcclusionInfoMap[s][PRIMARY_MIC].num_of_recovery++;
-            } /* previously none of the mic occluded */
-
-            micOcclusionInfoMap[s][SECONDARY_MIC].is_occluded = true;
-            micOcclusionInfoMap[s][SECONDARY_MIC].num_of_occlusion++;
-        break;
-        default:
-            PAL_DBG(LOG_TAG," Incorrect mic occ state: %d", occlusionState);
-    }
-
-    PAL_DBG(LOG_TAG, "Exit %s", __func__);
-    return 0;
 }
 
 ResourceManager::ResourceManager()
@@ -2911,57 +2849,6 @@ int ResourceManager::isActiveStream(pal_stream_handle_t *handle) {
     return false;
 }
 
-void ResourceManager::addMicOcclusionInfo(Stream *s) {
-    std::vector <struct pal_device> palDevs;
-    pal_device_id_t dev_id = PAL_DEVICE_NONE;
-
-    if (s == nullptr) {
-        PAL_ERR(LOG_TAG,"stream handle s is null");
-        return;
-    }
-
-    s->getAssociatedPalDevices(palDevs);
-
-    if (palDevs.size() == 0) {
-       PAL_ERR(LOG_TAG,"empty device vector can't add new entry in map");
-       return;
-    }
-
-    for (int i = 0; i < palDevs.size(); i++) {
-        if (isInputDevId(palDevs[i].id)) {
-            dev_id = palDevs[i].id;
-            PAL_DBG(LOG_TAG," device = %d for mic map", dev_id);
-            break;
-        }
-    }
-
-    if (dev_id == PAL_DEVICE_NONE) {
-       PAL_ERR(LOG_TAG,"no input device found, can't add new entry in map");
-       return;
-    }
-
-    if (micOcclusionInfoMap.find(s) == micOcclusionInfoMap.end()) {
-        pal_param_mic_occlusion_info_t mic_info = {dev_id, false, 0, 0};
-        std::vector<pal_param_mic_occlusion_info_t> micInfoVector;
-        micInfoVector.push_back(mic_info);
-        micInfoVector.push_back(mic_info);
-        micOcclusionInfoMap[s]= micInfoVector;
-    }
-}
-
-void ResourceManager::removeMicOcclusionInfo(Stream *s)
-{
-    if (s == nullptr) {
-        PAL_ERR(LOG_TAG,"stream handle s is null");
-        return;
-    }
-
-    auto it = micOcclusionInfoMap.find(s);
-    if (it != micOcclusionInfoMap.end()) {
-        micOcclusionInfoMap.erase(it);
-    }
-}
-
 int ResourceManager::initStreamUserCounter(Stream *s)
 {
     lockValidStreamMutex();
@@ -4305,35 +4192,6 @@ void ResourceManager::mixerEventWaitThreadLoop(
     mixer_subscribe_events(mixer, 0);
 }
 
-int ResourceManager::getPcmIdByDevInfoName(char *mixer_str) {
-    int pcm_id = 0;
-    std::string event_str(mixer_str);
-
-    if (!mixer_str) {
-        PAL_ERR(LOG_TAG,"empty mixer str");
-        return -EINVAL;
-    }
-
-    int idx = event_str.find(" ");
-    if (idx == std::string::npos) {
-        PAL_ERR(LOG_TAG,"space index not found");
-        return -EINVAL;
-    }
-
-    std::string event_name = event_str.substr(0,idx);
-
-    for (int i = 0; i < devInfo.size();i++) {
-        if (strcmp(event_name.c_str(), devInfo[i].name) == 0) {
-            pcm_id = devInfo[i].deviceId;
-            return pcm_id;
-        }
-    }
-
-    //not found.
-    PAL_ERR(LOG_TAG,"pcm id not found");
-    return -EINVAL;
-}
-
 int ResourceManager::handleMixerEvent(struct mixer *mixer, char *mixer_str) {
     int status = 0;
     int pcm_id = 0;
@@ -4343,7 +4201,6 @@ int ResourceManager::handleMixerEvent(struct mixer *mixer, char *mixer_str) {
     // TODO: hard code in common defs
     std::string pcm_prefix = "PCM";
     std::string compress_prefix = "COMPRESS";
-    std::string voice_prefix = "VOICEMMODE";
     std::string event_suffix = "event";
     size_t prefix_idx = 0;
     size_t suffix_idx = 0;
@@ -4393,20 +4250,9 @@ int ResourceManager::handleMixerEvent(struct mixer *mixer, char *mixer_str) {
     if (prefix_idx == event_str.npos) {
         prefix_idx = event_str.find(compress_prefix);
         if (prefix_idx == event_str.npos) {
-            prefix_idx = event_str.find(voice_prefix);
-            if (prefix_idx == event_str.npos) {
-                PAL_ERR(LOG_TAG, "Invalid mixer event");
-                status = -EINVAL;
-                goto exit;
-            } else { /*find pcm_id for voice call case*/
-                pcm_id = getPcmIdByDevInfoName(mixer_str);
-                if (pcm_id < 0) {
-                    PAL_ERR(LOG_TAG, "Invalid mixer event");
-                    status = -EINVAL;
-                    goto exit;
-                }
-                goto acquire_cb;
-            }
+            PAL_ERR(LOG_TAG, "Invalid mixer event");
+            status = -EINVAL;
+            goto exit;
         } else {
             prefix_idx += compress_prefix.length();
         }
@@ -4424,7 +4270,6 @@ int ResourceManager::handleMixerEvent(struct mixer *mixer, char *mixer_str) {
     length = suffix_idx - prefix_idx;
     pcm_id = std::stoi(event_str.substr(prefix_idx, length));
 
-acquire_cb:
     // acquire callback/cookie with pcm dev id
     it = mixerEventCallbackMap.find(pcm_id);
     if (it != mixerEventCallbackMap.end()) {
@@ -8631,19 +8476,6 @@ int ResourceManager::getParameter(uint32_t param_id, void **param_payload,
 
             *payload_size = sizeof(isHifiFilterEnabled);
             **(bool **)param_payload = isHifiFilterEnabled;
-        }
-        break;
-        case PAL_PARAM_ID_MIC_OCCLUSION_INFO:
-        {
-            PAL_INFO(LOG_TAG, "get parameter for Mic Occlusion Info");
-            auto micInfoVec = new std::vector<std::vector<pal_param_mic_occlusion_info_t>>;
-            for (const auto& it : micOcclusionInfoMap )
-            {
-                micInfoVec->push_back(it.second);
-            }
-
-        *payload_size = sizeof(micInfoVec);
-        *param_payload = static_cast<void*>(micInfoVec);
         }
         break;
         default:
