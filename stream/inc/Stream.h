@@ -273,6 +273,8 @@ public:
                                                            uint32_t event_size);
     static void handleStreamException(struct pal_stream_attributes *attributes,
                                       pal_stream_callback cb, uint64_t cookie);
+    static void handleSessionCallBack(uint64_t hdl, uint32_t event_id, void *data,
+                                                           uint32_t event_size);
     void lockStreamMutex() {
         mStreamMutex.lock();
         mutexLockedbyRm = true;

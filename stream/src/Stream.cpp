@@ -95,6 +95,29 @@ void Stream::handleSoftPauseCallBack(uint64_t hdl, uint32_t event_id,
     }
 }
 
+void Stream::handleSessionCallBack(uint64_t hdl, uint32_t event_id, void *data,
+                                  uint32_t event_size)
+{
+    Stream *s = (Stream *) hdl;
+    pal_device_id_t dev_id;
+
+    PAL_DBG(LOG_TAG,"Event id %x ", event_id);
+
+    if (!rm) {
+        rm = ResourceManager::getInstance();
+        if (!rm) {
+            PAL_ERR(LOG_TAG, "ResourceManager getInstance failed");
+            return;
+        }
+    }
+
+    if (event_id == EVENT_ID_MIC_OCCLUSION_STATUS_INFO) {
+        PAL_DBG(LOG_TAG," Mic Occlusion info received");
+        // Notify Resource Manager to update the cache.
+        rm->updateMicOcclusionInfo(s, data);
+     }
+}
+
 Stream* Stream::create(struct pal_stream_attributes *sAttr, struct pal_device *dAttr,
     uint32_t noOfDevices, struct modifier_kv *modifiers, uint32_t noOfModifiers)
 {
