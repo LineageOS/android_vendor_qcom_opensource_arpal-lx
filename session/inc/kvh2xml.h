@@ -27,6 +27,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 typedef enum {
 	PLATFORM_LA = 1, 	/**< @h2xmle_name {LA} */
 	PLATFORM_LE = 2,	/**< @h2xmle_name {LE} */
