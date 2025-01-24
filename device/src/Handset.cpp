@@ -33,7 +33,9 @@
 #include "ResourceManager.h"
 #include "Device.h"
 #include "kvh2xml.h"
+#ifdef SPEAKER_PROTECT_ENABLED
 #include "SpeakerProtection.h"
+#endif
 
 std::shared_ptr<Device> Handset::obj = nullptr;
 
@@ -46,14 +48,18 @@ std::shared_ptr<Device> Handset::getInstance(struct pal_device *device,
                                              std::shared_ptr<ResourceManager> Rm)
 {
     if (!obj) {
+#ifdef SPEAKER_PROTECT_ENABLED
         if (ResourceManager::isHandsetProtectionEnabled &&
                             ResourceManager::isSpeakerProtectionEnabled) {
             std::shared_ptr<Device> sp(new SpeakerProtection(device, Rm));
             obj = sp;
         } else {
+#endif
             std::shared_ptr<Device> sp(new Handset(device, Rm));
             obj = sp;
+#ifdef SPEAKER_PROTECT_ENABLED
         }
+#endif
     }
     return obj;
 }

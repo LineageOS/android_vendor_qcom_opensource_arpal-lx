@@ -46,14 +46,18 @@ std::shared_ptr<Device> Speaker::getInstance(struct pal_device *device,
                                              std::shared_ptr<ResourceManager> Rm)
 {
     if (!obj) {
+#ifdef SPEAKER_PROTECT_ENABLED
         if (ResourceManager::isSpeakerProtectionEnabled) {
             std::shared_ptr<Device> sp(new SpeakerProtection(device, Rm));
             obj = sp;
         }
         else {
+#endif
             std::shared_ptr<Device> sp(new Speaker(device, Rm));
             obj = sp;
+#ifdef SPEAKER_PROTECT_ENABLED
         }
+#endif
     }
     return obj;
 }
