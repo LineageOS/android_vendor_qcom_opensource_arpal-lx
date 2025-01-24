@@ -104,7 +104,6 @@ LOCAL_SRC_FILES := \
     device/src/DisplayPort.cpp \
     device/src/HeadsetVaMic.cpp \
     device/src/RTProxy.cpp \
-    device/src/SpeakerProtection.cpp \
     device/src/FMDevice.cpp \
     device/src/ExtEC.cpp \
     device/src/HapticsDev.cpp \
@@ -132,6 +131,11 @@ LOCAL_SRC_FILES := \
     utils/src/SignalHandler.cpp
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EC_REF_CAPTURE)),true)
 LOCAL_SRC_FILES += device/src/ECRefDevice.cpp
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_SPEAKER_PROTECT)),true)
+LOCAL_SRC_FILES += device/src/SpeakerProtection.cpp
+LOCAL_CFLAGS += -DSPEAKER_PROTECT_ENABLED
 endif
 
 LOCAL_HEADER_LIBRARIES := \

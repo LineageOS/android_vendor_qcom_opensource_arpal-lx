@@ -35,7 +35,9 @@
 #include "SessionAlsaUtils.h"
 #include "Device.h"
 #include "Speaker.h"
+#ifdef SPEAKER_PROTECT_ENABLED
 #include "SpeakerProtection.h"
+#endif
 #include "Headphone.h"
 #include "USBAudio.h"
 #include "SpeakerMic.h"
@@ -78,9 +80,11 @@ std::shared_ptr<Device> Device::getInstance(struct pal_device *device,
     case PAL_DEVICE_OUT_SPEAKER:
         PAL_VERBOSE(LOG_TAG, "speaker device");
         return Speaker::getInstance(device, Rm);
+#ifdef SPEAKER_PROTECT_ENABLED
     case PAL_DEVICE_IN_VI_FEEDBACK:
         PAL_VERBOSE(LOG_TAG, "speaker feedback device");
         return SpeakerFeedback::getInstance(device, Rm);
+#endif
     case PAL_DEVICE_OUT_WIRED_HEADSET:
     case PAL_DEVICE_OUT_WIRED_HEADPHONE:
         PAL_VERBOSE(LOG_TAG, "headphone device");

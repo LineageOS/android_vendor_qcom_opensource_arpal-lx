@@ -41,8 +41,10 @@
 #include <agm/agm_api.h>
 #include <bt_intf.h>
 #include <bt_ble.h>
+#ifdef SPEAKER_PROTECT_ENABLED
 #include "sp_vi.h"
 #include "sp_rx.h"
+#endif
 #include "fluence_ffv_common_calibration.h"
 
 #if defined(FEATURE_IPQ_OPENWRT) || defined(LINUX_ENABLED)
@@ -3532,6 +3534,7 @@ int PayloadBuilder::populateTagKeyVector(Stream *s, std::vector <std::pair<int,i
     return status;
 }
 
+#ifdef SPEAKER_PROTECT_ENABLED
 void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t miid,
                 int param_id, void *param)
 {
@@ -3884,3 +3887,4 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
     *size = payloadSize + padBytes;
     *payload = payloadInfo;
 }
+#endif
