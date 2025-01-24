@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aced7db4_91d7493b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 17257
+      },
+      "writtenOn": "2025-01-24T12:24:06Z",
+      "side": 1,
+      "message": "I think using open source audio HAL would fix this.",
+      "revId": "15e8d4bfa17b4ac73bb8a478b05a7022f84d2e32",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
