@@ -2172,9 +2172,9 @@ void BtSco::convertCodecInfo(audio_lc3_codec_cfg_t &lc3CodecInfo,
         streamMapStr = match.suffix().str();
     }
 
-    PAL_DBG(LOG_TAG, "stream map out size: %d, stream map in size: %d", steamMapOut.size(), steamMapIn.size());
+    PAL_DBG(LOG_TAG, "stream map out size: %zu, stream map in size: %zu", steamMapOut.size(), steamMapIn.size());
     if ((steamMapOut.size() == 0) || (steamMapIn.size() == 0)) {
-        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %d, steamMapIn.size %d",
+        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %zu, steamMapIn.size %zu",
                 steamMapOut.size(), steamMapIn.size());
         return;
     }

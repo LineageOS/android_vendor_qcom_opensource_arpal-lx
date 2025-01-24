@@ -6630,7 +6630,7 @@ int ResourceManager::findActiveStreamsNotInDisconnectList(
 
     rm->getActiveStream_l(activeStreams, devObj);
 
-    PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
+    PAL_DBG(LOG_TAG, "activeStreams size = %zu, device: %s", activeStreams.size(),
             deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
 
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
