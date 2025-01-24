@@ -55,6 +55,15 @@ AS_IF([test "x$with_spf" != "xno"], [SPF_CFLAGS="-I$with_spf"])
 
 AC_SUBST(SPF_CFLAGS)
 
+AC_ARG_WITH([acdbdata],
+      AC_HELP_STRING([--with-acdbdata],
+         [enable acdbdata, Build against acdbdata. Use this when building for HLOS systems which use acdbdata]))
+
+ACDBDATA_CFLAGS=
+AS_IF([test "x$with_acdbdata" != "xno"], [ACDBDATA_CFLAGS="-I$with_acdbdata"])
+
+AC_SUBST(ACDBDATA_CFLAGS)
+
 AC_ARG_WITH([compress],
     AS_HELP_STRING([compile compress (default is no)]),
     [with_compress=$withval],
