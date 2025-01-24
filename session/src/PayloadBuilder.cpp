@@ -1052,7 +1052,7 @@ int PayloadBuilder::payloadACDBTunnelParam(uint8_t **alsaPayload,
 
     if (effectCustomPayload->paramId) {
         paddedPayloadSize = PAL_ALIGN_8BYTE(payloadSize);
-        PAL_INFO(LOG_TAG, "payloadSize=%d paddedPayloadSize=%x",
+        PAL_INFO(LOG_TAG, "payloadSize=%d paddedPayloadSize=%zx",
                     payloadSize, paddedPayloadSize);
         payloadACDBTunnelInfo = (struct agm_acdb_tunnel_param *)calloc(1,
             sizeof(struct agm_acdb_tunnel_param) +
@@ -1124,7 +1124,7 @@ int PayloadBuilder::payloadACDBTunnelParam(uint8_t **alsaPayload,
         header->param_size = payloadSize;
         header->error_code = 0x0;
         PAL_DBG(LOG_TAG, "tag = 0x%x", acdbParam->tag);
-        PAL_DBG(LOG_TAG, "padded payload size = 0x%x", paddedPayloadSize);
+        PAL_DBG(LOG_TAG, "padded payload size = 0x%zx", paddedPayloadSize);
         if (paddedPayloadSize) {
             ptrDst = (uint8_t *)header + sizeof(struct apm_module_param_data_t);
             ptrSrc = (uint8_t *)effectCustomPayload->data;
@@ -1148,7 +1148,7 @@ int PayloadBuilder::payloadACDBTunnelParam(uint8_t **alsaPayload,
                 ((uint8_t *)(effectCustomPayload->data) + parsedSize);
             paddedPayloadSize = PAL_ALIGN_8BYTE(sizeof(struct apm_module_param_data_t)
                                                 + gefMultipleParamHeader->length);
-            PAL_INFO(LOG_TAG, "total padded size = 0x%x current padded size=0x%x",
+            PAL_INFO(LOG_TAG, "total padded size = 0x%x current padded size=0x%zx",
                         totalPaddedSize, paddedPayloadSize);
             PAL_INFO(LOG_TAG, "current param value length = 0x%x",
                         gefMultipleParamHeader->length);
@@ -1252,7 +1252,7 @@ int PayloadBuilder::payloadACDBParam(uint8_t **alsaPayload, size_t *size,
                         acdbParam->num_kvs * sizeof(struct gsl_key_value_pair)
                         - sizeof(pal_effect_custom_payload_t);
         paddedSize = PAL_ALIGN_8BYTE(payloadSize);
-        PAL_INFO(LOG_TAG, "payloadSize=%d paddedSize=%x", payloadSize, paddedSize);
+        PAL_INFO(LOG_TAG, "payloadSize=%d paddedSize=%zx", payloadSize, paddedSize);
         payloadInfo = (struct agm_acdb_param *)calloc(1,
             sizeof(struct agm_acdb_param) +
             (acdbParam->num_kvs + appendSampleRateInCKV) *
@@ -1350,7 +1350,7 @@ int PayloadBuilder::payloadACDBParam(uint8_t **alsaPayload, size_t *size,
                 ((uint8_t *)(effectCustomPayload->data) + parsedSize);
             paddedSize= PAL_ALIGN_8BYTE(sizeof(struct apm_module_param_data_t)
                                                 + gefMultipleParamHeader->length);
-            PAL_DBG(LOG_TAG, "total padded size = 0x%x paddedSize=0x%x",
+            PAL_DBG(LOG_TAG, "total padded size = 0x%x paddedSize=0x%zx",
                         totalPaddedSize, paddedSize);
             PAL_DBG(LOG_TAG, "current param value length = 0x%x",
                         gefMultipleParamHeader->length);
@@ -1435,7 +1435,7 @@ int PayloadBuilder::payloadCustomParam(uint8_t **alsaPayload, size_t *size,
                 (legacyGefParamHeader *)((uint8_t *)customPayload + parsedSize);
             alsaPayloadSize = PAL_ALIGN_8BYTE(sizeof(struct apm_module_param_data_t)
                                                 + gefMultipleParamHeader->length);
-            PAL_DBG(LOG_TAG, "total padded size = 0x%x alsapayloadsize=0x%x",
+            PAL_DBG(LOG_TAG, "total padded size = 0x%x alsapayloadsize=0x%zx",
                         totalPaddedSize, alsaPayloadSize);
             PAL_DBG(LOG_TAG, "current param length = 0x%x",
                         gefMultipleParamHeader->length);
@@ -3165,7 +3165,7 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
 
     /*scaling the volume by PLAYBACK_VOLUME_MAX factor*/
     voldB = (long)(vol * (PLAYBACK_VOLUME_MAX*1.0));
-    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",voldB);
+    PAL_VERBOSE(LOG_TAG,"volume sent:%ld \n",voldB);
 
     switch (static_cast<uint32_t>(tag)) {
     case TAG_STREAM_VOLUME:
