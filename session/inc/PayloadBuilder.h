@@ -236,8 +236,10 @@ public:
     void payloadCopV2PackConfig(uint8_t** payload, size_t* size, uint32_t miid, void *data);
     void payloadTWSConfig(uint8_t** payload, size_t* size, uint32_t miid,
                           bool isTwsMonoModeOn, uint32_t codecFormat);
+#ifdef SPEAKER_PROTECT_ENABLED
     void payloadSPConfig(uint8_t** payload, size_t* size, uint32_t miid,
                          int paramId, void *data);
+#endif
     void payloadScramblingConfig(uint8_t** payload, size_t* size,
             uint32_t miid, uint32_t enable);
     int payloadPopSuppressorConfig(uint8_t** payload, size_t* size,

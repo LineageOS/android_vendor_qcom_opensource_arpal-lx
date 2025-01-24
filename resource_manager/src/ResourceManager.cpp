@@ -51,7 +51,9 @@
 #include "Bluetooth.h"
 #include "SpeakerMic.h"
 #include "Speaker.h"
+#ifdef SPEAKER_PROTECT_ENABLED
 #include "SpeakerProtection.h"
+#endif
 #include "USBAudio.h"
 #include "HeadsetMic.h"
 #include "HandsetMic.h"
