@@ -159,20 +159,18 @@ int SessionAlsaPcm::open(Stream * s)
                 rm->freeFrontEndIds(pcmDevIds, sAttr, ldir);
                 frontEndIdAllocated = false;
             } else {
-                if (sAttr.type != PAL_STREAM_CONTEXT_PROXY) {
-                    // Register for  mixer event callback for mic occlusion.
-                    status = rm->registerMixerEventCallback(pcmDevIds, sessionCb,
-                            cbCookie, true);
-                    if (status == 0) {
-                        PAL_DBG(LOG_TAG, "register mixer event callback is SUCCESS");
-                        isMixerEventCbRegd = true;
-                    } else {
-                        // Not a fatal error
-                        PAL_ERR(LOG_TAG, "Failed to register callback to mixer event");
-                        // If registration fails for this then mic occlusion
-                        // can't be notified to client.
-                        status = 0;
-                    }
+                // Register for  mixer event callback for mic occlusion.
+                status = rm->registerMixerEventCallback(pcmDevIds, sessionCb,
+                        cbCookie, true);
+                if (status == 0) {
+                    PAL_DBG(LOG_TAG, "register mixer event callback is SUCCESS");
+                    isMixerEventCbRegd = true;
+                } else {
+                 // Not a fatal error
+                    PAL_ERR(LOG_TAG, "Failed to register callback to mixer event");
+                 // If registration fails for this then mic occlusion
+                 // can't be notified to client.
+                    status = 0;
                 }
             }
             break;
@@ -1230,8 +1228,7 @@ set_mixer:
                 }
             }
 
-            if (!status && isMixerEventCbRegd &&
-                (sAttr.type != PAL_STREAM_CONTEXT_PROXY)) {
+            if (!status && isMixerEventCbRegd) {
                 // Register for callback for Mic Occlusion Notification
                 size_t payload_size = 0;
                 struct agm_event_reg_cfg event_cfg;
@@ -1445,8 +1442,7 @@ int SessionAlsaPcm::stop(Stream * s)
                 }
             }
             // Deregister for callback for Mic Occlusion
-            if (!status && isMicOcclusionRegistrationDone &&
-                (sAttr.type != PAL_STREAM_CONTEXT_PROXY)) {
+            if (!status && isMicOcclusionRegistrationDone) {
                 payload_size = sizeof(struct agm_event_reg_cfg);
                 memset(&event_cfg, 0, sizeof(event_cfg));
                 event_cfg.event_id = EVENT_ID_MIC_OCCLUSION_STATUS_INFO;
@@ -1648,8 +1644,7 @@ int SessionAlsaPcm::close(Stream * s)
                 ldir = TX_HOSTLESS;
 
             // Deregister callback for Mixer Event
-            if (!status && isMixerEventCbRegd &&
-                (sAttr.type != PAL_STREAM_CONTEXT_PROXY)) {
+            if (!status && isMixerEventCbRegd) {
                 status = rm->registerMixerEventCallback(pcmDevIds,
                     sessionCb, cbCookie, false);
                 if (status == 0) {
@@ -1839,8 +1834,7 @@ int SessionAlsaPcm::disconnectSessionDevice(Stream *streamHandle,
     if (!txAifBackEndsToDisconnect.empty()) {
         int cnt = 0;
             // Deregister for callback for Mic Occlusion during device switch
-            if (!status && isMicOcclusionRegistrationDone &&
-                (streamType != PAL_STREAM_CONTEXT_PROXY)) {
+            if (!status && isMicOcclusionRegistrationDone) {
                 payload_size = sizeof(struct agm_event_reg_cfg);
                 memset(&event_cfg, 0, sizeof(event_cfg));
                 event_cfg.event_id = EVENT_ID_MIC_OCCLUSION_STATUS_INFO;
@@ -1959,8 +1953,7 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
         }
         /* Re-register for the new device during device switch.*/
 
-        if (!status && isMixerEventCbRegd &&
-            (streamType != PAL_STREAM_CONTEXT_PROXY)) {
+        if (!status && isMixerEventCbRegd) {
             // Register for callback for Mic Occlusion Notification
             size_t payload_size = 0;
             struct agm_event_reg_cfg event_cfg;
