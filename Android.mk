@@ -8,6 +8,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE                := libarpal_headers
 LOCAL_VENDOR_MODULE         := true
+
+LOCAL_EXPORT_HEADER_LIBRARY_HEADERS := \
+    libarosal_headers
+
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
     $(LOCAL_PATH) \
     $(LOCAL_PATH)/stream/inc \
