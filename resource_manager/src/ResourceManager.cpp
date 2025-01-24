@@ -27,8 +27,37 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define LOG_TAG "PAL: ResourceManager"
@@ -456,7 +485,6 @@ bool ResourceManager::isContextManagerEnabled = false;
 bool ResourceManager::isVIRecordStarted;
 bool ResourceManager::lpi_logging_ = false;
 bool ResourceManager::isUpdDedicatedBeEnabled = false;
-bool ResourceManager::isUpdSetCustomGainEnabled = false;
 int ResourceManager::max_voice_vol = -1;     /* Variable to store max volume index for voice call */
 bool ResourceManager::isSignalHandlerEnabled = false;
 bool ResourceManager::a2dp_suspended = false;
@@ -3383,15 +3411,6 @@ int ResourceManager::registerDevice(std::shared_ptr<Device> d, Stream *s)
     }
 
 unlock:
-    if (IsCustomGainEnabledForUPD() &&
-            (1 == d->getDeviceCount())) {
-        /* Try to set Ultrasound Gain if needed */
-        if (PAL_DEVICE_OUT_SPEAKER == d->getSndDeviceId()) {
-            setUltrasoundGain(PAL_ULTRASOUND_GAIN_HIGH, s);
-        } else if (PAL_DEVICE_OUT_HANDSET == d->getSndDeviceId()) {
-            setUltrasoundGain(PAL_ULTRASOUND_GAIN_LOW, s);
-        }
-    }
     mResourceManagerMutex.unlock();
 exit:
     PAL_DBG(LOG_TAG, "Exit. status: %d", status);
@@ -3529,14 +3548,6 @@ int ResourceManager::deregisterDevice(std::shared_ptr<Device> d, Stream *s)
         }
     }
 unlock:
-
-    if (IsCustomGainEnabledForUPD() &&
-            (1 == d->getDeviceCount()) &&
-            ((PAL_DEVICE_OUT_SPEAKER == d->getSndDeviceId()) ||
-             (PAL_DEVICE_OUT_HANDSET == d->getSndDeviceId()))) {
-        setUltrasoundGain(PAL_ULTRASOUND_GAIN_MUTE, s);
-    }
-
     mResourceManagerMutex.unlock();
 exit:
     PAL_DBG(LOG_TAG, "Exit. status: %d", status);
@@ -3632,17 +3643,14 @@ int ResourceManager::removePlugInDevice(pal_device_id_t device_id,
     return ret;
 }
 
-void ResourceManager::getActiveDevices_l(std::vector<std::shared_ptr<Device>> &deviceList)
+int ResourceManager::getActiveDevices(std::vector<std::shared_ptr<Device>> &deviceList)
 {
+    int ret = 0;
+    mResourceManagerMutex.lock();
     for (int i = 0; i < active_devices.size(); i++)
         deviceList.push_back(active_devices[i].first);
-}
-
-void ResourceManager::getActiveDevices(std::vector<std::shared_ptr<Device>> &deviceList)
-{
-    mResourceManagerMutex.lock();
-    getActiveDevices_l(deviceList);
     mResourceManagerMutex.unlock();
+    return ret;
 }
 
 int ResourceManager::getAudioRoute(struct audio_route** ar)
@@ -3752,11 +3760,6 @@ bool ResourceManager::IsLPISupported(pal_stream_type_t type) {
 bool ResourceManager::IsDedicatedBEForUPDEnabled()
 {
     return ResourceManager::isUpdDedicatedBeEnabled;
-}
-
-bool ResourceManager::IsCustomGainEnabledForUPD()
-{
-    return ResourceManager::isUpdSetCustomGainEnabled;
 }
 
 void ResourceManager::GetSoundTriggerConcurrencyCount(
@@ -7711,7 +7714,6 @@ int ResourceManager::setConfigParams(struct str_parms *parms)
     ret = setContextManagerEnableParam(parms, value, len);
 
     ret = setUpdDedicatedBeEnableParam(parms, value, len);
-    ret = setUpdCustomGainParam(parms, value, len);
     ret = setDualMonoEnableParam(parms, value, len);
     ret = setSignalHandlerEnableParam(parms, value, len);
 
@@ -7935,30 +7937,6 @@ int ResourceManager::setNativeAudioParams(struct str_parms *parms,
     }
     return ret;
 }
-
-int ResourceManager::setUpdCustomGainParam(struct str_parms *parms,
-                                 char *value, int len)
-{
-    int ret = -EINVAL;
-
-    if (!value || !parms)
-        return ret;
-
-    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_UPD_SET_CUSTOM_GAIN,
-                            value, len);
-    PAL_VERBOSE(LOG_TAG," value %s", value);
-
-    if (ret >= 0) {
-        if (value && !strncmp(value, "true", sizeof("true")))
-            ResourceManager::isUpdSetCustomGainEnabled = true;
-
-        str_parms_del(parms, AUDIO_PARAMETER_KEY_UPD_SET_CUSTOM_GAIN);
-    }
-
-    return ret;
-
-}
-
 void ResourceManager::updatePcmId(int32_t deviceId, int32_t pcmId)
 {
     if (isValidDevId(deviceId)) {
@@ -11863,128 +11841,4 @@ bool ResourceManager::doDevAttrDiffer(struct pal_device *inDevAttr,
 
 exit:
     return ret;
-}
-
-int ResourceManager::setUltrasoundGain(pal_ultrasound_gain_t gain, Stream *s)
-{
-    int32_t status = 0;
-
-    struct pal_device dAttr;
-    StreamUltraSound *updStream = NULL;
-    std::vector<Stream*> activeStreams;
-    struct pal_stream_attributes sAttr;
-    struct pal_stream_attributes sAttr1;
-    std::vector<std::shared_ptr<Device>> activeDeviceList;
-    pal_ultrasound_gain_t gain_2 = PAL_ULTRASOUND_GAIN_MUTE;
-
-    PAL_INFO(LOG_TAG, "Entered. Gain = %d", gain);
-
-    if (!IsCustomGainEnabledForUPD()) {
-        PAL_ERR(LOG_TAG,"Custom Gain not enabled for UPD, returning");
-        return status;
-    }
-
-    if (s) {
-        status = s->getStreamAttributes(&sAttr);
-        if (status != 0) {
-            PAL_ERR(LOG_TAG,"stream get attributes failed");
-            return -ENOENT;
-        }
-    }
-
-    if (PAL_STREAM_ULTRASOUND == sAttr.type) {
-        updStream =  static_cast<StreamUltraSound *> (s);
-    } else {
-        status = getActiveStream_l(activeStreams, NULL);
-        if ((0 != status) || (activeStreams.size() == 0)) {
-            PAL_DBG(LOG_TAG, "No active stream available, status = %d, nStream = %d",
-                    status, activeStreams.size());
-            return -ENOENT;
-        }
-
-        for (int i = 0; i < activeStreams.size(); i++) {
-            status = (static_cast<Stream *> (activeStreams[i]))->getStreamAttributes(&sAttr1);
-            if (0 != status) {
-                PAL_DBG(LOG_TAG, "Fail to get Stream Attributes, status = %d", status);
-                continue;
-            }
-
-            if (PAL_STREAM_ULTRASOUND == sAttr1.type) {
-                updStream = static_cast<StreamUltraSound *> (activeStreams[i]);
-                /* Found UPD stream, break here */
-                PAL_INFO(LOG_TAG, "Found UPD Stream = %p", updStream);
-                break;
-            }
-        }
-    }
-    /* Skip if we do not found upd stream or UPD stream is not active*/
-    if (!updStream || !updStream->isActive()) {
-        PAL_INFO(LOG_TAG, "Either UPD Stream not found or not active, returning");
-        return 0;
-    }
-
-
-    if (!isDeviceSwitch && (PAL_STREAM_ULTRASOUND != sAttr.type))
-        status = updStream->setUltraSoundGain(gain);
-    else
-        status = updStream->setUltraSoundGain_l(gain);
-
-    if (0 != status) {
-        PAL_ERR(LOG_TAG, "SetParameters failed, status = %d", status);
-        return status;
-    }
-
-    PAL_INFO(LOG_TAG, "Ultrasound gain(%d) set, status = %d", gain, status);
-
-    /* If provided gain is MUTE then in some cases we may need to set new gain LOW/HIGH based on
-     * concurrencies.
-     *
-     * Skip setting new gain if,
-     * - currently set gain is not Mute
-     * - or if device switch is active (new gain will be set once new device is active)
-     *
-     * This should avoid multiple set gain calls while stream is being closed/in middle of device switch
-     */
-
-    if ((PAL_ULTRASOUND_GAIN_MUTE != gain) || isDeviceSwitch) {
-        return 0;
-    }
-
-    /* Find new GAIN value based on currently active devices */
-    getActiveDevices_l(activeDeviceList);
-    for (int i = 0; i < activeDeviceList.size(); i++) {
-        status = activeDeviceList[i]->getDeviceAttributes(&dAttr);
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "Fail to get device attribute for device %p, status = %d",
-                    &activeDeviceList[i], status);
-            continue;
-        }
-        if (PAL_DEVICE_OUT_SPEAKER == dAttr.id) {
-            gain_2 = PAL_ULTRASOUND_GAIN_HIGH;
-            /* Only breaking here as we want to give priority to speaker device */
-            break;
-        } else if ((PAL_DEVICE_OUT_ULTRASOUND == dAttr.id) ||
-                   (PAL_DEVICE_OUT_HANDSET == dAttr.id)) {
-            gain_2 = PAL_ULTRASOUND_GAIN_LOW;
-        }
-    }
-
-    if (PAL_ULTRASOUND_GAIN_MUTE != gain_2) {
-        /* Currently configured value is 20ms which allows 3 to 4 process call
-         * to handle this value at ADSP side.
-         * Increase or decrease this dealy based on requirements */
-        usleep(20000);
-        if (PAL_STREAM_ULTRASOUND != sAttr.type)
-            status = updStream->setUltraSoundGain(gain_2);
-        else
-            status = updStream->setUltraSoundGain_l(gain_2);
-
-        if (0 != status) {
-            PAL_ERR(LOG_TAG, "SetParameters failed, status = %d", status);
-            return status;
-        }
-        PAL_INFO(LOG_TAG, "Ultrasound gain(%d) set, status = %d", gain_2, status);
-    }
-
-    return status;
 }
