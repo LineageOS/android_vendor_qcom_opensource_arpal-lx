@@ -376,13 +376,17 @@ enum Key_Gain {
 */
 enum Key_SamplingRate {
     SAMPLINGRATE_8K   = 8000,   /**< @h2xmle_sampleRate{8000} @h2xmle_name {SR_8K}*/
+    SAMPLINGRATE_11K  = 11000,  /**< @h2xmle_sampleRate{11000} @h2xmle_name {SR_1K}*/
     SAMPLINGRATE_16K  = 16000,  /**< @h2xmle_sampleRate{16000} @h2xmle_name {SR_16K}*/
     SAMPLINGRATE_22K  = 22050,  /**< @h2xmle_sampleRate{22050} @h2xmle_name {SR_22K}*/
     SAMPLINGRATE_24K  = 24000,  /**< @h2xmle_sampleRate{24000} @h2xmle_name {SR_24K}*/
     SAMPLINGRATE_32K  = 32000,  /**< @h2xmle_sampleRate{32000} @h2xmle_name {SR_32K}*/
     SAMPLINGRATE_44K  = 44100,  /**< @h2xmle_sampleRate{44100} @h2xmle_name {SR_44.1K}*/
     SAMPLINGRATE_48K  = 48000,  /**< @h2xmle_sampleRate{48000} @h2xmle_name {SR_48K}*/
+    SAMPLINGRATE_64K  = 64000,  /**< @h2xmle_sampleRate{64000} @h2xmle_name {SR_64K}*/
+    SAMPLINGRATE_88K  = 88000,  /**< @h2xmle_sampleRate{88000} @h2xmle_name {SR_88K}*/
     SAMPLINGRATE_96K  = 96000,  /**< @h2xmle_sampleRate{96000} @h2xmle_name {SR_96K}*/
+    SAMPLINGRATE_176K = 176000, /**< @h2xmle_sampleRate{176000} @h2xmle_name {SR_176K}*/
     SAMPLINGRATE_192K = 192000, /**< @h2xmle_sampleRate{192000} @h2xmle_name {SR_192K}*/
     SAMPLINGRATE_352K = 352800, /**< @h2xmle_sampleRate{352800} @h2xmle_name {SR_352.8K}*/
     SAMPLINGRATE_384K = 384000, /**< @h2xmle_sampleRate{384000} @h2xmle_name {SR_384K}*/
