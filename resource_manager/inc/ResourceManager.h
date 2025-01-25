@@ -623,10 +623,12 @@ public:
     static std::shared_ptr<group_dev_config_t> activeGroupDevConfig;
     static std::shared_ptr<group_dev_config_t> currentGroupDevConfig;
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
     /** Update mic occlusion info when event is detected */
     int32_t updateMicOcclusionInfo(Stream* stream_hdl, void* data);
     void addMicOcclusionInfo(Stream *s);
     void removeMicOcclusionInfo(Stream *s);
+#endif
     /* checks config for both stream and device */
     bool isStreamSupported(struct pal_stream_attributes *attributes,
                            struct pal_device *devices, int no_of_devices);

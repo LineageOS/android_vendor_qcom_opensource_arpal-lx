@@ -657,6 +657,7 @@ void ResourceManager::sendCrashSignal(int signal, pid_t pid, uid_t uid)
     agm_dump(&dump_info);
 }
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
 int32_t ResourceManager::updateMicOcclusionInfo(Stream *s, void *data)
 {
     PAL_DBG(LOG_TAG, "Enter %s", __func__);
@@ -714,6 +715,7 @@ int32_t ResourceManager::updateMicOcclusionInfo(Stream *s, void *data)
     PAL_DBG(LOG_TAG, "Exit %s", __func__);
     return 0;
 }
+#endif
 
 ResourceManager::ResourceManager()
 {
@@ -2883,6 +2885,7 @@ int ResourceManager::isActiveStream(pal_stream_handle_t *handle) {
     return false;
 }
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
 void ResourceManager::addMicOcclusionInfo(Stream *s) {
     std::vector <struct pal_device> palDevs;
     pal_device_id_t dev_id = PAL_DEVICE_NONE;
@@ -2933,6 +2936,7 @@ void ResourceManager::removeMicOcclusionInfo(Stream *s)
         micOcclusionInfoMap.erase(it);
     }
 }
+#endif
 
 int ResourceManager::initStreamUserCounter(Stream *s)
 {

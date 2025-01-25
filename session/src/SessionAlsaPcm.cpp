@@ -1230,6 +1230,7 @@ set_mixer:
                 }
             }
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
             if (!status && isMixerEventCbRegd &&
                 (sAttr.type != PAL_STREAM_CONTEXT_PROXY)) {
                 // Register for callback for Mic Occlusion Notification
@@ -1258,6 +1259,7 @@ set_mixer:
                     status = 0;
                 }
             }
+#endif
             break;
         case PAL_AUDIO_OUTPUT:
             if (sAttr.type == PAL_STREAM_VOICE_CALL_MUSIC) {
@@ -1444,6 +1446,7 @@ int SessionAlsaPcm::stop(Stream * s)
                     PAL_ERR(LOG_TAG, "pcm_stop failed %d", status);
                 }
             }
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
             // Deregister for callback for Mic Occlusion
             if (!status && isMicOcclusionRegistrationDone &&
                 (sAttr.type != PAL_STREAM_CONTEXT_PROXY)) {
@@ -1467,6 +1470,7 @@ int SessionAlsaPcm::stop(Stream * s)
                 rm->removeMicOcclusionInfo(s);
                 isMicOcclusionRegistrationDone = false;
             }
+#endif
         break;
         case PAL_AUDIO_OUTPUT:
             if (pcm && isActive()) {
@@ -1838,6 +1842,7 @@ int SessionAlsaPcm::disconnectSessionDevice(Stream *streamHandle,
     }
     if (!txAifBackEndsToDisconnect.empty()) {
         int cnt = 0;
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
             // Deregister for callback for Mic Occlusion during device switch
             if (!status && isMicOcclusionRegistrationDone &&
                 (streamType != PAL_STREAM_CONTEXT_PROXY)) {
@@ -1858,6 +1863,7 @@ int SessionAlsaPcm::disconnectSessionDevice(Stream *streamHandle,
                 isMicOcclusionRegistrationDone = false;
                 rm->removeMicOcclusionInfo(streamHandle);
             }
+#endif
 disconnectTxBE:
         if (streamType != PAL_STREAM_LOOPBACK)
             status = SessionAlsaUtils::disconnectSessionDevice(streamHandle, streamType, rm,
@@ -1959,6 +1965,7 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
         }
         /* Re-register for the new device during device switch.*/
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
         if (!status && isMixerEventCbRegd &&
             (streamType != PAL_STREAM_CONTEXT_PROXY)) {
             // Register for callback for Mic Occlusion Notification
@@ -1988,6 +1995,7 @@ int SessionAlsaPcm::connectSessionDevice(Stream* streamHandle, pal_stream_type_t
                 status = 0;
             }
         }
+#endif
     }
 
     status = streamHandle->getStreamAttributes(&sAttr);

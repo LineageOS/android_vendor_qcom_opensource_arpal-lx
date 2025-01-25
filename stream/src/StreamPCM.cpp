@@ -56,10 +56,12 @@ void StreamPCM::handleSessionCallBack(uint64_t hdl, uint32_t event_id,
         }
     }
 
+#ifdef EVENT_ID_MIC_OCCLUSION_STATUS_INFO
     if (event_id == EVENT_ID_MIC_OCCLUSION_STATUS_INFO) {
         PAL_DBG(LOG_TAG,"LOG_AS: Mic Occlusion info received");
         rm->updateMicOcclusionInfo(s, data);
      }
+#endif
 }
 
 StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_device *dattr,
