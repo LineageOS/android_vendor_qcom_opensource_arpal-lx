@@ -10782,9 +10782,12 @@ void ResourceManager::process_device_info(struct xml_userdata *data, const XML_C
     if (data->resourcexml_parsed)
       return;
 
+    PAL_ERR(LOG_TAG, "tag_name: %s", tag_name);
+
     if ((data->tag == TAG_IN_DEVICE) || (data->tag == TAG_OUT_DEVICE)) {
         if (!strcmp(tag_name, "id")) {
             std::string deviceName(data->data_buf);
+            PAL_ERR(LOG_TAG, "deviceName: %s", deviceName.c_str());
             dev.deviceId  = deviceIdLUT.at(deviceName);
             deviceInfo.push_back(dev);
         } else if (!strcmp(tag_name, "back_end_name")) {
@@ -10869,11 +10872,13 @@ void ResourceManager::process_device_info(struct xml_userdata *data, const XML_C
             std::string userIdname(data->data_buf);
             size = deviceInfo.size() - 1;
             sizeusecase = deviceInfo[size].usecase.size() - 1;
+            PAL_ERR(LOG_TAG, "userIdname: %s", userIdname.c_str());
             deviceInfo[size].usecase[sizeusecase].type = usecaseIdLUT.at(userIdname);
         } else if (!strcmp(tag_name, "sidetone_mode")) {
             std::string mode(data->data_buf);
             size = deviceInfo.size() - 1;
             sizeusecase = deviceInfo[size].usecase.size() - 1;
+            PAL_ERR(LOG_TAG, "mode: %s", mode.c_str());
             deviceInfo[size].usecase[sizeusecase].sidetoneMode = sidetoneModetoId.at(mode);
         } else if (!strcmp(tag_name, "snd_device_name")) {
             std::string sndDev(data->data_buf);
@@ -10905,6 +10910,7 @@ void ResourceManager::process_device_info(struct xml_userdata *data, const XML_C
     } else if (data->tag == TAG_ECREF) {
         if (!strcmp(tag_name, "id")) {
             std::string rxDeviceName(data->data_buf);
+            PAL_ERR(LOG_TAG, "rxDeviceName: %s", rxDeviceName.c_str());
             pal_device_id_t rxDeviceId  = deviceIdLUT.at(rxDeviceName);
             std::vector<std::pair<Stream *, int>> str_list;
             str_list.clear();
@@ -10934,6 +10940,7 @@ void ResourceManager::process_device_info(struct xml_userdata *data, const XML_C
             size = deviceInfo.size() - 1;
             sizeusecase = deviceInfo[size].usecase.size() - 1;
             sizecustomconfig = deviceInfo[size].usecase[sizeusecase].config.size() - 1;
+            PAL_ERR(LOG_TAG, "mode: %s", mode.c_str());
             deviceInfo[size].usecase[sizeusecase].config[sizecustomconfig].sidetoneMode = sidetoneModetoId.at(mode);
         } else if (!strcmp(tag_name, "priority")) {
             size = deviceInfo.size() - 1;
@@ -10985,9 +10992,12 @@ void ResourceManager::process_input_streams(struct xml_userdata *data, const XML
     if (data->resourcexml_parsed)
       return;
 
+    PAL_ERR(LOG_TAG, "tag_name: %s", tag_name);
+
     if (data->tag == TAG_INSTREAM) {
         if (!strcmp(tag_name, "name")) {
             std::string userIdname(data->data_buf);
+            PAL_ERR(LOG_TAG, "userIdname: %s", userIdname.c_str());
             txecinfo.tx_stream_type  = usecaseIdLUT.at(userIdname);
             txEcInfo.push_back(txecinfo);
             PAL_DBG(LOG_TAG, "name %d", txecinfo.tx_stream_type);
@@ -10995,6 +11005,7 @@ void ResourceManager::process_input_streams(struct xml_userdata *data, const XML
     } else if (data->tag == TAG_ECREF) {
         if (!strcmp(tag_name, "disabled_stream")) {
             std::string userIdname(data->data_buf);
+            PAL_ERR(LOG_TAG, "userIdname: %s", userIdname.c_str());
             type  = usecaseIdLUT.at(userIdname);
             size = txEcInfo.size() - 1;
             txEcInfo[size].disabled_rx_streams.push_back(type);
