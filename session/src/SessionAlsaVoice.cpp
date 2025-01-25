@@ -683,6 +683,7 @@ int SessionAlsaVoice::setTaggedSlotMask(Stream * s)
     return status;
 }
 
+#ifdef VCPM_CAL_KEY_ID_NUM_CHANNELS
 int SessionAlsaVoice::setVoiceCKVS(Stream * s)
 {
     int status = 0;
@@ -748,6 +749,7 @@ if (paramData) {
 }
     return status;
 }
+#endif
 
 int SessionAlsaVoice::start(Stream * s)
 {
@@ -895,12 +897,14 @@ int SessionAlsaVoice::start(Stream * s)
         goto err_pcm_open;
     }
 
+#ifdef VCPM_CAL_KEY_ID_NUM_CHANNELS
     /* set CKV's to configure voice call*/
     status = setVoiceCKVS(s);
     if (status != 0) {
         PAL_ERR(LOG_TAG,"setVoiceCKVS failed");
         goto err_pcm_open;
     }
+#endif
 
     if (ResourceManager::isLpiLoggingEnabled()) {
         status = payloadTaged(s, MODULE, LPI_LOGGING_ON, pcmDevTxIds.at(0), TX_HOSTLESS);
@@ -1676,6 +1680,7 @@ exit:
     return status;
 }
 
+#ifdef VCPM_CAL_KEY_ID_NUM_CHANNELS
 int SessionAlsaVoice::payloadCKVs(uint8_t **payload, size_t *size, uint32_t channels)
 {
     int status = 0;
@@ -1722,6 +1727,7 @@ int SessionAlsaVoice::payloadCKVs(uint8_t **payload, size_t *size, uint32_t chan
 
     return status;
 }
+#endif
 
 int SessionAlsaVoice::payloadSetTTYMode(uint8_t **payload, size_t *size, uint32_t mode){
     int status = 0;
@@ -2042,11 +2048,13 @@ sidetone:
         }
     }
 
+#ifdef VCPM_CAL_KEY_ID_NUM_CHANNELS
     /* set and fire CKV's to configure voice call in device switch*/
     status = setVoiceCKVS(streamHandle);
     if (status != 0) {
         PAL_ERR(LOG_TAG,"setVoiceCKVS failed in connectsession");
     }
+#endif
     return status;
 }
 
