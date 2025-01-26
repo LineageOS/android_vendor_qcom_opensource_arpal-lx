@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "418a1f51_c3ea4087",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 24438
+      },
+      "writtenOn": "2025-01-26T04:58:55Z",
+      "side": 1,
+      "message": "what about doing a symlink of the persist to /data?",
+      "revId": "1fdf5feae4b17f80452058502d5c993524e88c11",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
