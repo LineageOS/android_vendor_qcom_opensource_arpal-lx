@@ -1,7 +1,4 @@
 LOCAL_PATH := $(call my-dir)
-
-ifneq ($(QCPATH),)
-
 include $(CLEAR_VARS)
 
 ifeq ($(SOONG_CONFIG_android_hardware_audio_run_64bit), true)
@@ -39,4 +36,3 @@ LOCAL_HEADER_LIBRARIES := \
 
 include $(BUILD_SHARED_LIBRARY)
 
-endif
