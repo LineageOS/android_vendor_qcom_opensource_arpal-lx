@@ -2389,6 +2389,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
                 phy_add[2] = ResourceManager::wsa_rd_fifo_reg_phy_addr;
                 updateCpsCustomPayload(SP_miid, phy_add, WSA_REGISTER_ADD);
                 PAL_DBG(LOG_TAG, "Updated the CPS payload for both WSA");
+                [[fallthrough]];
            default:
                 enableDevice(audioRoute, mSndDeviceName_vi);
                 PAL_DBG(LOG_TAG, "pcm start for TX");
