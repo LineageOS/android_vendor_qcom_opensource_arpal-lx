@@ -2102,6 +2102,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
                 // wsa883x specific cps payload
                 updateCpsCustomPayload(miid);
 
+                [[fallthrough]];
            default:
                 // Free up the local variables
                 goto exit;
