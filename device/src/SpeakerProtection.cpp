@@ -2152,17 +2152,23 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
         PAL_ERR(LOG_TAG,"hw mixer error %d", status);
     }
 
-    fp = fopen(PAL_SP_TEMP_PATH, "rb");
-    if (fp) {
-        PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
-        spkrCalState = SPKR_CALIBRATED;
-    }
-    else {
-        PAL_DBG(LOG_TAG, "Calibration Not done");
-        mCalThread = std::thread(&SpeakerProtection::spkrCalibrationThread,
-                            this);
-        calThrdCreated = true;
-    }
+    // if (this[0x318] == (SpeakerProtection)0x0) {
+        fp = fopen("/mnt/vendor/persist/audio/aw_calr.bin", "rb");
+        if (fp) {
+            PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
+            size_t itemsRead = fread(&this->awFeedbackData,
+                    sizeof(this->awFeedbackData[0]), 2, fp);
+            if (itemsRead == 2 && this->awFeedbackData[0] > 0 && this->awFeedbackData[1] > 0) {
+                PAL_ERR(LOG_TAG, "Calibration read done, value0: %d, value1: %d", this->awFeedbackData[0], this->awFeedbackData[1]);
+                spkrCalState = SPKR_CALIBRATED;
+            }
+        }
+        if (spkrCalState != SPKR_CALIBRATED) {
+            PAL_ERR(LOG_TAG, "Calibration error, use default");
+            this->awFeedbackData[0] = 0x1964;
+            this->awFeedbackData[1] = 0x1964;
+            spkrCalState = SPKR_CALIBRATED;
+        }
 
 error_exit:
     if (status != 0) {
@@ -3839,13 +3845,55 @@ int SpeakerProtection::stop()
     return 0;
 }
 
+void SpeakerProtection::setAwReValue(mixer *audioMixer, int deviceId, int msgType, int reValue)
+{
+    uint32_t msgId = (msgType == 1) ? 0x10013D1C : 0x10013D1B;
+
+    auto dspMsg = static_cast<uint32_t *>(calloc(1, 0x1C));
+    if (!dspMsg) {
+        PAL_ERR(LOG_TAG, "msg_id:0x%x calloc dsp_msg error", msgId);
+        return;
+    }
+
+    dspMsg[0] = 0;
+    dspMsg[1] = msgId;
+    dspMsg[2] = 1;
+    dspMsg[3] = (reValue << 12) / 1000;
+
+    auto payload = static_cast<uint64_t *>(calloc(1, 0x30));
+    if (!payload) {
+        PAL_ERR(LOG_TAG, "calloc payload failed");
+        free(dspMsg);
+        return;
+    }
+
+    payload[0] = 0x10013D2A000042D3;
+    payload[1] = 0x1C;
+    payload[2] = static_cast<uint64_t>(dspMsg[0]);
+    payload[3] = static_cast<uint64_t>(dspMsg[1]);
+    // dspMsg[2] ?
+    payload[4] = static_cast<uint64_t>(dspMsg[3]);
+    payload[5] = static_cast<uint64_t>(dspMsg[4]);
+
+    PAL_INFO(LOG_TAG, "set re value number %d, value %d for %s", msgType, reValue, rm->getDeviceNameFromID(deviceId));
+
+    SessionAlsaUtils::setMixerParameter(audioMixer, deviceId, payload, 0x30);
+
+    free(payload);
+    free(dspMsg);
+}
 
 int32_t SpeakerProtection::setParameter(uint32_t param_id, void *param)
 {
-    PAL_DBG(LOG_TAG, "Inside Speaker Protection Set parameters");
+    PAL_DBG(LOG_TAG, "Inside Speaker Protection Set parameters, param_id: %d", param_id);
     (void ) param;
     if (param_id == PAL_SP_MODE_DYNAMIC_CAL)
         speakerProtectionDynamicCal();
+    // else if (param_id == PAL_SP_MODE_AW_CAL) {4278190081
+    else if (param_id == 4278190081) {
+        setAwReValue(virtMixer, *(int *)param, 0, this->awFeedbackData[0]);
+        setAwReValue(virtMixer, *(int *)param, 1, this->awFeedbackData[1]);
+    }
     return 0;
 }
 

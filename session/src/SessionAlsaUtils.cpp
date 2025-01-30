@@ -2202,6 +2202,8 @@ int SessionAlsaUtils::connectSessionDevice(Session* sess, Stream* streamHandle, 
                         PAL_ERR(LOG_TAG, "setMixerParameter failed");
                         goto exit;
                     }
+
+                    // HERE AWINIC CALIB
                 }
             } else {
                 PAL_ERR(LOG_TAG, "invalid session audio object");

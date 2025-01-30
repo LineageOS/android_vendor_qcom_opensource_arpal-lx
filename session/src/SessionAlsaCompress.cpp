@@ -1326,6 +1326,8 @@ int SessionAlsaCompress::start(Stream * s)
                         PAL_ERR(LOG_TAG, "setMixerParameter failed");
                         goto exit;
                     }
+
+                    // HERE AWINIC CALIB
                 }
 
                 if (!status && isMixerEventCbRegd && !isPauseRegistrationDone) {

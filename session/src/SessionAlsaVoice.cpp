@@ -880,6 +880,8 @@ int SessionAlsaVoice::start(Stream * s)
         goto err_pcm_open;
     }
 
+    // HERE AWINIC CALIB
+
     /* set slot_mask as TKV to configure MUX module */
     status = setTaggedSlotMask(s);
     if (status != 0) {

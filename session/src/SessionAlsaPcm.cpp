@@ -1296,6 +1296,8 @@ set_mixer:
                         PAL_ERR(LOG_TAG, "setMixerParameter failed");
                         goto exit;
                     }
+
+                    // HERE AWINIC CALIB
                 }
             }
 pcm_start:
