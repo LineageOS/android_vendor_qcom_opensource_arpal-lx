@@ -115,6 +115,7 @@ protected :
     struct spDeviceInfo spDevInfo;
     void *viCustomPayload;
     size_t viCustomPayloadSize;
+    uint32_t awFeedbackData[2];
 
 private :
     static bool isSharedBE;
@@ -170,6 +171,8 @@ public:
 
     bool canDeviceProceedForCalibration(unsigned long *sec);
     bool isDeviceInUse(unsigned long *sec);
+
+    void setAwReValue(mixer *audioMixer, int deviceId, int msgType, int reValue);
 };
 
 class SpeakerFeedback : public Device
