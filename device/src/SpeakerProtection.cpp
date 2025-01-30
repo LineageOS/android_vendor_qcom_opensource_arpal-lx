@@ -2152,17 +2152,23 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
         PAL_ERR(LOG_TAG,"hw mixer error %d", status);
     }
 
-    fp = fopen(PAL_SP_TEMP_PATH, "rb");
-    if (fp) {
-        PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
-        spkrCalState = SPKR_CALIBRATED;
-    }
-    else {
-        PAL_DBG(LOG_TAG, "Calibration Not done");
-        mCalThread = std::thread(&SpeakerProtection::spkrCalibrationThread,
-                            this);
-        calThrdCreated = true;
-    }
+    // if (this[0x318] == (SpeakerProtection)0x0) {
+        fp = fopen("/mnt/vendor/persist/audio/aw_calr.bin", "rb");
+        if (fp) {
+            PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
+            size_t itemsRead = fread(&this->awReValues,
+                    sizeof(this->awReValues[0]), 2, fp);
+            if (itemsRead == 2 && this->awReValues[0] > 0 && this->awReValues[1] > 0) {
+                PAL_ERR(LOG_TAG, "Calibration read done, value0: %d, value1: %d", this->awReValues[0], this->awReValues[1]);
+                spkrCalState = SPKR_CALIBRATED;
+            }
+        }
+        if (spkrCalState != SPKR_CALIBRATED) {
+            PAL_ERR(LOG_TAG, "Calibration error, use default");
+            this->awReValues[0] = 0x1964;
+            this->awReValues[1] = 0x1964;
+            spkrCalState = SPKR_CALIBRATED;
+        }
 
 error_exit:
     if (status != 0) {
@@ -2605,6 +2611,7 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
                 modeConfg.th_operation_mode = V_VALIDATION_MODE;
             break;
             case PAL_SP_MODE_DYNAMIC_CAL:
+            case PAL_SP_MODE_AW_CAL:
             default:
                 PAL_INFO(LOG_TAG, "Normal mode being used");
                 modeConfg.th_operation_mode = NORMAL_MODE;
@@ -2746,6 +2753,9 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
                 break;
                 case PAL_SP_MODE_DYNAMIC_CAL:
                     PAL_ERR(LOG_TAG, "Dynamic cal in Processing mode!!");
+                break;
+                case PAL_SP_MODE_AW_CAL:
+                    PAL_ERR(LOG_TAG, "aw cal in processing mode!!")
                 break;
             }
         }
@@ -3253,6 +3263,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
                 modeConfg.th_operation_mode = V_VALIDATION_MODE;
             break;
             case PAL_SP_MODE_DYNAMIC_CAL:
+            case PAL_SP_MODE_AW_CAL:
             default:
                 PAL_INFO(LOG_TAG, "Normal mode being used");
                 modeConfg.th_operation_mode = NORMAL_MODE;
@@ -3360,10 +3371,14 @@ int SpeakerProtection::viTxSetupThreadLoop()
                 case PAL_SP_MODE_DYNAMIC_CAL:
                     PAL_ERR(LOG_TAG, "Dynamic cal in Processing mode!!");
                 break;
+                case PAL_SP_MODE_AW_CAL:
+                    PAL_ERR(LOG_TAG, "aw cal in Processing mode!!");
+                break;
             }
         }
 
         // Setting the R0T0 values
+        /*
         PAL_DBG(LOG_TAG, "Read R0T0 from file");
         fp = fopen(PAL_SP_TEMP_PATH, "rb");
         if (fp) {
@@ -3411,6 +3426,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
                 ret = 0;
             }
         }
+        */
 
         // Setting the values for VI module
         if (customPayloadSize) {
@@ -3560,6 +3576,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
             PAL_DBG(LOG_TAG, " Created vi tx thread :%s ", __func__);
             viTxSetupThrdCreated = true;
         }
+        if (0) {
         rm = ResourceManager::getInstance();
         if (!rm) {
             PAL_ERR(LOG_TAG, "Failed to get resource manager instance");
@@ -3656,6 +3673,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
         // CPS related payload
         if (ResourceManager::isCpsEnabled) {
             updateCpsCustomPayload(miid);
+        }
         }
         goto exit;
     }
@@ -3839,6 +3857,56 @@ int SpeakerProtection::stop()
     return 0;
 }
 
+void SpeakerProtection::setAwReValue(mixer* mixer, int device, int re_value_number, int re_value) {
+    struct dsp_msg {
+        uint32_t field1;
+        uint32_t msg_id;
+        uint32_t field3;
+        uint32_t padding[3];
+        uint32_t field4;
+    };
+
+    struct dsp_payload {
+        uint64_t header;
+        size_t msg_length;
+        struct dsp_msg msg;
+    } * payload;
+
+    payload = (struct dsp_payload*)calloc(1, sizeof(struct dsp_payload));
+    if (!payload) {
+        PAL_ERR(LOG_TAG, "Failed to allocate memory for payload");
+        return;
+    }
+    PAL_ERR(LOG_TAG, "dsp_msg: 0x%x, dsp_payload: 0x%x", sizeof(dsp_msg), sizeof(dsp_payload));
+    payload->header = 0x10013d2a000042d3;
+    payload->msg_length = sizeof(struct dsp_msg);
+    payload->msg.field1 = 0;
+    payload->msg.msg_id = (re_value_number == 1) ? 0x10013d1c : 0x10013d1b;
+    payload->msg.field3 = 1;
+    payload->msg.field4 = (re_value * 4096) / 1000;
+
+    PAL_INFO(LOG_TAG, "set re value number %d, value %d for %d, %s", re_value_number, re_value, device,
+             rm->getDeviceNameFromID(device));
+
+    SessionAlsaUtils::setMixerParameter(mixer, device, payload, sizeof(struct dsp_payload));
+    free(payload);
+
+    // *(undefined4 *)__ptr = 0; // 0-3
+    // *(undefined4 *)((long)__ptr + 4) = msg_id; // 4-7
+    // *(undefined4 *)(__ptr + 1) = 1; // 8-b // 8-11
+    // *(int *)(__ptr + 3) = (re_value * 4096) / 1000; // 18-1b // 24-27
+
+    // __ptr_00 = (undefined8 *)calloc(1,0x30);
+
+    // __ptr_00[0] = 0x10013d2a000042d3; // 0-7
+    // __ptr_00[1] = 0x1c; // sizeof dsp_msg // 8-f
+
+    // // copy dsp_msg
+    // __ptr_00[2] = __ptr[0]; // 10-17
+    // __ptr_00[3] = __ptr[1]; // 18-1f
+    // *(undefined8 *)((long)__ptr_00 + 0x1c) = *(undefined8 *)((long)__ptr + 0xc); // 1c-23
+    // *(undefined8 *)((long)__ptr_00 + 0x24) = *(undefined8 *)((long)__ptr + 0x14); // 24-2b
+}
 
 int32_t SpeakerProtection::setParameter(uint32_t param_id, void *param)
 {
@@ -3846,6 +3914,11 @@ int32_t SpeakerProtection::setParameter(uint32_t param_id, void *param)
     (void ) param;
     if (param_id == PAL_SP_MODE_DYNAMIC_CAL)
         speakerProtectionDynamicCal();
+    else if (param_id == PAL_SP_MODE_AW_CAL) {
+    // else if (param_id == 4278190081) {
+        setAwReValue(virtMixer, *(int *)param, 0, this->awReValues[0]);
+        setAwReValue(virtMixer, *(int *)param, 1, this->awReValues[1]);
+    }
     return 0;
 }
 
