@@ -1326,6 +1326,21 @@ int SessionAlsaCompress::start(Stream * s)
                         PAL_ERR(LOG_TAG, "setMixerParameter failed");
                         goto exit;
                     }
+
+                    // HERE AWINIC CALIB
+                    {
+                        struct pal_device dattr;
+                        dattr.id = PAL_DEVICE_OUT_SPEAKER;
+                        std::shared_ptr<Device> dev = nullptr;
+                        dev = Device::getInstance(&dattr , rm);
+                        if (dev) {
+                            PAL_DBG(LOG_TAG, "Got Speaker instance");
+                            dev->setParameter(PAL_SP_MODE_AW_CAL, nullptr);
+                        }
+                        else {
+                            PAL_DBG(LOG_TAG, "Unable to get speaker instance");
+                        }
+                    }
                 }
 
                 if (!status && isMixerEventCbRegd && !isPauseRegistrationDone) {
