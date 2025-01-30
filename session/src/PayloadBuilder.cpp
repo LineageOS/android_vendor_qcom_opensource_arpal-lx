@@ -3080,8 +3080,8 @@ int PayloadBuilder::populateDevicePPCkv(Stream *s, std::vector <std::pair<int,in
                     (dAttr.id == PAL_DEVICE_IN_HANDSET_MIC) ||
                     (dAttr.id == PAL_DEVICE_IN_WIRED_HEADSET) ||
                     (dAttr.id == PAL_DEVICE_IN_USB_HEADSET)) {
-                    if ((sampleRateKv = getSamplerateKv(dAttr.config.sample_rate)) != 0)
-                        keyVector.push_back(std::make_pair(SAMPLINGRATE, sampleRateKv));
+                    //if ((sampleRateKv = getSamplerateKv(dAttr.config.sample_rate)) != 0)
+                        //keyVector.push_back(std::make_pair(SAMPLINGRATE, sampleRateKv));
                     PAL_DBG(LOG_TAG,"stream type %d Sample Rate[%d]\n", sattr->type, dAttr.config.sample_rate);
                 }
 

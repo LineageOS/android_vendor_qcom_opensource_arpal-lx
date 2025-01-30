@@ -1298,7 +1298,22 @@ set_mixer:
                         goto exit;
                     }
                 }
+                // HERE AWINIC CALIB
+                {
+                    struct pal_device dattr;
+                    dattr.id = PAL_DEVICE_OUT_SPEAKER;
+                    std::shared_ptr<Device> dev = nullptr;
+                    dev = Device::getInstance(&dattr, rm);
+                    std::shared_ptr<int> sndDeviceId = std::make_shared<int>(dev->getSndDeviceId());
+                    if (dev) {
+                        PAL_DBG(LOG_TAG, "awinic: Got Speaker instance, pcm: %d", pcmDevIds.at(0));
+                        dev->setParameter(PAL_SP_MODE_AW_CAL, sndDeviceId.get());
+                    } else {
+                        PAL_DBG(LOG_TAG, "awinic: Unable to get speaker instance");
+                    }
+                }
             }
+
 pcm_start:
             status = setInitialVolume();
             if (status != 0) {

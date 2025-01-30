@@ -8866,6 +8866,16 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                                 spModeval->operationModeRunTime;
                     }
                     break;
+                    case PAL_SP_MODE_AW_CAL:
+                    {
+                        PAL_ERR(LOG_TAG, "ResourceManager sp mode aw cal");
+                        mSpkrProtModeValue.operationMode =
+                                PAL_SP_MODE_AW_CAL;
+                        // mSpkrProtModeValue.spkrHeatupTime =
+                        //         spModeval->spkrHeatupTime;
+                        // mSpkrProtModeValue.operationModeRunTime =
+                        //         spModeval->operationModeRunTime;
+                    }
                 }
             } else {
                 PAL_ERR(LOG_TAG,"Incorrect size : expected (%zu), received(%zu)",
