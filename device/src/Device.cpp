@@ -447,6 +447,69 @@ int Device::start()
     return status;
 }
 
+int enableAwSmartPA(std::shared_ptr<ResourceManager> Rm, pal_device_id_t device_id, char *speaker_type, bool enable)
+{
+    struct mixer *hwMixerHandle = NULL;
+    struct mixer_ctl *mixer_ctl_top = NULL, *mixer_ctl_bottom = NULL;
+    int32_t ret = 0;
+    bool is_device_speaker;
+    bool speaker_flag;
+
+    ret = Rm->getHwAudioMixer(&hwMixerHandle);
+    if (ret) {
+        PAL_ERR(LOG_TAG, "getHwAudioMixer() failed %d", ret);
+        goto exit;
+    }
+
+    if (device_id == PAL_DEVICE_OUT_HANDSET) {
+        is_device_speaker = false;
+        speaker_flag = 1;
+    } else if (device_id == PAL_DEVICE_OUT_SPEAKER) {
+        if (strcmp(speaker_type, "speaker-top") == 0) {
+            PAL_INFO(LOG_TAG, "top speaker only");
+            is_device_speaker = false;
+            speaker_flag = 1;
+        } else if (strcmp(speaker_type, "speaker-bot") == 0) {
+            PAL_INFO(LOG_TAG, "bottom speaker only");
+            is_device_speaker = true;
+            speaker_flag = 0;
+        } else {
+            is_device_speaker = false;
+            speaker_flag = 0;
+        }
+    } else {
+        is_device_speaker = true;
+        speaker_flag = 1;
+    }
+
+    mixer_ctl_top = mixer_get_ctl_by_name(hwMixerHandle, "aw_dev_0_switch");
+    if (!mixer_ctl_top) {
+        PAL_DBG(LOG_TAG, "aw_dev_0_switch mixer control not identified");
+        goto exit;
+    }
+    mixer_ctl_bottom = mixer_get_ctl_by_name(hwMixerHandle, "aw_dev_1_switch");
+    if (!mixer_ctl_bottom) {
+        PAL_DBG(LOG_TAG, "aw_dev_1_switch mixer control not identified");
+        goto exit;
+    }
+
+    PAL_ERR(LOG_TAG, "is_device_speaker: %d, speaker_flag: %d", is_device_speaker, speaker_flag);
+    if (!is_device_speaker && mixer_ctl_top != 0) {
+        ret = mixer_ctl_set_value(mixer_ctl_top, 0, enable);
+        if (ret)
+            PAL_ERR(LOG_TAG, "failed to set aw0 ctl value to %d", enable);
+    }
+
+    if (speaker_flag && mixer_ctl_bottom != 0) {
+        ret = mixer_ctl_set_value(mixer_ctl_bottom, 0, enable);
+        if (ret)
+            PAL_ERR(LOG_TAG, "failed to set aw1 ctl value to %d", enable);
+    }
+
+exit:
+    return ret;
+}
+
 // must be called with mDeviceMutex held
 int Device::start_l()
 {
@@ -472,6 +535,10 @@ int Device::start_l()
             if (status)
                  PAL_ERR(LOG_TAG, "Error: Dev setParam failed for %d\n",
                                    this->deviceAttr.id);
+        }
+        if (this->deviceAttr.id == PAL_DEVICE_OUT_HANDSET || this->deviceAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+            PAL_DBG(LOG_TAG, "Enabling Awinic SmartPA for device %d with name: %s", this->deviceAttr.id, this->mSndDeviceName);
+            enableAwSmartPA(this->rm, this->deviceAttr.id, this->mSndDeviceName, true);
         }
     }
     deviceStartStopCount++;
@@ -500,6 +567,11 @@ int Device::stop_l()
 
     if (deviceStartStopCount > 0) {
         --deviceStartStopCount;
+    }
+
+    if (this->deviceAttr.id == PAL_DEVICE_OUT_HANDSET || this->deviceAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+        PAL_DBG(LOG_TAG, "Disabling Awinic SmartPA for device %d with name: %s", this->deviceAttr.id, this->mSndDeviceName);
+        enableAwSmartPA(this->rm, this->deviceAttr.id, this->mSndDeviceName, false);
     }
 
     return 0;
