@@ -233,6 +233,7 @@ typedef enum {
     PAL_SP_MODE_DYNAMIC_CAL = 1,
     PAL_SP_MODE_FACTORY_TEST,
     PAL_SP_MODE_V_VALIDATION,
+    PAL_SP_MODE_AW_CAL = 4278190081,
 } pal_spkr_prot_mode;
 
 /* Payload For ID: PAL_PARAM_ID_SP_MODE
