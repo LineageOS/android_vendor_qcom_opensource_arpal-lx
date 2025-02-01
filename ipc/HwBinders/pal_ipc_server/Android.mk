@@ -1,3 +1,4 @@
+ifneq ($(TARGET_PROVIDES_AUDIO_HAL),true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -35,4 +36,4 @@ LOCAL_HEADER_LIBRARIES := \
     libacdb_headers
 
 include $(BUILD_SHARED_LIBRARY)
-
+endif
