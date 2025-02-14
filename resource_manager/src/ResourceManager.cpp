@@ -548,6 +548,7 @@ bool ResourceManager::isXPANEnabled = false;
 bool ResourceManager::isDummyDevEnabled = false;
 bool ResourceManager::isProxyRecordActive = false;
 int ResourceManager::max_voice_vol = -1;     /* Variable to store max volume index for voice call */
+bool ResourceManager::isLvacfsEnabled = false;
 bool ResourceManager::isSignalHandlerEnabled = false;
 static int haptics_priority;
 bool ResourceManager::isHapticsthroughWSA = false;
@@ -8788,6 +8789,7 @@ int ResourceManager::setConfigParams(struct str_parms *parms)
     ret = setUpdDedicatedBeEnableParam(parms, value, len);
     ret = setUpdCustomGainParam(parms, value, len);
     ret = setDualMonoEnableParam(parms, value, len);
+    ret = setLvacfsEnableParam(parms, value, len);
     ret = setSignalHandlerEnableParam(parms, value, len);
     ret = setMuxconfigEnableParam(parms, value, len);
     ret = setUpdDutyCycleEnableParam(parms, value, len);
@@ -9090,6 +9092,29 @@ int ResourceManager::setDualMonoEnableParam(struct str_parms *parms,
     }
 
     PAL_VERBOSE(LOG_TAG, "dual mono enabled is=%x", isDualMonoEnabled);
+
+    return ret;
+}
+
+int ResourceManager::setLvacfsEnableParam(struct str_parms *parms,
+                                 char *value, int len)
+{
+    int ret = -EINVAL;
+
+    if (!value || !parms)
+        return ret;
+
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_RECORD_USE_AP_LVACFS,
+                                value, len);
+    PAL_INFO(LOG_TAG," value %s", value);
+    if (ret >= 0) {
+        if (value && !strncmp(value, "enable", sizeof("enable") - 1))
+            isLvacfsEnabled = true;
+
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_RECORD_USE_AP_LVACFS);
+    }
+
+    PAL_INFO(LOG_TAG, "LVACFS enabled is=%x", isLvacfsEnabled);
 
     return ret;
 }
@@ -10675,6 +10700,14 @@ int ResourceManager::getParameter(uint32_t param_id, void **param_payload,
             PAL_VERBOSE(LOG_TAG, "get parameter for Proxy Record session");
             *payload_size = (isProxyRecordActive ? strlen("true") : strlen("false")) + 1;
             memcpy((char*)param_payload, isProxyRecordActive ? "true" : "false", *payload_size);
+        }
+        break;
+        case PAL_PARAM_ID_LVACFS:
+        {
+            PAL_INFO(LOG_TAG, "get parameter for LVACFS");
+
+            *payload_size = sizeof(isLvacfsEnabled);
+            **(bool **)param_payload = isLvacfsEnabled;
         }
         break;
         default:
