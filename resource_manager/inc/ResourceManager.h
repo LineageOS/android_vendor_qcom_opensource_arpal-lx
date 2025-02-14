@@ -94,6 +94,7 @@ typedef enum {
 #define AUDIO_PARAMETER_KEY_WSA_HAPTICS "haptics_through_wsa"
 #define AUDIO_PARAMETER_KEY_DUMMY_DEV_ENABLE "dummy_dev_enable"
 #define AUDIO_PARAMETER_MULTI_SR_COMBO_SUPPORTED "multiple_sample_rate_combo_supported"
+#define AUDIO_PARAMETER_KEY_RECORD_USE_AP_LVACFS "record_use_ap_lvacfs"
 #define MAX_PCM_NAME_SIZE 50
 #define MAX_STREAM_INSTANCES (sizeof(uint64_t) << 3)
 #define MIN_USECASE_PRIORITY 0xFFFFFFFF
@@ -433,6 +434,7 @@ class SoundTriggerEngine;
 class SndCardMonitor;
 class StreamUltraSound;
 class ContextManager;
+class Lvacfs;
 class StreamSensorPCMData;
 class StreamContextProxy;
 class StreamCommonProxy;
@@ -658,6 +660,7 @@ public:
     static bool isDualMonoEnabled;
     static bool isDeviceMuxConfigEnabled;
     static bool isUHQAEnabled;
+    static bool isLvacfsEnabled;
     static bool isSignalHandlerEnabled;
     static bool isXPANEnabled;
     static bool isCRSCallEnabled;
@@ -982,6 +985,7 @@ public:
     static int setUpdVirtualPortParam(struct str_parms *parms, char *value, int len);
     static int setUpdCustomGainParam(struct str_parms *parms,char *value, int len);
     static int setDualMonoEnableParam(struct str_parms *parms,char *value, int len);
+    static int setLvacfsEnableParam(struct str_parms *parms,char *value, int len);
     static int setSignalHandlerEnableParam(struct str_parms *parms,char *value, int len);
     static int setMuxconfigEnableParam(struct str_parms *parms,char *value, int len);
     static int setHapticsPriorityParam(struct str_parms *parms,char *value, int len);
