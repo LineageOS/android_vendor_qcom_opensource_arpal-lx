@@ -969,6 +969,7 @@ typedef enum {
     PAL_PARAM_ID_ULTRASOUND_RAMPDOWN = 62,
     PAL_PARAM_ID_VOLUME_CTRL_RAMP = 63,
     PAL_PARAM_ID_ULTRASOUND_SET_GAIN = 64,
+    PAL_PARAM_ID_LVACFS = 1001,
 } pal_param_id_type_t;
 
 /** HDMI/DP */
