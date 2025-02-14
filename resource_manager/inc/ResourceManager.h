@@ -84,6 +84,7 @@ typedef enum {
 #define AUDIO_PARAMETER_KEY_UPD_DUTY_CYCLE "upd_duty_cycle_enable"
 #define AUDIO_PARAMETER_KEY_UPD_VIRTUAL_PORT "upd_virtual_port"
 #define AUDIO_PARAMETER_KEY_SPKR_XMAX_TMAX_LOG "spkr_xmax_tmax_logging_enable"
+#define AUDIO_PARAMETER_KEY_RECORD_USE_AP_LVACFS "record_use_ap_lvacfs"
 #define MAX_PCM_NAME_SIZE 50
 #define MAX_STREAM_INSTANCES (sizeof(uint64_t) << 3)
 #define MIN_USECASE_PRIORITY 0xFFFFFFFF
@@ -395,6 +396,7 @@ class SoundTriggerEngine;
 class SndCardMonitor;
 class StreamUltraSound;
 class ContextManager;
+class Lvacfs;
 class StreamSensorPCMData;
 class StreamContextProxy;
 
@@ -618,6 +620,7 @@ public:
     static bool isDualMonoEnabled;
     static bool isDeviceMuxConfigEnabled;
     static bool isUHQAEnabled;
+    static bool isLvacfsEnabled;
     static bool isSignalHandlerEnabled;
     static std::mutex mChargerBoostMutex;
     /* Variable to store which speaker side is being used for call audio.
@@ -922,6 +925,7 @@ public:
     static int setUpdVirtualPortParam(struct str_parms *parms, char *value, int len);
     static int setUpdCustomGainParam(struct str_parms *parms,char *value, int len);
     static int setDualMonoEnableParam(struct str_parms *parms,char *value, int len);
+    static int setLvacfsEnableParam(struct str_parms *parms,char *value, int len);
     static int setSignalHandlerEnableParam(struct str_parms *parms,char *value, int len);
     static int setMuxconfigEnableParam(struct str_parms *parms,char *value, int len);
     static int setSpkrXmaxTmaxLoggingParam(struct str_parms* parms, char* value, int len);
