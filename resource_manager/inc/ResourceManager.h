@@ -88,6 +88,7 @@ typedef enum {
 #define AUDIO_PARAMETER_KEY_UPD_SET_CUSTOM_GAIN "upd_set_custom_gain"
 #define AUDIO_PARAMETER_KEY_DUAL_MONO "dual_mono"
 #define AUDIO_PARAMETER_KEY_SIGNAL_HANDLER "signal_handler"
+#define AUDIO_PARAMETER_RECORD_USE_AP_LVACFS "record_use_ap_lvacfs"
 #define MAX_PCM_NAME_SIZE 50
 #define MAX_STREAM_INSTANCES (sizeof(uint64_t) << 3)
 #define MIN_USECASE_PRIORITY 0xFFFFFFFF
@@ -367,6 +368,7 @@ class SoundTriggerEngine;
 class SndCardMonitor;
 class StreamUltraSound;
 class ContextManager;
+class Lvacfs;
 class StreamSensorPCMData;
 class StreamContextProxy;
 
@@ -557,6 +559,7 @@ protected:
     std::array<std::shared_ptr<nonTunnelInstMap_t>, DEFAULT_NT_SESSION_TYPE_COUNT> mNTStreamInstancesList;
     int32_t scoOutConnectCount = 0;
     int32_t scoInConnectCount = 0;
+    std::shared_ptr<Lvacfs> mLvacfs;
     std::shared_ptr<SignalHandler> mSigHandler;
     int getPcmIdByDevInfoName(char *mixer_str);
 public:
@@ -580,6 +583,7 @@ public:
     static bool isContextManagerEnabled;
     static bool isDualMonoEnabled;
     static bool isUHQAEnabled;
+    static bool isLvacfsEnabled;
     static bool isSignalHandlerEnabled;
     /* Variable to store which speaker side is being used for call audio.
      * Valid for Stereo case only
@@ -848,6 +852,7 @@ public:
     static int setUpdDedicatedBeEnableParam(struct str_parms *parms,char *value, int len);
     static int setUpdCustomGainParam(struct str_parms *parms,char *value, int len);
     static int setDualMonoEnableParam(struct str_parms *parms,char *value, int len);
+    static int setLvacfsEnableParam(struct str_parms *parms,char *value, int len);
     static int setSignalHandlerEnableParam(struct str_parms *parms,char *value, int len);
     static bool isLpiLoggingEnabled();
     static void processConfigParams(const XML_Char **attr);
