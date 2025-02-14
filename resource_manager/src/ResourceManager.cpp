@@ -464,6 +464,7 @@ bool ResourceManager::lpi_logging_ = false;
 bool ResourceManager::isUpdDedicatedBeEnabled = false;
 bool ResourceManager::isUpdSetCustomGainEnabled = false;
 int ResourceManager::max_voice_vol = -1;     /* Variable to store max volume index for voice call */
+bool ResourceManager::isLvacfsEnabled = false;
 bool ResourceManager::isSignalHandlerEnabled = false;
 bool ResourceManager::a2dp_suspended = false;
 
@@ -7729,6 +7730,7 @@ int ResourceManager::setConfigParams(struct str_parms *parms)
     ret = setUpdDedicatedBeEnableParam(parms, value, len);
     ret = setUpdCustomGainParam(parms, value, len);
     ret = setDualMonoEnableParam(parms, value, len);
+    ret = setLvacfsEnableParam(parms, value, len);
     ret = setSignalHandlerEnableParam(parms, value, len);
 
     /* Not checking return value as this is optional */
@@ -7845,6 +7847,28 @@ int ResourceManager::setDualMonoEnableParam(struct str_parms *parms,
     }
 
     PAL_INFO(LOG_TAG, "dual mono enabled is=%x", isDualMonoEnabled);
+
+    return ret;
+}
+
+int ResourceManager::setLvacfsEnableParam(struct str_parms *parms, char *value, int len)
+{
+    int ret = -EINVAL;
+
+    if (!value || !parms) {
+        return ret;
+    }
+
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_RECORD_USE_AP_LVACFS,
+                            value, len);
+    PAL_INFO(LOG_TAG," value %s", value);
+    if (ret >= 0) {
+        if (value && !strncmp(value, "enable", sizeof("enable") - 1)) {
+            isLvacfsEnabled = true;
+        str_parms_del(parms, AUDIO_PARAMETER_RECORD_USE_AP_LVACFS);
+        }
+        PAL_INFO(LOG_TAG, "LVACFS enabled is=%x", isLvacfsEnabled);
+    }
 
     return ret;
 }
@@ -8706,6 +8730,14 @@ int ResourceManager::getParameter(uint32_t param_id, void **param_payload,
 
         *payload_size = sizeof(micInfoVec);
         *param_payload = static_cast<void*>(micInfoVec);
+        }
+        break;
+        case PAL_PARAM_ID_LVACFS:
+        {
+            PAL_INFO(LOG_TAG, "get parameter for LVACFS");
+
+            *payload_size = sizeof(isLvacfsEnabled);
+            **(bool **)param_payload = isLvacfsEnabled;
         }
         break;
         default:
