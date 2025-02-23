@@ -1002,23 +1002,27 @@ int SessionAlsaPcm::start(Stream * s)
         }
         SessionAlsaUtils::registerMixerEvent(mixer, pcmDevIds.at(0),
             (void *)&event_cfg, payload_size);
-    } else if (sAttr.type == PAL_STREAM_ULTRASOUND && RegisterForEvents) {
-        payload_size = sizeof(struct agm_event_reg_cfg);
+    } else if (sAttr.type == PAL_STREAM_ULTRASOUND) {
+        PAL_INFO(LOG_TAG, "MIUS_CB: start() RegisterForEvents is %d, tagId: 0x%x", RegisterForEvents, tagId);
+        if (RegisterForEvents) {
+            payload_size = sizeof(struct agm_event_reg_cfg);
 
-        memset(&event_cfg, 0, sizeof(event_cfg));
-        event_cfg.event_config_payload_size = 0;
-        event_cfg.is_register = 1;
-        event_cfg.event_id = EVENT_ID_GENERIC_US_DETECTION;
-        tagId = ULTRASOUND_DETECTION_MODULE;
-        if (!pcmDevTxIds.size()) {
-            PAL_ERR(LOG_TAG, "pcmDevTxIds not found.");
-            status = -EINVAL;
-            goto exit;
+            memset(&event_cfg, 0, sizeof(event_cfg));
+            event_cfg.event_config_payload_size = 0;
+            event_cfg.is_register = 1;
+            event_cfg.event_id = EVENT_ID_GENERIC_US_DETECTION;
+            tagId = ULTRASOUND_DETECTION_MODULE;
+            if (!pcmDevTxIds.size()) {
+                PAL_ERR(LOG_TAG, "pcmDevTxIds not found.");
+                status = -EINVAL;
+                goto exit;
+            }
+            PAL_INFO(LOG_TAG, "MIUS_CB: start() registerMixerEvent");
+            DeviceId = pcmDevTxIds.at(0);
+            SessionAlsaUtils::registerMixerEvent(mixer, DeviceId,
+                    txAifBackEnds[0].second.data(), tagId, (void *)&event_cfg,
+                    payload_size);
         }
-        DeviceId = pcmDevTxIds.at(0);
-        SessionAlsaUtils::registerMixerEvent(mixer, DeviceId,
-                txAifBackEnds[0].second.data(), tagId, (void *)&event_cfg,
-                payload_size);
     } else if(sAttr.type == PAL_STREAM_ACD) {
         if (eventPayload) {
             payload_size = sizeof(struct agm_event_reg_cfg) + eventPayloadSize;
@@ -1557,23 +1561,27 @@ int SessionAlsaPcm::stop(Stream * s)
         }
         SessionAlsaUtils::registerMixerEvent(mixer, pcmDevIds.at(0),
             (void *)&event_cfg, payload_size);
-    } else if (sAttr.type == PAL_STREAM_ULTRASOUND && RegisterForEvents) {
-        payload_size = sizeof(struct agm_event_reg_cfg);
-        memset(&event_cfg, 0, sizeof(event_cfg));
-        event_cfg.event_config_payload_size = 0;
-        event_cfg.is_register = 0;
-        event_cfg.event_id = EVENT_ID_GENERIC_US_DETECTION;
-        tagId = ULTRASOUND_DETECTION_MODULE;
-        if (!pcmDevTxIds.size()) {
-            PAL_ERR(LOG_TAG, "pcmDevTxIds not found.");
-            status = -EINVAL;
-            goto exit;
+    } else if (sAttr.type == PAL_STREAM_ULTRASOUND) {
+        PAL_INFO(LOG_TAG, "MIUS_CB: stop() RegisterForEvents is %d", RegisterForEvents);
+        if (RegisterForEvents) {
+            payload_size = sizeof(struct agm_event_reg_cfg);
+            memset(&event_cfg, 0, sizeof(event_cfg));
+            event_cfg.event_config_payload_size = 0;
+            event_cfg.is_register = 0;
+            event_cfg.event_id = EVENT_ID_GENERIC_US_DETECTION;
+            tagId = ULTRASOUND_DETECTION_MODULE;
+            if (!pcmDevTxIds.size()) {
+                PAL_ERR(LOG_TAG, "pcmDevTxIds not found.");
+                status = -EINVAL;
+                goto exit;
+            }
+            PAL_INFO(LOG_TAG, "MIUS_CB: SessionAlsaPcm::stop() De-registerMixerEvent and set flag to flase");
+            DeviceId = pcmDevTxIds.at(0);
+            RegisterForEvents = false;
+            SessionAlsaUtils::registerMixerEvent(mixer, DeviceId,
+                    txAifBackEnds[0].second.data(), tagId, (void *)&event_cfg,
+                    payload_size);
         }
-        DeviceId = pcmDevTxIds.at(0);
-        RegisterForEvents = false;
-        SessionAlsaUtils::registerMixerEvent(mixer, DeviceId,
-                txAifBackEnds[0].second.data(), tagId, (void *)&event_cfg,
-                payload_size);
     } else if (sAttr.type == PAL_STREAM_ACD) {
         if (eventPayload == NULL)
             goto exit;
@@ -2398,6 +2406,7 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             pal_param_payload *param_payload = (pal_param_payload *)payload;
             pal_param_upd_event_detection_t *detection_payload =
                                    (pal_param_upd_event_detection_t *)param_payload->payload;
+            PAL_INFO(LOG_TAG, "MIUS_CB: setParam() set RegisterForEvents flag to %d", detection_payload->register_status);
             RegisterForEvents = detection_payload->register_status;
             return 0;
         }
