@@ -109,6 +109,7 @@ LOCAL_SRC_FILES := \
     device/src/HeadsetVaMic.cpp \
     device/src/RTProxy.cpp \
     device/src/SpeakerProtection.cpp \
+    device/src/SpeakerTfa98xx.cpp \
     device/src/FMDevice.cpp \
     device/src/ExtEC.cpp \
     device/src/HapticsDev.cpp \
