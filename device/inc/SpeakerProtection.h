@@ -41,6 +41,7 @@
 #include<vector>
 #include "apm_api.h"
 #include "ResourceManager.h"
+#include "SpeakerTfa98xx.h"
 
 class Device;
 
@@ -115,6 +116,7 @@ protected :
     struct spDeviceInfo spDevInfo;
     void *viCustomPayload;
     size_t viCustomPayloadSize;
+    std::unique_ptr<SpeakerTfa98xx> tfa98xx;
 
 private :
     static bool isSharedBE;
