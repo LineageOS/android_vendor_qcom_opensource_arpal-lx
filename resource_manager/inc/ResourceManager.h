@@ -561,6 +561,10 @@ protected:
     int32_t scoInConnectCount = 0;
     std::shared_ptr<SignalHandler> mSigHandler;
     int getPcmIdByDevInfoName(char *mixer_str);
+    int activeStreamPcmId;
+    inline void setActiveStreamPcmId(int pcmId) {
+        activeStreamPcmId = pcmId;
+    }
 public:
     ~ResourceManager();
     static bool mixerClosed;
@@ -948,6 +952,9 @@ public:
                              struct pal_device *streamDevAttr);
     static void sendCrashSignal(int signal, pid_t pid, uid_t uid);
     bool isValidDeviceSwitchForStream(Stream *s, pal_device_id_t newDeviceId);
+    inline int getActiveStreamPcmId() const {
+        return activeStreamPcmId;
+    }
 };
 
 static int getSocId() {

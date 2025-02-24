@@ -6118,6 +6118,7 @@ const std::vector<int> ResourceManager::allocateFrontEndIds(const struct pal_str
                         f.push_back(listAllPcmPlaybackFrontEnds.at(id));
                         listAllPcmPlaybackFrontEnds.erase(it);
                         PAL_INFO(LOG_TAG, "allocateFrontEndIds: front end %d", f[i]);
+                        setActiveStreamPcmId(f[i]);
                         it -= 1;
                         id -= 1;
                     }

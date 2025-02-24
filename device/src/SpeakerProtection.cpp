@@ -2152,6 +2152,10 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
         PAL_ERR(LOG_TAG,"hw mixer error %d", status);
     }
 
+    if (SpeakerTfa98xx::isTfaDevicePresent(hwMixer)) {
+        tfa98xx = std::make_unique<SpeakerTfa98xx>();
+    }
+
     fp = fopen(PAL_SP_TEMP_PATH, "rb");
     if (fp) {
         PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
@@ -3636,8 +3640,12 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
         }
 
         payloadSize = 0;
-        builder->payloadSPConfig(&payload, &payloadSize, miid,
-                PARAM_ID_SP_OP_MODE,(void *)&spModeConfg);
+        if (tfa98xx) {
+            tfa98xx->payloadSPConfig(&payload, &payloadSize, miid);
+        } else {
+            builder->payloadSPConfig(&payload, &payloadSize, miid,
+                    PARAM_ID_SP_OP_MODE, (void *)&spModeConfg);
+        }
         if (payloadSize) {
             if (customPayload) {
                 free (customPayload);
@@ -3657,6 +3665,16 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
         if (ResourceManager::isCpsEnabled) {
             updateCpsCustomPayload(miid);
         }
+            
+        if (tfa98xx) {
+            int pcmId = rm->getActiveStreamPcmId();
+            ret = tfa98xx->sendPcmIdAndMiidToDriver(miid, pcmId); 
+            if (ret) {
+                PAL_ERR(LOG_TAG, "Failed to send PCM ID %d and MIID to driver", pcmId);
+                goto exit;
+            }
+        }
+
         goto exit;
     }
     else {
