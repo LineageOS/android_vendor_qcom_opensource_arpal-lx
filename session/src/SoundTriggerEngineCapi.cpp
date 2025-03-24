@@ -159,7 +159,6 @@ int32_t SoundTriggerEngineCapi::StartKeywordDetection()
     uint32_t ftrt_sz = 0, read_offset = 0;
     uint32_t max_processing_sz = 0, processed_sz = 0;
     vui_intf_param_t param;
-    struct keyword_index kw_index {};
 
     PAL_DBG(LOG_TAG, "Enter");
     if (!reader_) {
@@ -321,18 +320,12 @@ int32_t SoundTriggerEngineCapi::StartKeywordDetection()
         if (result_cfg_ptr->is_detected) {
             exit_buffering_ = true;
             detection_state_ = KEYWORD_DETECTION_SUCCESS;
-            start_idx = result_cfg_ptr->start_position * CNN_FRAME_SIZE + read_offset;
-            end_idx = result_cfg_ptr->end_position * CNN_FRAME_SIZE + read_offset;
+            start_idx = result_cfg_ptr->start_position * CNN_FRAME_SIZE;
+            end_idx = result_cfg_ptr->end_position * CNN_FRAME_SIZE;
             param.stream = (void *)stream_handle_;
             param.data = (void *)&det_conf_score_;
             param.size = sizeof(int32_t);
             vui_intf_->SetParameter(PARAM_SSTAGE_KW_DET_LEVEL, &param);
-
-            kw_index.start_index = start_idx;
-            kw_index.end_index = end_idx;
-            param.data = (void *)&kw_index;
-            param.size = sizeof(struct keyword_index);
-            vui_intf_->SetParameter(PARAM_KEYWORD_INDEX, &param);
             PAL_INFO(LOG_TAG, "KWD Second Stage Detected, start index %u, end index %u",
                 start_idx, end_idx);
         } else if (processed_sz >= max_processing_sz) {
@@ -375,21 +368,6 @@ exit:
         (long long)total_capi_get_param_duration);
     if (vui_ptfm_info_->GetEnableDebugDumps()) {
         ST_DBG_FILE_CLOSE(keyword_detection_fd);
-    }
-
-    if (sm_cfg_->IsDetPropSupported(ST_PARAM_KEY_SSTAGE_KW_ENGINE_INFO)) {
-        struct st_det_engine_stats engine_info;
-        engine_info.version = 0x1;
-        engine_info.detection_state = detection_state_;
-        engine_info.processed_length =
-            BytesToFrames(processed_sz) * MS_PER_SEC / sample_rate_;
-        engine_info.total_process_duration = process_duration;
-        engine_info.total_capi_process_duration = total_capi_process_duration;
-        engine_info.total_capi_get_param_duration = total_capi_get_param_duration;
-        param.stream = (void *)stream_handle_;
-        param.data = (void *)&engine_info;
-        param.size = sizeof(struct st_det_engine_stats);
-        vui_intf_->SetParameter(PARAM_SSTAGE_KW_DET_STATS, &param);
     }
 
     if (reader_)
@@ -663,21 +641,6 @@ exit:
         status = -EINVAL;
         PAL_ERR(LOG_TAG, "set_param STAGE2_UV_WRAPPER_ID_REINIT failed, status = %d",
                 status);
-    }
-
-    if (sm_cfg_->IsDetPropSupported(ST_PARAM_KEY_SSTAGE_UV_ENGINE_INFO)) {
-        struct st_det_engine_stats engine_info;
-        engine_info.version = 1;
-        engine_info.detection_state = detection_state_;
-        engine_info.processed_length =
-            BytesToFrames(processed_sz) * MS_PER_SEC / sample_rate_;
-        engine_info.total_process_duration = process_duration;
-        engine_info.total_capi_process_duration = total_capi_process_duration;
-        engine_info.total_capi_get_param_duration = total_capi_get_param_duration;
-        param.stream = (void *)stream_handle_;
-        param.data = (void *)&engine_info;
-        param.size = sizeof(struct st_det_engine_stats);
-        vui_intf_->SetParameter(PARAM_SSTAGE_UV_DET_STATS, &param);
     }
 
     if (reader_)

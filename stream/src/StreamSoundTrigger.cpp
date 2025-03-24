@@ -1249,7 +1249,6 @@ int32_t StreamSoundTrigger::LoadSoundModel(
     sound_model_data_t *sm_data = nullptr;
     sound_model_list_t model_list;
     sound_model_config_t sound_model_config;
-    detection_prop_list_t det_prop;
 
     PAL_DBG(LOG_TAG, "Enter");
 
@@ -1280,18 +1279,6 @@ int32_t StreamSoundTrigger::LoadSoundModel(
     if (status) {
         PAL_ERR(LOG_TAG, "Failed to get sound model type");
         goto error_exit;
-    }
-
-    det_prop.prop_list.clear();
-    sm_cfg_->GetDetectionPropertyList(det_prop.prop_list);
-    if (det_prop.prop_list.size()) {
-        param_model.data = (void *)&det_prop;
-        param_model.size = sizeof(detection_prop_list_t);
-        status = vui_intf_->SetParameter(PARAM_DETECTION_PROP_LIST, &param_model);
-        if (status) {
-            PAL_ERR(LOG_TAG, "Failed to set detection property");
-            goto error_exit;
-        }
     }
 
     /* Update stream attributes as per sound model config */
@@ -1799,29 +1786,6 @@ int32_t StreamSoundTrigger::notifyClient(uint32_t detection) {
         goto exit;
     } else {
         PostDelayedStop();
-    }
-
-    if (sm_cfg_->IsDetPropSupported(ST_PARAM_KEY_KEYWORD_BUFFER)) {
-        uint8_t *buffer = nullptr;
-        struct keyword_index index {};
-        int32_t ret = 0;
-        param.stream = this;
-        if (rec_config_->capture_requested || engines_.size() > 1) {
-            param.data = &index;
-            vui_intf_->GetParameter(PARAM_KEYWORD_INDEX, &param);
-            if (index.end_index && index.end_index < reader_->getBufferSize()) {
-                buffer = (uint8_t *)calloc(1, index.end_index);
-                if (buffer) {
-                    ret = reader_->getKwData(this, buffer, index.end_index);
-                    if (ret > 0) {
-                        param.data = (void *)buffer;
-                        param.size = ret;
-                        vui_intf_->SetParameter(PARAM_FTRT_DATA, &param);
-                    }
-                    free(buffer);
-                }
-            }
-        }
     }
 
     param.stream = this;
@@ -3467,13 +3431,14 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 st_stream_.second_stage_processing_ = false;
                 st_stream_.detection_state_ = ENGINE_IDLE;
 
+                if (st_stream_.reader_) {
+                    st_stream_.reader_->reset();
+                }
+
                 if (st_stream_.vui_ptfm_info_->GetNotifySecondStageFailure()) {
                     st_stream_.rejection_notified_ = true;
                     st_stream_.notifyClient(PAL_RECOGNITION_STATUS_FAILURE);
                 } else {
-                    if (st_stream_.reader_) {
-                        st_stream_.reader_->reset();
-                    }
                     PAL_DBG(LOG_TAG, "Notification for second stage rejection is disabled");
                     for (auto& eng : st_stream_.engines_) {
                         status = eng->GetEngine()->RestartRecognition(&st_stream_);
@@ -3502,6 +3467,9 @@ int32_t StreamSoundTrigger::StBuffering::ProcessEvent(
                 st_stream_.second_stage_processing_ = false;
                 st_stream_.detection_state_ = ENGINE_IDLE;
                 if (!st_stream_.rec_config_->capture_requested) {
+                    if (st_stream_.reader_) {
+                        st_stream_.reader_->reset();
+                    }
                     TransitTo(ST_STATE_DETECTED);
                 }
                 st_stream_.notifyClient(PAL_RECOGNITION_STATUS_SUCCESS);
