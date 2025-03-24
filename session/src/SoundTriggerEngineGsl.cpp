@@ -340,6 +340,11 @@ int32_t SoundTriggerEngineGsl::StartBuffering(Stream *s) {
         ATRACE_ASYNC_END("stEngine: lab read", (int32_t)module_type_);
         // write data to ring buffer
         if (size) {
+            if (total_read_size < ftrt_size) {
+                param.data = buf.buffer;
+                param.size = size;
+                vui_intf_->SetParameter(PARAM_FTRT_DATA, &param);
+            }
             size_t ret = 0;
             if (bytes_to_drop) {
                 if (size < bytes_to_drop) {
@@ -990,7 +995,6 @@ int32_t SoundTriggerEngineGsl::StartRecognition(Stream *s) {
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
     bool state = true;
     vui_intf_param_t param {};
-    uint32_t perf_mode = 0;
 
     PAL_DBG(LOG_TAG, "Enter");
 
@@ -1007,18 +1011,6 @@ int32_t SoundTriggerEngineGsl::StartRecognition(Stream *s) {
     param.data = (void *)&state;
     param.size = sizeof(bool);
     vui_intf_->SetParameter(PARAM_FSTAGE_SOUND_MODEL_STATE, &param);
-
-    /*
-     * update performance mode for the detection
-     * perf_mode = 0: detection happens in LPI
-     * perf_mode = 1: detection happens in NLPI
-     */
-    if (sm_cfg_->IsDetPropSupported(ST_PARAM_KEY_IS_BARGEIN)) {
-        perf_mode = !use_lpi_;
-        param.data = &perf_mode;
-        param.size = sizeof(bool);
-        vui_intf_->SetParameter(PARAM_DETECTION_PERF_MODE, &param);
-    }
 
     if (IsEngineActive())
         ProcessStopRecognition(eng_streams_[0]);
