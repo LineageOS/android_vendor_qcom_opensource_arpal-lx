@@ -167,7 +167,6 @@ VUIStreamConfig::VUIStreamConfig() :
     curr_child_(nullptr),
     lpi_enable_(true)
 {
-    ext_det_prop_list_.clear();
 }
 
 /*
@@ -233,42 +232,6 @@ std::shared_ptr<VUIFirstStageConfig> VUIStreamConfig::GetVUIFirstStageConfig(con
         return module_config->second;
     else
         return nullptr;
-}
-
-void VUIStreamConfig::GetDetectionPropertyList(
-    std::vector<uint32_t> &list) {
-
-    for (int i = 0; i < ext_det_prop_list_.size(); i++)
-        list.push_back(ext_det_prop_list_[i]);
-}
-
-void VUIStreamConfig::ReadDetectionPropertyList(const char *prop_string)
-{
-    int ret = 0;
-    char *token = nullptr;
-    char *delims = ",";
-    char *save = nullptr;
-
-    PAL_VERBOSE(LOG_TAG, "Detection property list %s", prop_string);
-
-    token = strtok_r(const_cast<char *>(prop_string), delims, &save);
-    while (token) {
-        ext_det_prop_list_.push_back(std::strtoul(token, nullptr, 16));
-        token = strtok_r(NULL, delims, &save);
-    }
-
-    for (int i = 0; i < ext_det_prop_list_.size(); i++) {
-        PAL_INFO(LOG_TAG, "Found extension detection property 0x%x",
-            ext_det_prop_list_[i]);
-    }
-}
-
-bool VUIStreamConfig::IsDetPropSupported(uint32_t prop) const {
-
-    auto iter =
-        std::find(ext_det_prop_list_.begin(), ext_det_prop_list_.end(), prop);
-
-    return iter != ext_det_prop_list_.end();
 }
 
 void VUIStreamConfig::HandleStartTag(const char* tag, const char** attribs)
@@ -345,8 +308,6 @@ void VUIStreamConfig::HandleStartTag(const char* tag, const char** attribs)
             } else if (!strcmp(attribs[i], "out_channels")) {
                 if (std::stoi(attribs[++i]) <= MAX_MODULE_CHANNELS)
                     out_channels_ = std::stoi(attribs[i]);
-            } else if (!strcmp(attribs[i], "detection_property_list")) {
-                ReadDetectionPropertyList(attribs[++i]);
             } else {
                 PAL_ERR(LOG_TAG, "Invalid attribute %s", attribs[i++]);
             }

@@ -83,7 +83,6 @@ class PalRingBufferReader {
     void updateState(pal_ring_buffer_reader_state state);
     void getIndices(Stream *s,
         uint32_t *startIdx, uint32_t *endIdx, uint32_t *ftrtSize);
-    int32_t getKwData(Stream *s, uint8_t *data, uint32_t size);
     size_t getUnreadSize();
     size_t getBufferSize();
     void reset();
