@@ -62,6 +62,7 @@
 #include <agm/agm_api.h>
 #include <cutils/properties.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <dlfcn.h>
 #include <mutex>
 #include "kvh2xml.h"
@@ -9520,7 +9521,7 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     (SoundTriggerOnResourceAvailableCallback)resources_avail->callback;
                 onResourceAvailCookie = resources_avail->cookie;
                 PAL_VERBOSE(LOG_TAG, "setParameter onResourceAvailCb %pk"
-                    " onResourceAvailCookie %pk", onResourceAvailCb, onResourceAvailCookie);
+                    " onResourceAvailCookie %" PRIu64, onResourceAvailCb, onResourceAvailCookie);
             } else {
                 PAL_ERR(LOG_TAG, "Invalid ST resource payload");
                 status = -EINVAL;

@@ -8,6 +8,7 @@
 #include <string>
 #include <log/log.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include "PalDefs.h"
 #include "MetadataParser.h"
 
@@ -17,7 +18,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
 
     if (!metadata || metadataSize < std::min(START_METADATA_SIZE(), END_METADATA_SIZE())) {
         //TODO: may not work for multiple frames/buffer
-        ALOGE("%s: Metadata payload smaller than expected, bytes 0x%x, expected 0x%x",
+        ALOGE("%s: Metadata payload smaller than expected, bytes 0x%zx, expected 0x%zx",
                __func__, mdBytesRead, std::min(START_METADATA_SIZE(), END_METADATA_SIZE()));
         return -EINVAL;
     }
@@ -36,21 +37,21 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
                 size_t startMetadataPayloadSize = metadataItem->payload_size;
                 if (mdBytesRead + startMetadataPayloadSize > metadataSize) {
                     ALOGE("%s: Metadata item payload size larger than advertized metadata size"
-                            " metadata id 0x%x, mdBytesRead = 0x%x, item payload size 0x%x,"
-                            " metadata size = 0x%x ", __func__, metadataItem->metadata_id,
+                            " metadata id 0x%x, mdBytesRead = 0x%zx, item payload size 0x%zx,"
+                            " metadata size = 0x%zx ", __func__, metadataItem->metadata_id,
                             mdBytesRead, startMetadataPayloadSize, metadataSize);
                     return -EINVAL;
                 }
                 module_cmn_md_buffer_start_t* startMetadata =
                     reinterpret_cast<module_cmn_md_buffer_start_t*>(metadata + mdBytesRead);
                 if (!startMetadata) {
-                    ALOGE("%s: Metadata start payload not found at offset 0x%x",
+                    ALOGE("%s: Metadata start payload not found at offset 0x%zx",
                            __func__, mdBytesRead);
                     return -EINVAL;
                 }
                 bufferInfo->frame_index = static_cast<uint64_t>((static_cast<uint64_t>(
                         startMetadata->buffer_index_msw) << 32) | startMetadata->buffer_index_lsw);
-                ALOGV("%s: startMetadata frame_index %llu", __func__, bufferInfo->frame_index);
+                ALOGV("%s: startMetadata frame_index %" PRIu64, __func__, bufferInfo->frame_index);
                 mdBytesRead += sizeof(module_cmn_md_buffer_start_t);
                 break;
             }
@@ -58,7 +59,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
                 size_t endMetadataPayloadSize = metadataItem->payload_size;
                 if (mdBytesRead + endMetadataPayloadSize > metadataSize) {
                     ALOGE("%s: Metadata item payload size larger than advertized metadata size,"
-                          " metadata id 0x%x, mdBytesRead = 0x%x, item payload size 0x%x,"
+                          " metadata id 0x%x, mdBytesRead = 0x%zx, item payload size 0x%zx,"
                           " metadata size = 0x%x ", __func__, metadataItem->metadata_id,
                           mdBytesRead, endMetadataPayloadSize, static_cast<uint32_t>(metadataSize));
                     return -EINVAL;
@@ -66,7 +67,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
                 module_cmn_md_buffer_end_t* endMetadata =
                     reinterpret_cast<module_cmn_md_buffer_end_t*>(metadata + mdBytesRead);
                 if (!endMetadata) {
-                    ALOGE("%s: Metadata end payload not found at offset 0x%x",
+                    ALOGE("%s: Metadata end payload not found at offset 0x%zx",
                           __func__, mdBytesRead);
                     return -EINVAL;
                 }
@@ -93,8 +94,8 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
               size_t mfMetadataPayloadSize = metadataItem->payload_size;
               if (mdBytesRead + mfMetadataPayloadSize > metadataSize){
                   ALOGE("%s: Metadata item payload size larger than advertized metadata size,"
-                        " metadata id 0x%x, mdBytesRead = 0x%x, item payload size 0x%x,"
-                        " metadata size = 0x%x ", __func__, metadataItem->metadata_id,
+                        " metadata id 0x%x, mdBytesRead = 0x%zx, item payload size 0x%zx,"
+                        " metadata size = 0x%zx ", __func__, metadataItem->metadata_id,
                         mdBytesRead, mfMetadataPayloadSize, metadataSize);
                   return -EINVAL;
               }
@@ -103,7 +104,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
               mdBytesRead += sizeof(media_format_t);
 
               if (!mfPayload) {
-                  ALOGE("%s: Media metadata payload not found at offset 0x%x",
+                  ALOGE("%s: Media metadata payload not found at offset 0x%zx",
                         __func__, mdBytesRead);
                   return -EINVAL;
               }
@@ -125,7 +126,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
               break;
             }
             default: {
-                ALOGE("%s: Unknown Metadata marker found at offset 0x%x, Metadata ID=0x%x",
+                ALOGE("%s: Unknown Metadata marker found at offset 0x%zx, Metadata ID=0x%x",
                          __func__, mdBytesRead, metadataItem->metadata_id);
                 // increment bytes read
                 mdBytesRead += metadataItem->payload_size;
