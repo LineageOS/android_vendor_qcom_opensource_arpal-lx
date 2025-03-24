@@ -36,6 +36,7 @@
 #include <agm/agm_api.h>
 #include <cutils/properties.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <dlfcn.h>
 #include <mutex>
 #include <iostream>
@@ -8200,7 +8201,7 @@ int ResourceManager::findActiveStreamsNotInDisconnectList(
 
     rm->getActiveStream_l(activeStreams, devObj);
 
-    PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
+    PAL_DBG(LOG_TAG, "activeStreams size = %zu, device: %s", activeStreams.size(),
             deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
 
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
@@ -12281,7 +12282,7 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     (SoundTriggerOnResourceAvailableCallback)resources_avail->callback;
                 onResourceAvailCookie = resources_avail->cookie;
                 PAL_VERBOSE(LOG_TAG, "setParameter onResourceAvailCb %pk"
-                    " onResourceAvailCookie %pk", onResourceAvailCb, onResourceAvailCookie);
+                    " onResourceAvailCookie %" PRIu64, onResourceAvailCb, onResourceAvailCookie);
             } else {
                 PAL_ERR(LOG_TAG, "Invalid ST resource payload");
                 status = -EINVAL;
@@ -12986,7 +12987,7 @@ int ResourceManager::getStreamInstanceID(Stream *str) {
 done:
                 str->setInstanceId(instanceId);
                 PAL_DBG(LOG_TAG,
-                        "Sensor PCM Data instance id: %d, number of instances: %d",
+                        "Sensor PCM Data instance id: %d, number of instances: %zu",
                         instanceId, PCMDataInstances.size());
             }
             status = instanceId;
