@@ -121,7 +121,6 @@ LOCAL_SRC_FILES := \
     utils/src/SignalHandler.cpp \
     utils/src/AudioHapticsInterface.cpp \
     utils/src/MetadataParser.cpp \
-    utils/src/MemLogBuilder.cpp \
     utils/src/PerfLock.cpp
 
 LOCAL_HEADER_LIBRARIES := \
@@ -147,8 +146,14 @@ LOCAL_SHARED_LIBRARIES := \
     libutilscallstack \
     libagmclient \
     libvui_intf \
-    libarmemlog \
     libhidlbase
+
+ifneq ($(QCPATH),)
+LOCAL_SHARED_LIBRARIES += libarmemlog
+LOCAL_SRC_FILES += utils/src/MemLogBuilder.cpp
+else
+LOCAL_CFLAGS += -DPAL_MEMLOG_UNSUPPORTED
+endif
 
 ifeq ($(call is-board-platform-in-list,kalama pineapple sun), true)
 LOCAL_SHARED_LIBRARIES += libPeripheralStateUtils
