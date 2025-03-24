@@ -206,27 +206,6 @@ exit:
     return unreadSize_ >= buffer_size;
 }
 
-int32_t PalRingBufferReader::getKwData(Stream *s, uint8_t *data, uint32_t size)
-{
-    size_t offset = 0;
-
-    std::lock_guard<std::mutex> lck(ringBuffer_->mutex_);
-
-    // assume that we always have enough data after 2nd stage done
-    if (readOffset_ + size > ringBuffer_->bufferEnd_) {
-        offset = ringBuffer_->bufferEnd_ - readOffset_;
-        ar_mem_cpy(data, offset,
-            ringBuffer_->buffer_ + readOffset_, offset);
-        ar_mem_cpy(data + offset, size - offset,
-            ringBuffer_->buffer_, size - offset);
-    } else {
-        ar_mem_cpy(data, size,
-            ringBuffer_->buffer_ + readOffset_, size);
-    }
-
-    return size;
-}
-
 int32_t PalRingBufferReader::read(void* readBuffer, size_t bufferSize)
 {
     int32_t readSize = 0;
