@@ -1237,6 +1237,8 @@ enum TAGS_DEFINITIONS {
     MODULE_SP2                  = 0xC0000048, /**< @h2xmle_name {"module_sp2"} */
     TAG_MODULE_CPS2             = 0xC0000049, /**< @h2xmle_name {"module_cps2"} */
     TAG_MODULE_TSM              = 0xC000004B, /**< @h2xmle_name {"module_tsm"} */
+    TAG_TONE_RENDERER_MODULE    = 0xC0000051, /**< @h2xmle_name {"tone_renderer_module"} @h2xmle_description {this tag is used to identify the new module - ToneRenderer so miid can be queried from HLOS} */
+    TAG_MODULE_ASR              = 0xC0000057, /**< @h2xmle_name {"module_asr"} @h2xmle_description {Tag to be used to identify the MIID of ASR module} */
 };
 typedef enum TAGS_DEFINITIONS TAGS_DEFINITIONS;
 
