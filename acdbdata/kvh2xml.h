@@ -1237,6 +1237,15 @@ enum TAGS_DEFINITIONS {
     MODULE_SP2                  = 0xC0000048, /**< @h2xmle_name {"module_sp2"} */
     TAG_MODULE_CPS2             = 0xC0000049, /**< @h2xmle_name {"module_cps2"} */
     TAG_MODULE_TSM              = 0xC000004B, /**< @h2xmle_name {"module_tsm"} */
+    TAG_TONE_RENDERER_MODULE    = 0xC0000051, /**< @h2xmle_name {"tone_renderer_module"} @h2xmle_description {this tag is used to identify the new module - ToneRenderer so miid can be queried from HLOS} */
+    TAG_MODULE_ASR              = 0xC0000057, /**< @h2xmle_name {"module_asr"} @h2xmle_description {Tag to be used to identify the MIID of ASR module} */
+    MODULE_SOUND_DOSE           = 0xC000005C, /**< @h2xmle_name {"module_sound_dose"} @h2xmle_description {Module computes momentary exposure values and report for the SoundDose Feature.}  */
+    TRANSLATION_ASR             = 0xC0000060, /**< @h2xmle_name {"translation_asr"} @h2xmle_description {Use this tag for setting config to the ASR module in the Call Translation Graph.}  */
+    TRANSLATION_NMT             = 0xC0000061, /**< @h2xmle_name {"translation_nmt"} @h2xmle_description {Use this tag for setting config to the NMT module in the Call Translation Graph.}  */
+    TRANSLATION_TTS             = 0xC0000062, /**< @h2xmle_name {"translation_tts"} @h2xmle_description {Use this tag for setting config to the TTS module in the Call Translation Graph.}  */
+    TAG_MODULE_WNR              = 0xC0000063, /**< @h2xmle_name {"module_wnr"} @h2xmle_description {Tag to be used to identify the MIID of WNR module} */
+    MODULE_SA_HDT               = 0xC0000066, /**< @h2xmle_name {"module_sa_hdt"} @h2xmle_description {Tag to be used to identify the MIID of spatializer headtracking module} */
+    MODULE_SPATIAL_AUDIO        = 0xC0000067, /**< @h2xmle_name {"module_spatial_audio"} @h2xmle_description {Tag to be used to identify the MIID of spatializer module} */
 };
 typedef enum TAGS_DEFINITIONS TAGS_DEFINITIONS;
 
