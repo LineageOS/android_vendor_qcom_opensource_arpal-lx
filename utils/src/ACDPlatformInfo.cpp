@@ -110,9 +110,9 @@ void ACDSoundModelInfo::HandleEndTag(struct xml_userdata *data, const char* tag_
 }
 
 ACDStreamConfig::ACDStreamConfig() :
+    lpi_enable_(true),
     curr_child_(nullptr),
-    sound_model_cnt(0),
-    lpi_enable_(true)
+    sound_model_cnt(0)
 {
 }
 

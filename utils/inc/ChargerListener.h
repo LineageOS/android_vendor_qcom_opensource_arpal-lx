@@ -31,7 +31,6 @@
 
 #include <sys/epoll.h>
 #ifdef ANDROID
-#include <bits/epoll_event.h>
 #else
 #include <fcntl.h>
 #include <cstring>
