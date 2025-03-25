@@ -114,6 +114,7 @@ typedef enum {
     ST_MODULE_TYPE_HW       = 101, // Internal constant to identify hotword module
     ST_MODULE_TYPE_CUSTOM_1 = 102, // Reserved for Custom Engine 1
     ST_MODULE_TYPE_CUSTOM_2 = 103, // Reserved for Custom Engine 2
+    ST_MODULE_TYPE_MMA      = 104, // FIXME: value is wrong!
 } st_module_type_t;
 
 typedef struct _SML_GlobalHeaderType {
