@@ -322,8 +322,6 @@ typedef enum st_param_id_type {
 
 #define MAX_MODELS_SUPPORTED 8
 #define BITS_PER_BYTE 8
-#define US_PER_SEC 1000000
-#define MS_PER_SEC 1000
 #define MAX_STRING_LEN (100 * 2)
 
 struct model_stats
