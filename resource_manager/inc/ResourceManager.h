@@ -55,8 +55,6 @@
 #include <queue>
 #include <deque>
 #include <unordered_map>
-#include <vui_dmgr_audio_intf.h>
-#include <audio_feature_stats_intf.h>
 #include <amdb_api.h>
 #include "PalCommon.h"
 #include "PalDefs.h"
@@ -66,6 +64,38 @@
 #include "SoundTriggerPlatformInfo.h"
 #include "SignalHandler.h"
 #include "MemLogBuilder.h"
+
+typedef int32_t (*voiceuiDmgrCallback)(int32_t, void *, size_t);
+
+typedef int (*vui_dmgr_init_t)(voiceuiDmgrCallback);
+typedef void (*vui_dmgr_deinit_t)(void);
+
+typedef struct {
+    uint32_t data1;
+    uint16_t data2;
+    uint16_t data3;
+    uint16_t data4;
+    uint8_t data5[6];
+} vui_dmgr_uuid_t;
+
+typedef struct {
+    pal_stream_type_t stream_type;
+    vui_dmgr_uuid_t vendor_uuid;
+} vui_dmgr_usecases_t;
+
+typedef struct {
+    int num_usecases;
+    vui_dmgr_usecases_t usecases[64];
+} vui_dmgr_param_restart_usecases_t;
+
+enum {
+    VUI_DMGR_PARAM_ID_RESTART_USECASES = 0,
+};
+
+typedef int (*afsCallback)(void **, size_t *);
+
+typedef int (*afs_init_t)(afsCallback);
+typedef void (*afs_deinit_t)(void);
 
 typedef enum {
     RX_HOSTLESS = 1,
@@ -133,8 +163,19 @@ using nonTunnelInstMap_t = std::unordered_map<uint32_t, bool>;
 
 #ifdef SOC_PERIPHERAL_PROT
 extern "C" {
-#include "CPeripheralAccessControl.h"
-#include "peripheralStateUtils.h"
+enum {
+    CPeripheralAccessControl_AUDIO_UID = 0x501,
+};
+
+typedef int32_t (*PeripheralStateCB)(const uint32_t, const uint8_t);
+
+enum {
+    STATE_RESET_CONNECTION = -1,
+    STATE_SECURE           =  1,
+    STATE_NONSECURE        =  2,
+    STATE_PRE_CHANGE       =  4,
+    STATE_POST_CHANGE      =  5,
+};
 }
 #endif
 

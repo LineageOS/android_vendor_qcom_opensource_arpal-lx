@@ -76,7 +76,6 @@
 #include "HapticsDev.h"
 #include "HapticsDevProtection.h"
 #include "AudioHapticsInterface.h"
-#include "VUIInterfaceProxy.h"
 #include "kvh2xml.h"
 
 #include "PerfLock.h"
@@ -84,6 +83,11 @@
 #ifndef FEATURE_IPQ_OPENWRT
 #include <cutils/str_parms.h>
 #endif
+
+int VUIGetParameters(uint32_t param_id, void **param_payload,
+                     size_t *payload_size);
+int VUISetParameters(uint32_t param_id, void *param_payload,
+                     size_t payload_size);
 
 #define XML_PATH_EXTN_MAX_SIZE 80
 #define XML_FILE_DELIMITER "_"
@@ -586,6 +590,8 @@ getPeripheralStatusFnPtr ResourceManager::mGetPeripheralState = nullptr;
 registerPeripheralCBFnPtr ResourceManager::mRegisterPeripheralCb = nullptr;
 deregisterPeripheralCBFnPtr ResourceManager::mDeregisterPeripheralCb = nullptr;
 #define PRPHRL_REGSTR_RETRY_COUNT 10
+#define PRPHRL_ERROR -1
+#define PRPHRL_SUCCESS 0
 #endif
 //TODO:Needs to define below APIs so that functionality won't break
 #ifdef FEATURE_IPQ_OPENWRT
