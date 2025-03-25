@@ -46,7 +46,9 @@
 #include "Device.h"
 #include "kvh2xml.h"
 #include "VoiceUIInterface.h"
-#include "VUIInterfaceProxy.h"
+
+int32_t GetVUIInterface(struct vui_intf_t *intf, vui_intf_param_t *model);
+int32_t ReleaseVUIInterface(struct vui_intf_t *intf);
 
 // TODO: find another way to print debug logs by default
 #define ST_DBG_LOGS
