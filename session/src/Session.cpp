@@ -1550,7 +1550,7 @@ close_kmsg_fd:
     return log_out_size;
 }
 
-int dump_registers(char *in_file_path, char *regdump_out_file)
+int dump_registers(const char *in_file_path, char *regdump_out_file)
 {
     char *reg_dump = NULL;
     int infile_fd = 0,  regdump_wr_fd = 0;
