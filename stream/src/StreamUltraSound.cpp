@@ -160,10 +160,31 @@ int32_t  StreamUltraSound::setParameters(uint32_t param_id, void *payload)
     switch (param_id) {
         case PAL_PARAM_ID_UPD_REGISTER_FOR_EVENTS:
         {
+            PAL_INFO(LOG_TAG,
+                     "MIUS: enter PAL_PARAM_ID_UPD_REGISTER_FOR_EVENTS case, payload(int): %d, "
+                     "(uint): %d",
+                     *(int*)payload, *(uint*)payload);
             status = session->setParameters(NULL, 0, param_id, payload);
             if (status)
                 PAL_ERR(LOG_TAG, "Error:%d, Failed to setParam for registering an event",
                 status);
+            break;
+        }
+        case PAL_PARAM_ID_UPD_NOTIFY_MSG: {
+            pal_param_payload* param_payload = (pal_param_payload*)payload;
+            struct pal_ultrasound_rampdown_param* rampdown_payload =
+                    (struct pal_ultrasound_rampdown_param*)param_payload->payload;
+
+            PAL_INFO(LOG_TAG, "MIUS: enter PAL_PARAM_ID_UPD_NOTIFY_MSG case rampdown:",
+                     rampdown_payload->rampdown_param);
+            if (rampdown_payload->rampdown_param < 0xa1000002) {
+                rampdown_payload->rampdown_param = 0xa1000001;
+            }
+            PAL_INFO(LOG_TAG, "MIUS: notify msg_ id is 0x%x", rampdown_payload->rampdown_param);
+            status = session->setParameters(NULL, ULTRASOUND_DETECTION_MODULE, param_id,
+                                            param_payload);
+            if (status)
+                PAL_ERR(LOG_TAG, "Error:%d, Failed to setParam for upd notify message", status);
             break;
         }
         default:

@@ -2383,7 +2383,39 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             pal_param_payload *param_payload = (pal_param_payload *)payload;
             pal_param_upd_event_detection_t *detection_payload =
                                    (pal_param_upd_event_detection_t *)param_payload->payload;
+            PAL_INFO(LOG_TAG, "MIUS_CB: setParam() set RegisterForEvents flag to %d",
+                     detection_payload->register_status);
             RegisterForEvents = detection_payload->register_status;
+            return 0;
+        }
+        case PAL_PARAM_ID_UPD_NOTIFY_MSG: {
+            pal_param_payload* param_payload = (pal_param_payload*)payload;
+            struct pal_ultrasound_rampdown_param* rampdown_payload =
+                    (struct pal_ultrasound_rampdown_param*)param_payload->payload;
+
+            PAL_INFO(LOG_TAG, "MIUS: upd notify msg id [0x%X]", rampdown_payload->rampdown_param);
+
+            if (PAL_AUDIO_INPUT == sAttr.direction)
+                status = SessionAlsaUtils::getModuleInstanceId(
+                        mixer, device, txAifBackEnds[0].second.data(), tagId, &miid);
+            else if (PAL_AUDIO_OUTPUT == sAttr.direction)
+                status = SessionAlsaUtils::getModuleInstanceId(
+                        mixer, device, rxAifBackEnds[0].second.data(), tagId, &miid);
+
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", tagId, status);
+                break;
+            }
+            PAL_INFO(LOG_TAG, "MIUS: got Ultrasound Detector miid = 0x%08x", miid);
+            status = builder->payloadCustomParam(&paramData, &paramSize,
+                                                 &rampdown_payload->rampdown_param,
+                                                 sizeof(rampdown_payload), miid, 0x8001356);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "payloadCustomParam failed. status = %d", status);
+                break;
+            }
+            status = SessionAlsaUtils::setMixerParameter(mixer, device, paramData, paramSize);
+            PAL_INFO(LOG_TAG, "mixer set param status=%d\n", status);
             return 0;
         }
         case PAL_PARAM_ID_VOLUME_USING_SET_PARAM:
