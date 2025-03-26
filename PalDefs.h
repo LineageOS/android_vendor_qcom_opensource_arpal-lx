@@ -935,6 +935,7 @@ typedef enum {
     PAL_PARAM_ID_PROXY_RECORD_SESSION = 74,
     PAL_PARAM_ID_MIC_OCCLUSION_INFO = 75,
     PAL_PARAM_ID_ULTRASOUND_SET_GAIN = 76,
+    PAL_PARAM_ID_UPD_NOTIFY_MSG = 0xF0000001,
 } pal_param_id_type_t;
 
 /** HDMI/DP */
@@ -1170,6 +1171,11 @@ typedef struct pal_bt_lc3_payload_s {
 typedef struct pal_param_haptics_intensity {
     int intensity;
 } pal_param_haptics_intensity_t;
+
+#define PARAM_ID_UPD_NOTIFY_MSG 0x1000A220
+struct pal_param_upd_notify {
+    uint32_t msg;
+};
 
 /* Type of Ultrasound Gain */
 typedef enum {

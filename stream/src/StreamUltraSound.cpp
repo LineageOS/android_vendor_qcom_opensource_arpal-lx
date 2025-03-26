@@ -166,6 +166,13 @@ int32_t  StreamUltraSound::setParameters(uint32_t param_id, void *payload)
                 status);
             break;
         }
+        case PAL_PARAM_ID_UPD_NOTIFY_MSG: {
+            status = session->setParameters(NULL, ULTRASOUND_DETECTION_MODULE, param_id, payload);
+            if (status)
+                PAL_ERR(LOG_TAG, "MIUS: Failed to setParam for upd notify message, error: %d",
+                        status);
+            break;
+        }
         default:
             PAL_ERR(LOG_TAG, "Error:Unsupported param id %u", param_id);
             status = -EINVAL;
