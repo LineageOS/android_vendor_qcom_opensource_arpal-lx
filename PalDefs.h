@@ -935,6 +935,7 @@ typedef enum {
     PAL_PARAM_ID_PROXY_RECORD_SESSION = 74,
     PAL_PARAM_ID_MIC_OCCLUSION_INFO = 75,
     PAL_PARAM_ID_ULTRASOUND_SET_GAIN = 76,
+    PAL_PARAM_ID_UPD_NOTIFY_MSG = 0xf0000001,
 } pal_param_id_type_t;
 
 /** HDMI/DP */
@@ -973,6 +974,10 @@ struct pal_amp_db_and_gain_table {
     float    amp;
     float    db;
     uint32_t level;
+};
+
+struct pal_ultrasound_notify_param {
+    uint32_t msg;
 };
 
 struct pal_vol_ctrl_ramp_param {

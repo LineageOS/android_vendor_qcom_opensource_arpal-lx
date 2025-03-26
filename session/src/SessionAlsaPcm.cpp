@@ -2387,6 +2387,45 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             RegisterForEvents = detection_payload->register_status;
             return 0;
         }
+        case PAL_PARAM_ID_UPD_NOTIFY_MSG: {
+            pal_param_payload* param_payload = (pal_param_payload*)payload;
+            struct pal_ultrasound_notify_param* upd_notify_payload =
+                    (struct pal_ultrasound_notify_param*)param_payload->payload;
+
+            if (pcmDevTxIds.size() > 0) {
+                device = pcmDevTxIds.at(0);
+            } else {
+                PAL_ERR(LOG_TAG, "MIUS: No tx pcm devices available");
+                break;
+            }
+
+            PAL_INFO(LOG_TAG, "MIUS: upd notify msg id [0x%X], device=%d", upd_notify_payload->msg,
+                     device);
+
+            status = SessionAlsaUtils::getModuleInstanceId(
+                    mixer, device, txAifBackEnds[0].second.data(), tagId, &miid);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", tagId, status);
+                break;
+            }
+
+            PAL_INFO(LOG_TAG,
+                     "MIUS: get upd module iid: deviceId=%d miid = 0x%x txAifBackends=%s tagid=%x, "
+                     "status=%d",
+                     device, miid, txAifBackEnds[0].second.data(), tagId, status);
+
+            status = builder->payloadCustomParam(&paramData, &paramSize, &upd_notify_payload->msg,
+                                                 sizeof(upd_notify_payload), miid,
+                                                 PARAM_ID_ULTRASOUND_NOTIFY);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "MIUS: payloadCustomParam failed. status = %d", status);
+                break;
+            }
+            status = SessionAlsaUtils::setMixerParameter(mixer, device, paramData, paramSize);
+            freeCustomPayload(&paramData, &paramSize);
+            PAL_INFO(LOG_TAG, "MIUS: mixer set param status=%d\n", status);
+            return 0;
+        }
         case PAL_PARAM_ID_VOLUME_USING_SET_PARAM:
         {
             pal_param_payload *param_payload = (pal_param_payload *)payload;
