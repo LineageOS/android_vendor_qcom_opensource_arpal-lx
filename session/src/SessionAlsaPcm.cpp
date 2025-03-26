@@ -2211,7 +2211,7 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
     effect_pal_payload_t *effectPalPayload = nullptr;
     struct pal_stream_attributes sAttr;
 
-    PAL_DBG(LOG_TAG, "Enter. param id: %d", param_id);
+    PAL_DBG(LOG_TAG, "Enter. param id: %d, device size: %d", param_id, pcmDevIds.size());
     if (pcmDevIds.size() > 0)
         device = pcmDevIds.at(0);
     switch (param_id) {
@@ -2383,7 +2383,41 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
             pal_param_payload *param_payload = (pal_param_payload *)payload;
             pal_param_upd_event_detection_t *detection_payload =
                                    (pal_param_upd_event_detection_t *)param_payload->payload;
+            PAL_INFO(LOG_TAG, "MIUS_CB: setParam() set RegisterForEvents flag to %d",
+                     detection_payload->register_status);
             RegisterForEvents = detection_payload->register_status;
+            return 0;
+        }
+        case PAL_PARAM_ID_UPD_NOTIFY_MSG: {
+            pal_param_payload* param_payload = (pal_param_payload*)payload;
+            struct pal_ultrasound_rampdown_param* rampdown_payload =
+                    (struct pal_ultrasound_rampdown_param*)param_payload->payload;
+
+            if (pcmDevTxIds.size() > 0) device = pcmDevTxIds.at(0);
+            PAL_INFO(LOG_TAG, "MIUS: upd notify msg id [0x%X], device=%d",
+                     rampdown_payload->rampdown_param, device);
+
+            status = SessionAlsaUtils::getModuleInstanceId(
+                    mixer, device, txAifBackEnds[0].second.data(), tagId, &miid);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", tagId, status);
+                break;
+            }
+
+            PAL_INFO(LOG_TAG,
+                     "MIUS: get upd module iid: deviceId=%d miid = 0x%x txAifBackends=%s tagid=%x, "
+                     "status=%d",
+                     device, miid, txAifBackEnds[0].second.data(), tagId, status);
+
+            status = builder->payloadCustomParam(&paramData, &paramSize,
+                                                 &rampdown_payload->rampdown_param,
+                                                 sizeof(rampdown_payload), miid, 0x1000a220);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG, "payloadCustomParam failed. status = %d", status);
+                break;
+            }
+            status = SessionAlsaUtils::setMixerParameter(mixer, device, paramData, paramSize);
+            PAL_INFO(LOG_TAG, "mixer set param status=%d\n", status);
             return 0;
         }
         case PAL_PARAM_ID_VOLUME_USING_SET_PARAM:
