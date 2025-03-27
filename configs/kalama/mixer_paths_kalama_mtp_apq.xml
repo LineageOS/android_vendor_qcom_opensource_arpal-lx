@@ -222,7 +222,7 @@
     <ctl name="TX_DEC7 Volume" value="84" />
 
     <ctl name="ADC1 Volume" value="12" />
-    <ctl name="ADC2 Volume" value="12" />
+    <ctl name="ADC2 Volume" value="18" />
     <ctl name="ADC3 Volume" value="12" />
     <ctl name="ADC4 Volume" value="12" />
 

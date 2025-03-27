@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -2028,7 +2028,20 @@ std::shared_ptr<Device> Stream::GetPalDevice(Stream *streamHandle, pal_device_id
     dev.config.bit_width = cap_prof->GetBitWidth();
     dev.config.ch_info.channels = cap_prof->GetChannels();
     dev.config.sample_rate = cap_prof->GetSampleRate();
-    dev.config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+
+    switch(dev.config.bit_width) {
+        case 24:
+            dev.config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S24_3LE;
+            break;
+        /* Fixme: Considering only S32_LE, need handling for S24_LE in 32bit */
+        case 32:
+            dev.config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S32_LE;
+            break;
+        case 16:
+        default:
+            dev.config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+            break;
+    }
 
     device = Device::getInstance(&dev, rm);
     if (!device) {
