@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "SoundTriggerUtils.h"
+#include "VoiceUIInterfaceUtils.h"
 
 // common defs
 typedef std::map<void *, struct sound_model_info *> sound_model_info_map_t;
@@ -76,7 +77,7 @@ struct sound_model_info {
     sec_stage_level_t sec_threshold;
     sec_stage_level_t sec_det_level;
     uint32_t det_result;
-    void *info;
+    SoundModelInfo *info;
     bool state;
 };
 
