@@ -3,6 +3,7 @@ ifneq ($(AUDIO_USE_STUB_HAL), true)
 LOCAL_PATH := $(call my-dir)
 PAL_BASE_PATH := $(call my-dir)
 
+ifneq ($(TARGET_PROVIDES_LIBAR_PAL), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE        := libar-pal
@@ -165,6 +166,7 @@ LOCAL_SHARED_LIBRARIES += libtinyalsa libtinycompress
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+endif
 
 #-------------------------------------------
 #            Build CHARGER_LISTENER LIB
