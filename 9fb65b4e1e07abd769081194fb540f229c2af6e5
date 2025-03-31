@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d405249_9625c9ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10258
+      },
+      "writtenOn": "2025-03-31T02:29:12Z",
+      "side": 1,
+      "message": "the header is available from Audioreach: https://github.com/Audioreach/audioreach-graphservices/blob/master/ar_osal/api/ar_osal_mem_op.h\n\nmoreover, all modules from this repo should be buildable with headers there",
+      "revId": "9fb65b4e1e07abd769081194fb540f229c2af6e5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
