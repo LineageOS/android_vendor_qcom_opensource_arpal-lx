@@ -856,6 +856,7 @@ int SessionAlsaPcm::start(Stream * s)
     uint8_t *volPayload = nullptr;
 
     PAL_DBG(LOG_TAG, "Enter");
+    PAL_INFO(LOG_TAG, "awinic Enter mState=%d", mState);
 
     rm->voteSleepMonitor(s, true);
     status = s->getStreamAttributes(&sAttr);
@@ -864,6 +865,7 @@ int SessionAlsaPcm::start(Stream * s)
         goto exit;
     }
 
+    PAL_INFO(LOG_TAG, "awinic before idle stuff");
     if (mState == SESSION_IDLE) {
         s->getBufInfo(&in_buf_size,&in_buf_count,&out_buf_size,&out_buf_count);
         memset(&config, 0, sizeof(config));
@@ -891,6 +893,8 @@ int SessionAlsaPcm::start(Stream * s)
 
         switch(sAttr.direction) {
             case PAL_AUDIO_INPUT:
+                PAL_INFO(LOG_TAG, "awinic input case");
+
                 if (pcmDevIds.size() == 0) {
                     PAL_ERR(LOG_TAG, "frontendIDs is not available.");
                     status = -EINVAL;
@@ -921,6 +925,7 @@ int SessionAlsaPcm::start(Stream * s)
                 }
                 break;
             case PAL_AUDIO_OUTPUT:
+                PAL_INFO(LOG_TAG, "awinic output case");
                 if (pcmDevIds.size() == 0) {
                     PAL_ERR(LOG_TAG, "frontendIDs is not available.");
                     status = -EINVAL;
@@ -951,6 +956,7 @@ int SessionAlsaPcm::start(Stream * s)
                 }
                 break;
             case PAL_AUDIO_INPUT | PAL_AUDIO_OUTPUT:
+                PAL_INFO(LOG_TAG, "awinic in and output case");
                 if (!pcmDevRxIds.size() || !pcmDevTxIds.size()) {
                     PAL_ERR(LOG_TAG, "pcmDevRxIds or pcmDevTxIds not found.");
                     status = -EINVAL;
@@ -988,6 +994,7 @@ int SessionAlsaPcm::start(Stream * s)
                 !(sAttr.flags & PAL_STREAM_FLAG_MMAP_NO_IRQ_MASK))
             registerAdmStream(s, sAttr.direction, sAttr.flags, pcm, &config);
     }
+    PAL_INFO(LOG_TAG, "awinic after idle stuff, type=%d", sAttr.type);
     if (sAttr.type == PAL_STREAM_VOICE_UI) {
         payload_size = sizeof(struct agm_event_reg_cfg);
         memset(&event_cfg, 0, sizeof(event_cfg));
@@ -1043,6 +1050,7 @@ int SessionAlsaPcm::start(Stream * s)
         status = register_asps_event(1);
     }
 
+    PAL_INFO(LOG_TAG, "awinic stream direction: %d", sAttr.direction);
     switch (sAttr.direction) {
         case PAL_AUDIO_INPUT:
             if (pcmDevIds.size() == 0) {
@@ -1262,6 +1270,7 @@ set_mixer:
 #endif
             break;
         case PAL_AUDIO_OUTPUT:
+            PAL_INFO(LOG_TAG, "awinic output case");
             if (sAttr.type == PAL_STREAM_VOICE_CALL_MUSIC) {
                 goto pcm_start;
             }
@@ -1270,6 +1279,7 @@ set_mixer:
                 PAL_ERR(LOG_TAG, "getAssociatedDevices Failed\n");
                 goto exit;
             }
+            PAL_INFO(LOG_TAG, "awinic %d associated devices\n", associatedDevices.size());
             for (int i = 0; i < associatedDevices.size();i++) {
                 status = associatedDevices[i]->getDeviceAttributes(&dAttr);
                 if (0 != status) {
@@ -1298,6 +1308,8 @@ set_mixer:
                     }
                 }
                 // HERE AWINIC CALIB
+                PAL_INFO(LOG_TAG, "awinic calib");
+
                 {
                     struct pal_device dattr;
                     dattr.id = PAL_DEVICE_OUT_SPEAKER;
