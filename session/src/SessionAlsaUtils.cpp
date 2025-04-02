@@ -492,6 +492,15 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
             }
          }
       }
+
+        if (be->first == PAL_DEVICE_OUT_SPEAKER || be->first == PAL_DEVICE_OUT_HANDSET) {
+            status = builder->populateCalKeyVector(streamHandle, deviceCKV, SPKR_PROT_PROFILE);
+            if (status != 0) {
+                PAL_VERBOSE(LOG_TAG, "Unable to populate SP profile cal");
+                status = 0; /**< ignore device SP CKV failures */
+            }
+        }
+
         if (deviceKV.size() > 0) {
             getAgmMetaData(deviceKV, deviceCKV, (struct prop_data *)devicePropId,
                     deviceMetaData);
@@ -1547,6 +1556,15 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
       }
     }
 
+    if (rxBackEnds[0].first == PAL_DEVICE_OUT_SPEAKER ||
+        rxBackEnds[0].first == PAL_DEVICE_OUT_HANDSET) {
+        status = builder->populateCalKeyVector(streamHandle, deviceCKV, SPKR_PROT_PROFILE);
+        if (status != 0) {
+            PAL_VERBOSE(LOG_TAG, "Unable to populate SP profile cal");
+            status = 0; /**< ignore device SP CKV failures */
+        }
+    }
+
     if (deviceRxKV.size() > 0) {
         SessionAlsaUtils::getAgmMetaData(deviceRxKV, deviceCKV,
                 (struct prop_data *)devicePropId, deviceRxMetaData);
@@ -2480,6 +2498,14 @@ int SessionAlsaUtils::setupSessionDevice(Stream* streamHandle, pal_stream_type_t
        }
    }
 
+   if (aifBackEndsToConnect[0].first == PAL_DEVICE_OUT_SPEAKER ||
+       aifBackEndsToConnect[0].first == PAL_DEVICE_OUT_HANDSET) {
+       status = builder->populateCalKeyVector(streamHandle, deviceCKV, SPKR_PROT_PROFILE);
+       if (status != 0) {
+           PAL_VERBOSE(LOG_TAG, "Unable to populate SP profile cal");
+           status = 0; /**< ignore device SP CKV failures */
+       }
+   }
 
     if (deviceKV.size() > 0) {
         SessionAlsaUtils::getAgmMetaData(deviceKV, deviceCKV, (struct prop_data *)devicePropId,
