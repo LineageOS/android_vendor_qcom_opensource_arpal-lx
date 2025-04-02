@@ -939,7 +939,7 @@ int SessionAlsaPcm::start(Stream * s)
                 }
 
                 if (!pcm) {
-                    PAL_ERR(LOG_TAG, "pcm open failed");
+                    PAL_ERR(LOG_TAG, "attention!pcm open failed");
                     status = errno;
                     goto exit;
                 }
