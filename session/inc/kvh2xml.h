@@ -87,6 +87,7 @@ enum AllKeyIds{
     USB_VENDOR_ID         = 0xE6000000,    /**< @h2xmle_name{USB_Vendor_Id} */
     TAG_KEY_ULTRASOUND_GAIN = 0xE7000000,   /**< @h2xmle_name{UltrasoundGain} */
     PROXY_RX_TYPE         = 0xE7010000,   /**< @h2xmle_name{ProxyRxType} */
+    SPK_PRO_PROFILE           = 0xFA000007,    /**< @h2xmle_name{SP_Profile} */
 };
 
 /**
@@ -830,6 +831,16 @@ enum Key_Values_ProxyRxType {
 };
 
 /**
+    @h2xmlk_key {SPK_PRO_PROFILE}
+    @h2xmlk_description {SpkrProtProfile}
+*/
+enum Key_SpkrProtProfile {
+    NORMAL   = 0, /**< @h2xmle_name {Normal}*/
+    VOICE    = 1, /**< @h2xmle_name {Voice}*/
+    BYPASS   = 2, /**< @h2xmle_name {Bypass}*/
+};
+
+/**
     @h2xmlk_gkeys
     @h2xmlk_description {Graph Keys}
 */
@@ -869,6 +880,7 @@ enum Cal_Keys {
     ck_hapticsdev = HAPTICS_PRO_DEV_MAP,
     ck_hapticsvi = HAPTICS_PRO_VI_MAP,
     ck_usb_vendor_id = USB_VENDOR_ID,
+    ck_spkrprotprofile = SPK_PRO_PROFILE,
 };
 
 

@@ -3136,6 +3136,7 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
     int level = -1;
     std::vector<std::shared_ptr<Device>> associatedDevices;
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+    pal_stream_type_t sType;
 
     memset(&sAttr, 0, sizeof(struct pal_stream_attributes));
     status = s->getStreamAttributes(&sAttr);
@@ -3308,7 +3309,41 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
                 break;
             }
         }
-    break;
+        break;
+    case SPKR_PROT_PROFILE:
+        status = s->getStreamType(&sType);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "getStreamType Failed \n");
+            return status;
+        }
+
+        status = s->getAssociatedDevices(associatedDevices);
+        if (0 != status) {
+            PAL_ERR(LOG_TAG, "getAssociatedDevices Failed \n");
+            return status;
+        }
+
+        for (int i = 0; i < associatedDevices.size(); i++) {
+            status = associatedDevices[i]->getDeviceAttributes(&dAttr);
+            if (0 != status) {
+                PAL_ERR(LOG_TAG, "getAssociatedDevices Failed \n");
+                return status;
+            }
+            if (dAttr.id == PAL_DEVICE_OUT_HANDSET) {
+                PAL_DBG(LOG_TAG, "handset ckv: SP_Profile Bypass");
+                ckv.push_back(std::make_pair(SPK_PRO_PROFILE, BYPASS));
+            } else if (dAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+                if (sType == PAL_STREAM_VOIP_RX || sType == PAL_STREAM_VOICE_CALL) {
+                    PAL_DBG(LOG_TAG, "speaker ckv: SP_Profile Voice");
+                    ckv.push_back(std::make_pair(SPK_PRO_PROFILE, VOICE));
+                } else {
+                    PAL_DBG(LOG_TAG, "speaker ckv: SP_Profile Normal");
+                    ckv.push_back(std::make_pair(SPK_PRO_PROFILE, NORMAL));
+                }
+                break;
+            }
+        }
+        break;
     default:
         break;
     }
