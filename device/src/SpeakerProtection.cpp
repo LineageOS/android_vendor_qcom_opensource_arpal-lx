@@ -3614,9 +3614,9 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
         stream = static_cast<Stream *>(activeStreams[0]);
         stream->getAssociatedSession(&session);
 
-        ret = session->getMIID(backEndNameRx.c_str(), MODULE_SP, &miid);
+        ret = session->getMIID(backEndNameRx.c_str(), MODULE_VI, &miid);
         if (ret) {
-            PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", MODULE_SP, ret);
+            PAL_ERR(LOG_TAG, "Failed to get tag info %x, status = %d", MODULE_VI, ret);
             goto exit;
         }
 
