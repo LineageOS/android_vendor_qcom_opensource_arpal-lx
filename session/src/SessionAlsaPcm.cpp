@@ -425,6 +425,25 @@ exit:
     return status;
 }
 
+int SessionAlsaPcm::getFrontendPcmId(pal_stream_direction_t dir)
+{
+    if (dir == PAL_AUDIO_INPUT) {
+        if (!pcmDevTxIds.empty()) {
+            return pcmDevTxIds.at(0);
+        } else if (!pcmDevIds.empty()) {
+             return pcmDevIds.at(0);
+        }
+    } else { // PAL_AUDIO_OUTPUT or PAL_AUDIO_INPUT_OUTPUT (defaulting to RX for bidirectional)
+        if (!pcmDevRxIds.empty()) {
+            return pcmDevRxIds.at(0);
+        } else if (!pcmDevIds.empty()) {
+            return pcmDevIds.at(0);
+        }
+    }
+    PAL_ERR(LOG_TAG, "No valid frontend PCM ID found for direction %d", dir);
+    return -EINVAL;
+}
+
 int SessionAlsaPcm::setConfig(Stream * s, configType type, int tag)
 {
     int status = 0;
