@@ -125,6 +125,7 @@ public:
     int getTagsWithModuleInfo(Stream *s, size_t *size __unused, uint8_t *payload);
     void retryOpenWithoutEC(Stream *s, unsigned int pcm_flags, struct pcm_config *config);
     int populateECMFCPayload(Stream *s, size_t *payloadSize, uint8_t **payload);
+    int getFrontendPcmId(pal_stream_direction_t dir) override;
 };
 
 #endif //SESSION_ALSAPCM_H

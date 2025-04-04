@@ -170,6 +170,7 @@ public:
     virtual int checkAndSetExtEC(const std::shared_ptr<ResourceManager>& rm,
                                  Stream *s, bool is_enable);
     virtual void AdmRoutingChange(Stream *s __unused) {  };
+    virtual int getFrontendPcmId(pal_stream_direction_t dir) { return -EINVAL; };
 };
 
 #endif //SESSION_H
