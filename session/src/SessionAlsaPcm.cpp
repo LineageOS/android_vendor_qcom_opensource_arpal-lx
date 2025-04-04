@@ -425,6 +425,15 @@ exit:
     return status;
 }
 
+int SessionAlsaPcm::getFrontendPcmId(pal_stream_direction_t dir) {
+    const auto &devs = (dir == PAL_AUDIO_INPUT)
+            ? (!pcmDevTxIds.empty() ? pcmDevTxIds : pcmDevIds)
+            : (!pcmDevRxIds.empty() ? pcmDevRxIds : pcmDevIds);
+    return devs.at(0);
+    PAL_ERR(LOG_TAG, "No valid frontend PCM ID found for direction %d", dir);
+    return -EINVAL;
+}
+
 int SessionAlsaPcm::setConfig(Stream * s, configType type, int tag)
 {
     int status = 0;
