@@ -2152,6 +2152,10 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
         PAL_ERR(LOG_TAG,"hw mixer error %d", status);
     }
 
+    if (SpeakerProtectionTfa98xx::isTfaDevicePresent(hwMixer)) {
+        tfa98xx = std::make_unique<SpeakerProtectionTfa98xx>();
+    }
+
     fp = fopen(PAL_SP_TEMP_PATH, "rb");
     if (fp) {
         PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
@@ -3243,6 +3247,10 @@ int SpeakerProtection::viTxSetupThreadLoop()
 
         flags = PCM_IN;
 
+        if (tfa98xx) {
+            goto pcm_open;
+        }
+
         //Setting the mode of VI module
         modeConfg.num_speakers = numberOfChannels;
         switch (rm->mSpkrProtModeValue.operationMode) {
@@ -3422,6 +3430,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
             }
         }
 
+pcm_open:
         txPcm = pcm_open(rm->getVirtualSndCard(), pcmDevIdTx.at(0), flags, &config);
         if (!txPcm) {
             PAL_ERR(LOG_TAG, "txPcm open failed");
@@ -3498,6 +3507,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
     uint8_t* payload = NULL;
     uint32_t devicePropId[] = {0x08000010, 1, 0x2};
     uint32_t miid = 0;
+    uint32_t pcmId = 0;
     bool isTxFeandBeConnected = true;
     size_t payloadSize = 0;
     struct pal_device device;
@@ -3620,24 +3630,37 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
             goto exit;
         }
 
-        // Set the operation mode for SP module
-        PAL_DBG(LOG_TAG, "Operation mode for SP %d",
-                        rm->mSpkrProtModeValue.operationMode);
-        switch (rm->mSpkrProtModeValue.operationMode) {
-            case PAL_SP_MODE_FACTORY_TEST:
-                spModeConfg.operation_mode = FACTORY_TEST_MODE;
-            break;
-            case PAL_SP_MODE_V_VALIDATION:
-                spModeConfg.operation_mode = V_VALIDATION_MODE;
-            break;
-            default:
-                PAL_INFO(LOG_TAG, "Normal mode being used");
-                spModeConfg.operation_mode = NORMAL_MODE;
-        }
+        if (tfa98xx) {
+            pcmId = session->getFrontendPcmId(sAttr.direction);
 
-        payloadSize = 0;
-        builder->payloadSPConfig(&payload, &payloadSize, miid,
-                PARAM_ID_SP_OP_MODE,(void *)&spModeConfg);
+            ret = tfa98xx->sendPcmIdAndMiidToDriver(miid, pcmId);
+          if (ret) {
+            PAL_ERR(LOG_TAG, "Failed to send PCM ID %d and MIID to driver",
+                    pcmId);
+            goto exit;
+          }
+          payloadSize = 0;
+          tfa98xx->payloadSPConfig(&payload, &payloadSize, miid);
+        } else {
+            // Set the operation mode for SP module
+            PAL_DBG(LOG_TAG, "Operation mode for SP %d",
+                            rm->mSpkrProtModeValue.operationMode);
+            switch (rm->mSpkrProtModeValue.operationMode) {
+                case PAL_SP_MODE_FACTORY_TEST:
+                    spModeConfg.operation_mode = FACTORY_TEST_MODE;
+                break;
+                case PAL_SP_MODE_V_VALIDATION:
+                    spModeConfg.operation_mode = V_VALIDATION_MODE;
+                break;
+                default:
+                    PAL_INFO(LOG_TAG, "Normal mode being used");
+                    spModeConfg.operation_mode = NORMAL_MODE;
+            }
+
+            payloadSize = 0;
+            builder->payloadSPConfig(&payload, &payloadSize, miid,
+                     PARAM_ID_SP_OP_MODE,(void *)&spModeConfg);
+        }
         if (payloadSize) {
             if (customPayload) {
                 free (customPayload);
