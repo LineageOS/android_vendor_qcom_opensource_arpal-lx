@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f47b321d_ea09d8d5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 24438
+      },
+      "writtenOn": "2025-04-08T04:45:28Z",
+      "side": 1,
+      "message": "Simplified and reformatted with clang-format",
+      "revId": "e8e0fd77a8b367cdbaf7707a96febde8abd170ab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
