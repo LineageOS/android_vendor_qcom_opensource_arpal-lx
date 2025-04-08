@@ -39,6 +39,30 @@
       },
       "revId": "e8e0fd77a8b367cdbaf7707a96febde8abd170ab",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2847f55e_789c66a0",
+        "filename": "device/src/SpeakerProtection.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3662,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-04-08T08:11:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa4e7ed1_e614d759",
+      "range": {
+        "startLine": 3645,
+        "startChar": 0,
+        "endLine": 3662,
+        "endChar": 78
+      },
+      "revId": "e8e0fd77a8b367cdbaf7707a96febde8abd170ab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
