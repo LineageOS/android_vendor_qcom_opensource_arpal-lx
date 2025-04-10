@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28a459f7_07349209",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-04-10T21:06:33Z",
+      "side": 1,
+      "message": "We can patch the configs instead to activate the UPD_GENERATOR stream at the ultrasound out device instead: https://github.com/cupid-development/android_device_xiaomi_zeus/commit/48a79e11e94c806e620bde07b787a9b66046e8ba",
+      "revId": "f7356dfbfe7d683a236ad9542a6f3bb1d8c06d77",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
