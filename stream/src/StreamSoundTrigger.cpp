@@ -1805,26 +1805,21 @@ int32_t StreamSoundTrigger::notifyClient(uint32_t detection) {
         uint8_t *buffer = nullptr;
         struct keyword_index index {};
         int32_t ret = 0;
-        uint32_t ftrt_size = 0;
         param.stream = this;
         if (rec_config_->capture_requested || engines_.size() > 1) {
             param.data = &index;
             vui_intf_->GetParameter(PARAM_KEYWORD_INDEX, &param);
             if (index.end_index && index.end_index < reader_->getBufferSize()) {
-                ftrt_size = index.end_index;
-            } else {
-                ftrt_size = reader_->getUnreadSize() % reader_->getBufferSize();
-            }
-            PAL_DBG(LOG_TAG, "Allocate %d bytes for FTRT data transition", ftrt_size);
-            buffer = (uint8_t *)calloc(1, ftrt_size);
-            if (buffer) {
-                ret = reader_->getKwData(this, buffer, ftrt_size);
-                if (ret > 0) {
-                    param.data = (void *)buffer;
-                    param.size = ret;
-                    vui_intf_->SetParameter(PARAM_FTRT_DATA, &param);
+                buffer = (uint8_t *)calloc(1, index.end_index);
+                if (buffer) {
+                    ret = reader_->getKwData(this, buffer, index.end_index);
+                    if (ret > 0) {
+                        param.data = (void *)buffer;
+                        param.size = ret;
+                        vui_intf_->SetParameter(PARAM_FTRT_DATA, &param);
+                    }
+                    free(buffer);
                 }
-                free(buffer);
             }
         }
     }
