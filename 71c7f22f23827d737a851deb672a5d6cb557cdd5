@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5bf64cb5_185e4fd8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-04-18T12:04:48Z",
+      "side": 1,
+      "message": "this seems to be conceptionally unnecessary as this can be done in mixer_paths (and seems like most devices already do this).\nIt can be done like this for the relevant paths:\n`\n\u003cpath name\u003d\"speaker\"\u003e\n    \u003cctl name\u003d\"aw_dev_0_switch\" value\u003d\"Enable\" /\u003e\n    \u003cctl name\u003d\"aw_dev_1_switch\" value\u003d\"Enable\" /\u003e\n\u003c/path\u003e`",
+      "revId": "71c7f22f23827d737a851deb672a5d6cb557cdd5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
