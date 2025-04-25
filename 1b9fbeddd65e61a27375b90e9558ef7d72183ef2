@@ -22,6 +22,30 @@
       },
       "revId": "1b9fbeddd65e61a27375b90e9558ef7d72183ef2",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ff6889f_18e0c4a6",
+        "filename": "resource_manager/inc/ResourceManager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-04-25T18:13:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d776638_ab6c69d0",
+      "range": {
+        "startLine": 90,
+        "startChar": 8,
+        "endLine": 90,
+        "endChar": 44
+      },
+      "revId": "1b9fbeddd65e61a27375b90e9558ef7d72183ef2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
