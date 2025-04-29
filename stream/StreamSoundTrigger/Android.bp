@@ -11,7 +11,10 @@ cc_library_shared {
     owner: "qti",
     vendor: true,
 
-    cflags: [
+    cflags: select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": [],
+        default: ["-DPAL_MEMLOG_UNSUPPORTED"],
+    }) + [
         "-Wall",
         "-Werror",
         "-Wno-macro-redefined",
@@ -35,7 +38,6 @@ cc_library_shared {
 
     header_libs: [
         "libacdb_headers",
-        "libarmemlog_headers",
         "libarpal_headers",
         "libarpal_internalheaders",
         "libarvui_intf_headers",
@@ -45,7 +47,10 @@ cc_library_shared {
         "libsession_ar_headers",
         "libspf-headers",
         "libvui_dmgr_headers",
-    ],
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["libarmemlog_headers"],
+        default: [],
+    }),
 
     shared_libs: [
         "libar-pal",
