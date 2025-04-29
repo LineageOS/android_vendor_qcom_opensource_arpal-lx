@@ -28,7 +28,6 @@ cc_library_shared {
     header_libs: [
         "libacdb_headers",
         "libagm_headers",
-        "libarmemlog_headers",
         "libarosal_headers",
         "libarpal_headers",
         "libarpal_internalheaders",
@@ -38,7 +37,10 @@ cc_library_shared {
         "liblisten_headers",
         "libsession_ar_headers",
         "libspf-headers",
-    ],
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["libarmemlog_headers"],
+        default: [],
+    }),
 
     shared_libs: [
         "libar-pal",
