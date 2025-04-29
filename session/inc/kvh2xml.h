@@ -83,15 +83,6 @@ enum AllKeyIds{
 };
 
 /**
-        @h2xmlk_key {Stream}
-        @h2xmlk_description {Stream}
-*/
-enum Key_Stream {
-	NT_DECODE = 0xd2000001,
-	NT_ENCODE = 0xd2000002,
-};
-
-/**
 	@h2xmlk_key {STREAMRX}
 	@h2xmlk_description {Type of Rx Stream}
 */
@@ -109,9 +100,7 @@ enum Key_StreamRX {
 	INCALL_MUSIC = 0xa1000013,
 	GENERIC_PLAYBACK = 0xa1000014,
 	HAPTICS_PLAYBACK = 0xa1000015,
-	SPATIAL_AUDIO_PLAYBACK = 0xa1000018,
 	RAW_PLAYBACK = 0xa1000019,
-	INCALL_MUSIC_PLUS = 0xa100001a,
 };
 
 /**
@@ -132,22 +121,6 @@ enum Key_StreamTX {
 	SENSOR_PCM_DATA = 0xb100000e,
 	VOICE_RECOGNITION_RECORD = 0xb1000011,
 	COMPRESS_CAPTURE = 0xb1000012,
-};
-
-/**
-        @h2xmlk_key {StreamPP_RX}
-        @h2xmlk_description {Rx Stream Post/Pre Processing Chain}
-*/
-enum Key_StreamPP_RX {
-	STREAMPP_RX_DEFAULT = 0xaf000001,
-};
-
-/**
-        @h2xmlk_key {SW_SIDETONE}
-        @h2xmlk_description {SW_SIDETONE}
-*/
-enum Key_SW_Sidetone {
-	SW_SIDETONE_ON = 0xba000001,
 };
 
 /**
@@ -181,9 +154,7 @@ enum Key_DeviceRX {
 	HAPTICS_DEVICE = 0xa2000009,
 	ULTRASOUND_RX = 0xa200000a,
 	ULTRASOUND_RX_DEDICATED = 0xa200000b,
-	DUMMY_RX = 0xa200000c,
 };
-
 /**
 	@h2xmlk_key {DEVICETX}
 	@h2xmlk_description {Tx Device}
@@ -200,18 +171,7 @@ enum Key_DeviceTX {
 	VI_TX = 0xa3000009,
 	FM_TX = 0xa300000a,
 	ULTRASOUND_TX = 0xa300000b,
-	HAPTICS_VI_TX = 0xa300000c,
 	ECHO_REF_TX = 0xa300000d,
-	CPS_TX = 0xa300000e,
-	DUMMY_TX = 0xa300000f,
-};
-
-/**
-        @h2xmlk_key {DeviceTX_EXT}
-        @h2xmlk_description {Ext Tx Device}
-*/
-enum Key_DeviceTX_EXT {
-	EXT_EC_TX = 0xd700000,
 };
 
 /**
@@ -227,9 +187,7 @@ enum Key_DevicePP_RX {
 	DEVICEPP_RX_ULTRASOUND_GENERATOR = 0xac000006,
 	DEVICEPP_RX_VOICE_RVE = 0xac000007,
 	DEVICEPP_RX_VOICE_NN_NS = 0xac000009,
-	DEVICEPP_RX_VOICE_DEFAULT_RX_NN_NS = 0xac000009,
 	DEVICEPP_RX_AUDIO_MSPP = 0xac00000b,
-	DEVICEPP_RX_HAPTICS_GEN = 0xac00000d,
 };
 
 /**
@@ -246,7 +204,6 @@ enum Key_DevicePP_TX {
 	DEVICEPP_TX_VOIP_FLUENCE_SMECNS = 0xad000007,
 	DEVICEPP_TX_VOICE_FLUENCE_SMECNS = 0xad000008,
 	DEVICEPP_TX_VOICE_FLUENCE_ENDFIRE = 0xad000009,
-	DEVICEPP_TX_ULTRASOUND_DETECTOR = 0xad000011,
 	DEVICEPP_TX_VOICE_FLUENCE_PRO = 0xad00000a,
 	DEVICEPP_TX_RAW_LPI = 0xad00000c,
 	DEVICEPP_TX_VOIP_FLUENCE_ENDFIRE = 0xad00000d,
@@ -259,43 +216,11 @@ enum Key_DevicePP_TX {
 	DEVICEPP_TX_AAD = 0xad000019,
 	DEVICEPP_TX_FLUENCE_FFNS_AAD = 0xad00001a,
 	DEVICEPP_TX_RAW_LPI_AAD = 0xad00001b,
-	DEVICEPP_TX_VOICE_FLUENCE_ENDFIRE_CASCADE = 0xad00001f,
-	DEVICEPP_TX_VOICE_FLUENCE_PRO_CASCADE = 0xad000020,
 	DEVICEPP_TX_AUDIO_RECORD_ENQORE = 0xad000023,
-	DEVICEPP_TX_CUSTOM_ECNS = 0xad000025,
-	DEVICEPP_TX_CUSTOM_NS = 0xad000026,
 };
 
 enum Key_StreamConfig {
 	STREAM_CFG_VUI_SVA = 0xbc000001,
-	STREAM_CFG_VUI_HW = 0xbc000002,
-	STREAM_CFG_VUI_CUSTOM = 0xbc000004,
-	STREAM_CFG_VUI_GMM = 0xbc000005,
-	STREAM_CFG_VUI_PDK = 0xbc000006,
-	STREAM_CFG_ACD_QC = 0xbc000007,
-};
-
-/**
-        @h2xmlk_key {ProxyTxType}
-        @h2xmlk_description {ProxyTxType}
-*/
-enum Key_ProxyTxType {
-	PROXY_TX_DEFAULT = 0xd1000001,
-	PROXY_TX_WFD = 0xd1000002,
-	PROXY_TX_VOICE_RX = 0xd1000003,
-};
-
-/**
-        @h2xmlk_key {VSID}
-        @h2xmlk_description {VSID}
-*/
-
-enum Key_VSID {
-	VSID_DEFAULT = 0xb3000001,
-	VSID_VOICE1 = 0xb3000002,
-	VSID_VOICE2 = 0xb3000003,
-	VSID_VOICE1_LB = 0xb3000004,
-	VSID_VOICE2_LB = 0xb3000005,
 };
 
 /**
