@@ -39,9 +39,13 @@
 #include "Session.h"
 #include "ResourceManager.h"
 #include "Device.h"
+#ifndef PAL_MEMLOG_UNSUPPORTED
 #include "mem_logger.h"
+#endif
 #include "PluginManager.h"
+#ifndef PAL_MEMLOG_UNSUPPORTED
 #include "MemLogBuilder.h"
+#endif
 
 std::shared_ptr<ResourceManager> Stream::rm = nullptr;
 std::shared_ptr<PluginManager> Stream::pm = nullptr;
