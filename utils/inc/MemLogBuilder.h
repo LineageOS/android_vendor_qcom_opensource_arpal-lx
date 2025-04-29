@@ -6,6 +6,7 @@
 #ifndef MEMLOG_BUILDER_H
 #define MEMLOG_BUILDER_H
 
+#ifndef PAL_MEMLOG_UNSUPPORTED
 #include "mem_logger.h"
 #include "pal_state_queue.h"
 #include "kpi_queue.h"
@@ -18,5 +19,9 @@ int palStateEnqueue(Stream *s, pal_state_queue_state state, int32_t error);
 int palStateEnqueue(Stream *s, pal_state_queue_state state, int32_t error, union pal_mlog_str_info str_info);
 pal_mlog_acdstr_info palStateACDStreamBuilder(Stream *s);
 void kpiEnqueue(const char name[], bool isEnter);
+#else
+#define palStateEnqueue(...) (0)
+#define kpiEnqueue(...) (0)
+#endif
 
 #endif

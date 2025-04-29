@@ -11,7 +11,10 @@ cc_library_shared {
     owner: "qti",
     vendor: true,
 
-    cflags: ["-Wno-ignored-attributes"],
+    cflags: ["-Wno-ignored-attributes"] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": [],
+        default: ["-DPAL_MEMLOG_UNSUPPORTED"],
+    }),
 
     cppflags: ["-fexceptions"],
     rtti: true,
@@ -31,7 +34,6 @@ cc_library_shared {
     header_libs: [
         "libacdb_headers",
         "libagm_headers",
-        "libarmemlog_headers",
         "libarosal_headers",
         "libarpal_headers",
         "libarpal_internalheaders",
@@ -39,7 +41,10 @@ cc_library_shared {
         "libaudiofeaturestats_headers",
         "liblisten_headers",
         "libspf-headers",
-    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["libarmemlog_headers"],
+        default: [],
+    }) + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "sun": [
             "mink_headers",
             "peripheralstate_headers",
