@@ -51,7 +51,9 @@
 #include "ResourceManager.h"
 #include "Device.h"
 #include "USBAudio.h"
+#ifndef PAL_MEMLOG_UNSUPPORTED
 #include "mem_logger.h"
+#endif
 
 std::shared_ptr<ResourceManager> Stream::rm = nullptr;
 std::mutex Stream::mBaseStreamMutex;
