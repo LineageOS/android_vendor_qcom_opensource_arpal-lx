@@ -35,7 +35,10 @@ cc_library_shared {
         "-Wno-macro-redefined",
         "-Wno-unused-parameter",
         "-Wno-unused-variable",
-    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": [],
+        default: ["-DPAL_MEMLOG_UNSUPPORTED"],
+    }) + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "pineapple": ["-DSOC_PERIPHERAL_PROT"],
         "volcano": ["-DWSA_V883X_ADDR"],
         default: [],
@@ -102,13 +105,15 @@ cc_library_shared {
         "stream/src/StreamUltraSound.cpp",
         "utils/src/ACDPlatformInfo.cpp",
         "utils/src/AudioHapticsInterface.cpp",
-        "utils/src/MemLogBuilder.cpp",
         "utils/src/MetadataParser.cpp",
         "utils/src/PalRingBuffer.cpp",
         "utils/src/SignalHandler.cpp",
         "utils/src/SoundTriggerPlatformInfo.cpp",
         "utils/src/VoiceUIPlatformInfo.cpp",
-    ],
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["utils/src/MemLogBuilder.cpp"],
+        default: [],
+    }),
 
     export_include_dirs: ["inc"],
 
@@ -120,13 +125,15 @@ cc_library_shared {
     header_libs: [
         "generated_kernel_headers",
         "libagm_headers",
-        "libarmemlog_headers",
         "libarosal_headers",
         "libarpal_headers",
         "libarvui_intf_headers",
         "libaudiofeaturestats_headers",
         "libspf-headers",
         "libvui_dmgr_headers",
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["libarmemlog_headers"],
+        default: [],
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "pineapple": [
             "peripheralstate_headers",
@@ -137,7 +144,6 @@ cc_library_shared {
     shared_libs: [
         "libagmclient",
         "libar-gsl",
-        "libarmemlog",
         "libaudioroute",
         "libcutils",
         "libexpat",
@@ -148,7 +154,10 @@ cc_library_shared {
         "libtinycompress",
         "libutilscallstack",
         "libvui_intf",
-    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+    ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
+        "true": ["libarmemlog"],
+        default: [],
+    }) + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "pineapple": ["libPeripheralStateUtils"],
         default: [],
     }),
