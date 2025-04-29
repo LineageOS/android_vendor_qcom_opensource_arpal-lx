@@ -74,7 +74,9 @@
 #include "Device.h"
 #include "ResourceManager.h"
 #include "PalCommon.h"
+#ifndef PAL_MEMLOG_UNSUPPORTED
 #include "mem_logger.h"
+#endif
 class Stream;
 
 /**
