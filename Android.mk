@@ -59,6 +59,8 @@ ifeq ($(TARGET_BOARD_PLATFORM), volcano)
 LOCAL_CFLAGS        += -DWSA_V883X_ADDR
 endif
 
+LOCAL_CFLAGS        += -DPAL_MEMLOG_UNSUPPORTED
+
 LOCAL_C_INCLUDES := \
     $(TOP)/system/media/audio_route/include \
     $(TOP)/system/media/audio/include
@@ -143,8 +145,7 @@ LOCAL_SRC_FILES := \
     utils/src/PalRingBuffer.cpp \
     utils/src/SignalHandler.cpp \
     utils/src/AudioHapticsInterface.cpp \
-    utils/src/MetadataParser.cpp \
-    utils/src/MemLogBuilder.cpp
+    utils/src/MetadataParser.cpp
 
 LOCAL_HEADER_LIBRARIES := \
     libarpal_headers \
@@ -168,7 +169,6 @@ LOCAL_SHARED_LIBRARIES := \
     libutilscallstack \
     libagmclient \
     libvui_intf \
-    libarmemlog \
     libhidlbase
 
 ifeq ($(call is-board-platform-in-list,kalama pineapple), true)
