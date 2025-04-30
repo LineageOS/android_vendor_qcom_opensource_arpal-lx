@@ -54,6 +54,7 @@
 std::shared_ptr<ASREngine> ASREngine::eng;
 
 ASREngine::ASREngine(Stream *s, std::shared_ptr<ASRStreamConfig> smCfg)
+    : smCfg(smCfg)
 {
     PAL_DBG(LOG_TAG, "Enter");
     int status = 0;
@@ -68,7 +69,6 @@ ASREngine::ASREngine(Stream *s, std::shared_ptr<ASRStreamConfig> smCfg)
     numOutput = 0;
     rxEcDev = nullptr;
     asrInfo = nullptr;
-    smCfg = smCfg;
     engState = ASR_ENG_IDLE;
     streamHandle = s;
 
