@@ -67,10 +67,10 @@ void ASRCommonConfig::HandleEndTag(struct xml_userdata *data, const char* tag_na
 }
 
 ASRCommonConfig::ASRCommonConfig():
+    partial_mode_in_lpi_(false),
     input_buffer_size_(0),
     partial_mode_input_buffer_size_(0),
-    buffering_mode_out_buffer_size_(0),
-    partial_mode_in_lpi_(false)
+    buffering_mode_out_buffer_size_(0)
 {
 }
 
@@ -165,8 +165,8 @@ void ASRStreamConfig::HandleEndTag(struct xml_userdata *data, const char* tag)
 std::shared_ptr<ASRPlatformInfo> ASRPlatformInfo::me_ = nullptr;
 
 ASRStreamConfig::ASRStreamConfig() :
-    curr_child_(nullptr),
-    lpi_enable_(true)
+    lpi_enable_(true),
+    curr_child_(nullptr)
 {
     for (int i = 0; i < ASR_MAX_PARAM_IDS; i++) {
         module_tag_ids_[i] = 0;
