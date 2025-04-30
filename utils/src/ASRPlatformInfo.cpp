@@ -186,8 +186,8 @@ void ASRStreamConfig::HandleEndTag(struct xml_userdata *data, const std::string&
 std::shared_ptr<ASRPlatformInfo> ASRPlatformInfo::me_ = nullptr;
 
 ASRStreamConfig::ASRStreamConfig() :
-    curr_child_(nullptr),
-    lpi_enable_(true)
+    lpi_enable_(true),
+    curr_child_(nullptr)
 {
     for (int i = 0; i < ASR_MAX_PARAM_IDS; i++) {
         module_tag_ids_[i] = 0;
