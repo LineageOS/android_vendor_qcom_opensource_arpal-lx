@@ -51,7 +51,9 @@
 #include <deque>
 #include <unordered_map>
 #include <vui_dmgr_audio_intf.h>
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
 #include <audio_feature_stats_intf.h>
+#endif
 #include <amdb_api.h>
 #include "audio_route/audio_route.h"
 #include "PalCommon.h"
@@ -738,12 +740,14 @@ public:
     int32_t voiceuiDmgrRestartUseCases(vui_dmgr_param_restart_usecases_t *uc_info);
 
     pal_stream_handle_t *afs_stream_handle = NULL;
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
     static void *feature_stats_handle;
     static afs_init_t feature_stats_init;
     static afs_deinit_t feature_stats_deinit;
     static void AudioFeatureStatsInit();
     static void AudioFeatureStatsDeInit();
     static int AudioFeatureStatsGetInfo(void **afs_payload, size_t *afs_payload_size);
+#endif
     void checkQVAAppPresence(afs_param_payload_t *payload);
     pal_param_payload *AFSWakeUpAlgoDetection();
 
