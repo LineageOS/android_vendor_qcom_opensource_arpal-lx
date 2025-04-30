@@ -60,6 +60,7 @@ LOCAL_CFLAGS        += -DWSA_V883X_ADDR
 endif
 
 LOCAL_CFLAGS        += -DPAL_MEMLOG_UNSUPPORTED
+LOCAL_CFLAGS        += -DAUDIO_FEATURE_STATS_UNSUPPORTED
 
 LOCAL_C_INCLUDES := \
     $(TOP)/system/media/audio_route/include \
