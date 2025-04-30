@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <string>
 #include <errno.h>
 
 #include "SoundTriggerUtils.h"
@@ -42,9 +43,10 @@ struct keyword_stats {
  */
 typedef struct sound_model_config {
     struct pal_st_sound_model *sound_model;
-    st_module_type_t *module_type;
+    st_module_type_t module_type;
     bool is_model_merge_enabled;
     uint32_t supported_engine_count;
+    std::string intf_plugin_lib;
 } sound_model_config_t;
 
 // sound model data for each stage
@@ -69,6 +71,7 @@ struct sound_model_info {
     struct pal_st_recognition_config *rec_config;
     void *wakeup_config;
     uint32_t wakeup_config_size;
+    uint32_t conf_levels_intf_version;
     struct buffer_config buf_config;
     sec_stage_level_t sec_threshold;
     sec_stage_level_t sec_det_level;
@@ -100,36 +103,37 @@ typedef struct vui_intf_param {
 
 typedef enum {
     PARAM_FSTAGE_SOUND_MODEL_TYPE = 0,
-    PARAM_FSTAGE_SOUND_MODEL_ID,
-    PARAM_FSTAGE_SOUND_MODEL_STATE,
-    PARAM_FSTAGE_SOUND_MODEL_ADD,
-    PARAM_FSTAGE_SOUND_MODEL_DELETE,
-    PARAM_FSTAGE_BUFFERING_CONFIG,
-    PARAM_FSTAGE_DETECTION_UV_SCORE,
-    PARAM_SSTAGE_KW_CONF_LEVEL,
-    PARAM_SSTAGE_UV_CONF_LEVEL,
-    PARAM_SSTAGE_KW_DET_LEVEL,
-    PARAM_SSTAGE_UV_DET_LEVEL,
-    PARAM_SOUND_MODEL_LIST,
-    PARAM_RECOGNITION_MODE,
-    PARAM_RECOGNITION_CONFIG,
-    PARAM_DETECTION_RESULT,
-    PARAM_DETECTION_EVENT,
-    PARAM_DETECTION_STREAM,
-    PARAM_KEYWORD_INDEX,
-    PARAM_KEYWORD_STATS,
-    PARAM_FTRT_DATA,
-    PARAM_FTRT_DATA_SIZE,
-    PARAM_LAB_READ_OFFSET,
-    PARAM_STREAM_ATTRIBUTES,
-    PARAM_KEYWORD_DURATION,
-    PARAM_INTERFACE_PROPERTY,
-    PARAM_SOUND_MODEL_LOAD,
-    PARAM_SOUND_MODEL_UNLOAD,
-    PARAM_WAKEUP_CONFIG,
-    PARAM_CUSTOM_CONFIG,
-    PARAM_BUFFERING_CONFIG,
-    PARAM_ENGINE_RESET,
+    PARAM_FSTAGE_SOUND_MODEL_ID = 1,
+    PARAM_FSTAGE_SOUND_MODEL_STATE = 2,
+    PARAM_FSTAGE_SOUND_MODEL_ADD = 3,
+    PARAM_FSTAGE_SOUND_MODEL_DELETE = 4,
+    PARAM_FSTAGE_BUFFERING_CONFIG = 5,
+    PARAM_FSTAGE_DETECTION_UV_SCORE = 6,
+    PARAM_SSTAGE_KW_CONF_LEVEL = 7,
+    PARAM_SSTAGE_UV_CONF_LEVEL = 8,
+    PARAM_SSTAGE_KW_DET_LEVEL = 9,
+    PARAM_SSTAGE_UV_DET_LEVEL = 10,
+    PARAM_SOUND_MODEL_LIST = 11,
+    PARAM_RECOGNITION_MODE = 12,
+    PARAM_RECOGNITION_CONFIG = 13,
+    PARAM_DETECTION_RESULT = 14,
+    PARAM_DETECTION_EVENT = 15,
+    PARAM_DETECTION_STREAM = 16,
+    PARAM_KEYWORD_INDEX = 17,
+    PARAM_KEYWORD_STATS = 18,
+    PARAM_FTRT_DATA = 19,
+    PARAM_FTRT_DATA_SIZE = 20,
+    PARAM_LAB_READ_OFFSET = 21,
+    PARAM_STREAM_ATTRIBUTES = 22,
+    PARAM_DEFAULT_BUFFER_CONFIG = 23,
+    PARAM_INTERFACE_PROPERTY = 24,
+    PARAM_SOUND_MODEL_LOAD = 25,
+    PARAM_SOUND_MODEL_UNLOAD = 26,
+    PARAM_WAKEUP_CONFIG = 27,
+    PARAM_CUSTOM_CONFIG = 28,
+    PARAM_BUFFERING_CONFIG = 29,
+    PARAM_ENGINE_RESET = 30,
+    PARAM_DETECTION_STREAM_LIST = 31,
     // new custom param id can be added here
 } intf_param_id_t;
 
@@ -143,8 +147,6 @@ class VoiceUIInterface;
 typedef struct vui_intf_t {
     std::shared_ptr<VoiceUIInterface> interface;
 } vui_intf_t;
-
-int32_t GetVUIInterface(struct vui_intf_t *intf, vui_intf_param_t *model);
 
 // class defs
 class VoiceUIInterface {
@@ -202,10 +204,9 @@ class VoiceUIInterface {
     /*
      * @brief register stream/model to interface
      *
-     * @param[in]  s        stream pointer
-     * @param[in]  model    cached sound model for stream s
-     * @param[in]  sm_data  first stage model acquired from ParseSoundModel
-     * @param[in]  sm_size  first stage model size
+     * @param[in]   s          stream pointer
+     * @param[in]   model      cached sound model for stream s
+     * @param[out]  model_list list containing model data for each stage
      *
      * @return  0        stream/model registered successfully
      * @return  -ENOMEM  no memory for allocation
