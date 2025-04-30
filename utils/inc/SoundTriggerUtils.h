@@ -337,6 +337,7 @@ typedef enum st_param_id_type {
     WAKEUP_CONFIG,
     BUFFERING_CONFIG,
     ENGINE_RESET,
+    ENGINE_PER_MODEL_RESET,
     MODULE_VERSION,
     CUSTOM_CONFIG,
     MAX_PARAM_IDS
