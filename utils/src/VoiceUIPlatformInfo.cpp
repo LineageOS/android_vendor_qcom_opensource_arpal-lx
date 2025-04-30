@@ -213,9 +213,9 @@ VUIStreamConfig::VUIStreamConfig() :
     pre_roll_duration_(0),
     supported_first_stage_engine_count_(1),
     enable_intra_concurrent_detection_(false),
-    curr_child_(nullptr),
     lpi_enable_(true),
     batch_size_in_ms_(0),
+    curr_child_(nullptr),
     enable_amd_(false)
 {
     ext_det_prop_list_.clear();
