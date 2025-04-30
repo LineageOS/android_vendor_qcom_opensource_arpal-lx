@@ -498,9 +498,11 @@ void* ResourceManager::vui_dmgr_lib_handle = NULL;
 vui_dmgr_init_t ResourceManager::vui_dmgr_init = NULL;
 vui_dmgr_deinit_t ResourceManager::vui_dmgr_deinit = NULL;
 
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
 void* ResourceManager::feature_stats_handle = NULL;
 afs_init_t ResourceManager::feature_stats_init = NULL;
 afs_deinit_t ResourceManager::feature_stats_deinit = NULL;
+#endif
 
 std::mutex ResourceManager::cvMutex;
 std::queue<card_status_t> ResourceManager::msgQ;
@@ -1862,6 +1864,7 @@ close_stream:
     return NULL;
 }
 
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
 int ResourceManager::AudioFeatureStatsGetInfo(void **afs_payload,
                                                size_t *afs_payload_size)
 {
@@ -1967,6 +1970,7 @@ void ResourceManager::AudioFeatureStatsDeInit()
     feature_stats_init = NULL;
     feature_stats_deinit = NULL;
 }
+#endif
 
 void ResourceManager::voiceuiDmgrManagerDeInit()
 {
@@ -2039,8 +2043,10 @@ int ResourceManager::init()
     PAL_INFO(LOG_TAG, "Initialize voiceui dmgr");
     voiceuiDmgrManagerInit();
 
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
     PAL_INFO(LOG_TAG, "Initialize Audio Feature Stats");
     AudioFeatureStatsInit();
+#endif
 
     return 0;
 }
@@ -6865,7 +6871,9 @@ void ResourceManager::deinit()
        chargerListenerDeinit();
 
     voiceuiDmgrManagerDeInit();
+#ifndef AUDIO_FEATURE_STATS_UNSUPPORTED
     AudioFeatureStatsDeInit();
+#endif
 
     cvMutex.lock();
     msgQ.push(state);
