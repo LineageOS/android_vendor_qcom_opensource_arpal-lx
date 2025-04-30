@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <string>
 #include <errno.h>
 
 #include "SoundTriggerUtils.h"
@@ -42,9 +43,10 @@ struct keyword_stats {
  */
 typedef struct sound_model_config {
     struct pal_st_sound_model *sound_model;
-    st_module_type_t *module_type;
+    st_module_type_t module_type;
     bool is_model_merge_enabled;
     uint32_t supported_engine_count;
+    std::string intf_plugin_lib;
 } sound_model_config_t;
 
 // sound model data for each stage
@@ -122,7 +124,7 @@ typedef enum {
     PARAM_FTRT_DATA_SIZE,
     PARAM_LAB_READ_OFFSET,
     PARAM_STREAM_ATTRIBUTES,
-    PARAM_KEYWORD_DURATION,
+    PARAM_DEFAULT_BUFFER_CONFIG,
     PARAM_INTERFACE_PROPERTY,
     PARAM_SOUND_MODEL_LOAD,
     PARAM_SOUND_MODEL_UNLOAD,
@@ -130,6 +132,7 @@ typedef enum {
     PARAM_CUSTOM_CONFIG,
     PARAM_BUFFERING_CONFIG,
     PARAM_ENGINE_RESET,
+    PARAM_DETECTION_STREAM_LIST,
     // new custom param id can be added here
 } intf_param_id_t;
 
@@ -145,6 +148,7 @@ typedef struct vui_intf_t {
 } vui_intf_t;
 
 int32_t GetVUIInterface(struct vui_intf_t *intf, vui_intf_param_t *model);
+void ReleaseVUIInterface(struct vui_intf_t *intf);
 
 // class defs
 class VoiceUIInterface {
