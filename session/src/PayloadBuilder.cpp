@@ -3560,7 +3560,7 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
 
                 payloadSize = sizeof(struct apm_module_param_data_t) +
                               sizeof(param_id_sp_th_vi_r0t0_cfg_t) +
-                              sizeof(vi_r0t0_cfg_t) * data->num_speakers;
+                              sizeof(vi_r0t0_cfg_t) * data->num_ch;
 
                 padBytes = PAL_PADDING_8BYTE_ALIGN(payloadSize);
                 payloadInfo = (uint8_t*) calloc(1, payloadSize + padBytes);
@@ -3576,10 +3576,10 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
                                 sizeof(struct apm_module_param_data_t)
                                 + sizeof(param_id_sp_th_vi_r0t0_cfg_t));
 
-                spConf->num_speakers = data->num_speakers;
-                for(int i = 0; i < data->num_speakers; i++) {
-                    r0t0[i].r0_cali_q24 = data->vi_r0t0_cfg[i].r0_cali_q24;
-                    r0t0[i].t0_cali_q6 = data->vi_r0t0_cfg[i].t0_cali_q6;
+                spConf->num_ch = data->num_ch;
+                for(int i = 0; i < data->num_ch; i++) {
+                    r0t0[i].r0_cali_q24 = data->r0t0_cfg[i].r0_cali_q24;
+                    r0t0[i].t0_cali_q6 = data->r0t0_cfg[i].t0_cali_q6;
                 }
             }
         break;
@@ -3701,7 +3701,7 @@ void PayloadBuilder::payloadSPConfig(uint8_t** payload, size_t* size, uint32_t m
                 spConf = (param_id_sp_ex_vi_mode_cfg_t *) (payloadInfo +
                                 sizeof(struct apm_module_param_data_t));
 
-                spConf->operation_mode = data->operation_mode;
+                spConf->ex_FTM_mode_enable_flag = data->ex_FTM_mode_enable_flag;
             }
         break;
         case PARAM_ID_SP_TH_VI_FTM_CFG :
