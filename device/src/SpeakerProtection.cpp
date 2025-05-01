@@ -690,7 +690,7 @@ int SpeakerProtection::spkrStartCalibrationV2()
     }
 
     // Setting Excursion mode
-    viExModeConfg.operation_mode = 0; // Normal Mode
+    viExModeConfg.ex_FTM_mode_enable_flag = 0; // Normal Mode
     payloadSize = 0;
 
     builder->payloadSPConfig(&payload, &payloadSize, miid,
@@ -1342,7 +1342,7 @@ int SpeakerProtection::spkrStartCalibration()
     }
 
     // Setting Excursion mode
-    viExModeConfg.operation_mode = 0; // Normal Mode
+    viExModeConfg.ex_FTM_mode_enable_flag = 0; // Normal Mode
     payloadSize = 0;
 
     builder->payloadSPConfig(&payload, &payloadSize, miid,
@@ -2650,9 +2650,9 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
 
         // Setting Excursion mode
         if (rm->mSpkrProtModeValue.operationMode == PAL_SP_MODE_FACTORY_TEST)
-            viExModeConfg.operation_mode = 1; // FTM Mode
+            viExModeConfg.ex_FTM_mode_enable_flag = 1; // FTM Mode
         else
-            viExModeConfg.operation_mode = 0; // Normal Mode
+            viExModeConfg.ex_FTM_mode_enable_flag = 0; // Normal Mode
         payloadSize = 0;
 
         builder->payloadSPConfig(&payload, &payloadSize, miid,
@@ -2787,13 +2787,13 @@ int32_t SpeakerProtection::spkrProtProcessingModeV2(bool flag)
             PAL_ERR(LOG_TAG," unable to create speaker config payload\n");
             goto free_fe;
         }
-        spR0T0confg->num_speakers = spDevInfo.numChannels;
+        spR0T0confg->num_ch = spDevInfo.numChannels;
 
         for (int i = 0; i < spDevInfo.numChannels; i++) {
-            spR0T0confg->vi_r0t0_cfg[i].r0_cali_q24 = r0t0Array[i].r0_cali_q24;
-            spR0T0confg->vi_r0t0_cfg[i].t0_cali_q6 = r0t0Array[i].t0_cali_q6;
-            PAL_DBG (LOG_TAG,"R0 %x ", spR0T0confg->vi_r0t0_cfg[i].r0_cali_q24);
-            PAL_DBG (LOG_TAG,"T0 %x ", spR0T0confg->vi_r0t0_cfg[i].t0_cali_q6);
+            spR0T0confg->r0t0_cfg[i].r0_cali_q24 = r0t0Array[i].r0_cali_q24;
+            spR0T0confg->r0t0_cfg[i].t0_cali_q6 = r0t0Array[i].t0_cali_q6;
+            PAL_DBG (LOG_TAG,"R0 %x ", spR0T0confg->r0t0_cfg[i].r0_cali_q24);
+            PAL_DBG (LOG_TAG,"T0 %x ", spR0T0confg->r0t0_cfg[i].t0_cali_q6);
 
         }
 
@@ -3302,9 +3302,9 @@ int SpeakerProtection::viTxSetupThreadLoop()
 
         // Setting Excursion mode
         if (rm->mSpkrProtModeValue.operationMode == PAL_SP_MODE_FACTORY_TEST)
-            viExModeConfg.operation_mode = 1; // FTM Mode
+            viExModeConfg.ex_FTM_mode_enable_flag = 1; // FTM Mode
         else
-            viExModeConfg.operation_mode = 0; // Normal Mode
+            viExModeConfg.ex_FTM_mode_enable_flag = 0; // Normal Mode
         payloadSize = 0;
 
         builder->payloadSPConfig(&payload, &payloadSize, miid,
@@ -3392,13 +3392,13 @@ int SpeakerProtection::viTxSetupThreadLoop()
             PAL_ERR(LOG_TAG," unable to create speaker config payload\n");
             goto free_fe;
         }
-        spR0T0confg->num_speakers = numberOfChannels;
+        spR0T0confg->num_ch = numberOfChannels;
 
         for (int i = 0; i < numberOfChannels; i++) {
-            spR0T0confg->vi_r0t0_cfg[i].r0_cali_q24 = r0t0Array[i].r0_cali_q24;
-            spR0T0confg->vi_r0t0_cfg[i].t0_cali_q6 = r0t0Array[i].t0_cali_q6;
-            PAL_DBG (LOG_TAG,"R0 %x ", spR0T0confg->vi_r0t0_cfg[i].r0_cali_q24);
-            PAL_DBG (LOG_TAG,"T0 %x ", spR0T0confg->vi_r0t0_cfg[i].t0_cali_q6);
+            spR0T0confg->r0t0_cfg[i].r0_cali_q24 = r0t0Array[i].r0_cali_q24;
+            spR0T0confg->r0t0_cfg[i].t0_cali_q6 = r0t0Array[i].t0_cali_q6;
+            PAL_DBG (LOG_TAG,"R0 %x ", spR0T0confg->r0t0_cfg[i].r0_cali_q24);
+            PAL_DBG (LOG_TAG,"T0 %x ", spR0T0confg->r0t0_cfg[i].t0_cali_q6);
 
         }
 
@@ -3928,7 +3928,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
                         sizeof(struct apm_module_param_data_t));
 
         for (int i = 0; i < numberOfChannels; i++) {
-            ftm_ret[i].ftm_dc_res_q24 = ftmValue->vi_th_ftm_params[i].ftm_dc_res_q24;
+            ftm_ret[i].ftm_rDC_q24 = ftmValue->vi_th_ftm_params[i].ftm_rDC_q24;
             ftm_ret[i].ftm_temp_q22 = ftmValue->vi_th_ftm_params[i].ftm_temp_q22;
             ftm_ret[i].status = ftmValue->vi_th_ftm_params[i].status;
         }
@@ -3962,12 +3962,12 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
         exFtmValue = (param_id_sp_ex_vi_ftm_params_t *) (payload +
                                 sizeof(struct apm_module_param_data_t));
         for (int i = 0; i < numberOfChannels; i++) {
-            exFtm_ret[i].ftm_Re_q24 = exFtmValue->vi_ex_ftm_params[i].ftm_Re_q24;
-            exFtm_ret[i].ftm_Bl_q24 = exFtmValue->vi_ex_ftm_params[i].ftm_Bl_q24;
-            exFtm_ret[i].ftm_Kms_q24 = exFtmValue->vi_ex_ftm_params[i].ftm_Kms_q24;
-            exFtm_ret[i].ftm_Fres_q20 = exFtmValue->vi_ex_ftm_params[i].ftm_Fres_q20;
-            exFtm_ret[i].ftm_Qms_q24 = exFtmValue->vi_ex_ftm_params[i].ftm_Qms_q24;
-            exFtm_ret[i].status = exFtmValue->vi_ex_ftm_params[i].status;
+            exFtm_ret[i].ftm_Re_q24 = exFtmValue->fbsp_ex_vi_ftm_get_param[i].ftm_Re_q24;
+            exFtm_ret[i].ftm_Bl_q24 = exFtmValue->fbsp_ex_vi_ftm_get_param[i].ftm_Bl_q24;
+            exFtm_ret[i].ftm_Kms_q24 = exFtmValue->fbsp_ex_vi_ftm_get_param[i].ftm_Kms_q24;
+            exFtm_ret[i].ftm_Fres_q20 = exFtmValue->fbsp_ex_vi_ftm_get_param[i].ftm_Fres_q20;
+            exFtm_ret[i].ftm_Qms_q24 = exFtmValue->fbsp_ex_vi_ftm_get_param[i].ftm_Qms_q24;
+            exFtm_ret[i].status = exFtmValue->fbsp_ex_vi_ftm_get_param[i].status;
         }
     }
     PAL_DBG(LOG_TAG, "Got FTM Excursion value with status %d", exFtm_ret[0].status);
@@ -3983,7 +3983,7 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
             if (exFtm_ret[0].status == 4 && ftm_ret[0].status == 4)
                 spkr1_status = 1;
             resString << "SpkrParamStatus: " << spkr1_status << "; Rdc: "
-                    << ((ftm_ret[0].ftm_dc_res_q24)/(1<<24)) << "; Temp: "
+                    << ((ftm_ret[0].ftm_rDC_q24)/(1<<24)) << "; Temp: "
                     << ((ftm_ret[0].ftm_temp_q22)/(1<<22)) << "; Res: "
                     << ((exFtm_ret[0].ftm_Re_q24)/(1<<24)) << "; Bl: "
                     << ((exFtm_ret[0].ftm_Bl_q24)/(1<<24)) << "; Rms: "
@@ -3998,8 +3998,8 @@ int32_t SpeakerProtection::getFTMParameter(void **param)
             if (exFtm_ret[1].status == 4 && ftm_ret[1].status == 4)
                 spkr2_status = 1;
             resString << "SpkrParamStatus: " << spkr1_status <<", "<< spkr2_status
-                    << "; Rdc: " << ((ftm_ret[0].ftm_dc_res_q24)/(1<<24)) << ", "
-                    << ((ftm_ret[1].ftm_dc_res_q24)/(1<<24)) << "; Temp: "
+                    << "; Rdc: " << ((ftm_ret[0].ftm_rDC_q24)/(1<<24)) << ", "
+                    << ((ftm_ret[1].ftm_rDC_q24)/(1<<24)) << "; Temp: "
                     << ((ftm_ret[0].ftm_temp_q22)/(1<<22)) << ", "
                     << ((ftm_ret[1].ftm_temp_q22)/(1<<22)) <<"; Res: "
                     << ((exFtm_ret[0].ftm_Re_q24)/(1<<24)) << ", "
@@ -4214,9 +4214,9 @@ void SpeakerFeedback::updateVIcustomPayload()
         PAL_ERR(LOG_TAG," updateCustomPayload Failed\n");
         return;
     }
-    spR0T0confg->num_speakers = numSpeaker;
+    spR0T0confg->num_ch = numSpeaker;
 
-    memcpy(spR0T0confg->vi_r0t0_cfg, r0t0Array, sizeof(vi_r0t0_cfg_t) *
+    memcpy(spR0T0confg->r0t0_cfg, r0t0Array, sizeof(vi_r0t0_cfg_t) *
             numSpeaker);
 
     payloadSize = 0;
