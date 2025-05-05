@@ -33,7 +33,10 @@ cc_library_shared {
         "-Wno-macro-redefined",
         "-Wno-unused-parameter",
         "-Wno-unused-variable",
-    ] + select(soong_config_variable("qtiaudio", "feature_ec_ref_capture"), {
+    ] + select(soong_config_variable("qtiaudio", "cirrus_calibration_resistance"), {
+        "true": ["-DAUDIO_CIRRUS_CALIBRATION_RESISTANCE"],
+        default: [],
+    }) + select(soong_config_variable("qtiaudio", "feature_ec_ref_capture"), {
         "true": ["-DEC_REF_CAPTURE_ENABLED"],
         default: [],
     }) + select(soong_config_variable("qtiaudio", "feature_dynamic_sr"), {
