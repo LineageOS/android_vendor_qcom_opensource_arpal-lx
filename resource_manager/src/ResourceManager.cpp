@@ -73,6 +73,12 @@
 #ifndef FEATURE_IPQ_OPENWRT
 #include <cutils/str_parms.h>
 #endif
+#ifdef AUDIO_CIRRUS_CALIBRATION_RESISTANCE
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <thread>
+#endif
 
 #define XML_PATH_EXTN_MAX_SIZE 80
 #define XML_FILE_DELIMITER "_"
@@ -1233,6 +1239,109 @@ char* ResourceManager::getDeviceNameFromID(uint32_t id)
     return NULL;
 }
 
+#ifdef AUDIO_CIRRUS_CALIBRATION_RESISTANCE
+constexpr int kCirrusResistanceMin = 7728;
+constexpr int kCirrusResistanceMax = 10454;
+constexpr int kCirrusMaxChannels = 4;
+
+#define Z_TO_OHM(z) ((z) * 5.85714 / 8192.0)
+
+static int adev_crus_smartpa_init(struct mixer* mixer) {
+    static bool cirrusSmartpaInitialized = false;
+    const std::unordered_map<int, std::vector<std::string>> channelPrefixMap = {
+            {1, {"SPK "}},
+            {2, {"T ", "B "}},
+            {4, {"TL ", "TH ", "BL ", "BH "}},
+    };
+    const std::string dspFirmwareMixer = "DSP1 Firmware";
+    const std::string resistanceMixer = "Calibration Resistance";
+    const std::filesystem::path calibrationPath("/mnt/vendor/persist/audio/crus_calr.bin");
+    std::ifstream calibrationFile;
+    uint32_t calibrationValues[kCirrusMaxChannels]{0};
+    int numChannels, retry;
+
+    if (cirrusSmartpaInitialized) {
+        PAL_DBG(LOG_TAG, "Init already completed");
+        return 0;
+    }
+
+    if (!mixer) {
+        PAL_ERR(LOG_TAG, "Mixer not available");
+        return -EINVAL;
+    }
+
+    /* If no calibration is available allow to continue with default values */
+    if (!std::filesystem::exists(calibrationPath)) {
+        PAL_ERR(LOG_TAG, "Calibration file not found: %s", calibrationPath.c_str());
+        return 0;
+    }
+
+    calibrationFile.open(calibrationPath, std::ios::binary);
+    if (!calibrationFile.is_open()) {
+        PAL_ERR(LOG_TAG, "Failed to open file: %s", calibrationPath.c_str());
+        return -EACCES;
+    }
+
+    /* The calibration file contains one int per channel */
+    numChannels = std::filesystem::file_size(calibrationPath) / sizeof(uint32_t);
+    calibrationFile.read(reinterpret_cast<char*>(calibrationValues),
+                         numChannels * sizeof(uint32_t));
+
+    /* Check if smartpa driver is ready in case of working as module */
+    for (retry = 300; retry; retry--) {
+        /* Assume speaker is ready when firmware mixer is available */
+        int i;
+        for (i = 0; i < numChannels; i++) {
+            const std::string mixer_ctl_name =
+                    channelPrefixMap.at(numChannels)[i] + dspFirmwareMixer;
+            struct mixer_ctl* ctl = mixer_get_ctl_by_name(mixer, mixer_ctl_name.c_str());
+            if (!ctl) {
+                PAL_DBG(LOG_TAG, "Could not get ctl for mixer cmd - %s(%d retries left)",
+                        mixer_ctl_name.c_str(), retry);
+                continue;
+            }
+        }
+        if (i != numChannels) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+        break;
+    }
+
+    /* Driver is not ready yet? */
+    if (!retry) {
+        PAL_ERR(LOG_TAG, "SmartPA driver is not ready yet!");
+        return -EINVAL;
+    }
+
+    /* Update speaker calibration resistance */
+    for (int i = 0; i < numChannels; i++) {
+        if (calibrationValues[i] > kCirrusResistanceMax ||
+            calibrationValues[i] < kCirrusResistanceMin) {
+            PAL_ERR(LOG_TAG, "Invalid resistance for channel %d: %fOhm (%u)", i,
+                    Z_TO_OHM(calibrationValues[i]), calibrationValues[i]);
+            continue;
+        }
+        const std::string mixer_ctl_name = channelPrefixMap.at(numChannels)[i] + resistanceMixer;
+        struct mixer_ctl* ctl = mixer_get_ctl_by_name(mixer, mixer_ctl_name.c_str());
+        if (!ctl) {
+            PAL_ERR(LOG_TAG, "Could not get ctl for mixer cmd - %s", mixer_ctl_name.c_str());
+            return -EINVAL;
+        }
+
+        if (mixer_ctl_set_value(ctl, 0, calibrationValues[i])) {
+            PAL_ERR(LOG_TAG, "Failed to set ctl - %s", mixer_ctl_name.c_str());
+            return -EINVAL;
+        }
+    }
+
+    cirrusSmartpaInitialized = true;
+    property_set("vendor.audio.crus.smartpa.inited", "true");
+
+    return 0;
+}
+#endif
+
 int ResourceManager::init_audio()
 {
     int retry = 0;
@@ -1310,6 +1419,14 @@ int ResourceManager::init_audio()
         status = -EINVAL;
         goto exit;
     }
+
+#ifdef AUDIO_CIRRUS_CALIBRATION_RESISTANCE
+    status = adev_crus_smartpa_init(audio_hw_mixer);
+    if (status) {
+        PAL_ERR(LOG_TAG, "Cirrus smartpa init failed");
+        goto exit;
+    }
+#endif
 
     audio_virt_mixer = mixer_open(snd_virt_card);
     if(!audio_virt_mixer) {
