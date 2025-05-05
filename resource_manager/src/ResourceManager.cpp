@@ -73,6 +73,8 @@
 #ifndef FEATURE_IPQ_OPENWRT
 #include <cutils/str_parms.h>
 #endif
+#include <filesystem>
+#include <fstream>
 
 #define XML_PATH_EXTN_MAX_SIZE 80
 #define XML_FILE_DELIMITER "_"
@@ -1233,6 +1235,113 @@ char* ResourceManager::getDeviceNameFromID(uint32_t id)
     return NULL;
 }
 
+#define CRUS_SPK_DSP_FIRMWARE_MIXER "DSP1 Firmware"
+#define CRUS_SPK_DSP_CAL_R_MIXER "Calibration Resistance"
+#define CRUS_SPK_CAL_R_FILE "/mnt/vendor/persist/audio/crus_calr.bin"
+
+#define SPK_CAL_VAL_MIN 7728
+#define SPK_CAL_VAL_MAX 10454
+
+#define Z_TO_OHM(z) ((z) * 5.85714 / 8192.0)
+
+static int adev_crus_smartpa_init(unsigned int card)
+{
+    static bool crus_smartpa_inited = false;
+    struct mixer *mixer = NULL;
+    struct mixer_ctl* ctl = NULL;
+    int retry;
+    int ret;
+    static const std::filesystem::path cal_file(CRUS_SPK_CAL_R_FILE);
+    static const char* stereo_prefix[] = {"T ", "B "};
+    static const char* quad_prefix[] = {"TL ", "TH ", "BL ", "BH "};
+    int num_channels;
+    uint32_t cal_data[4]{0};
+
+    ALOGD("%s: enter", __func__);
+
+    if (!crus_smartpa_inited) {
+        if (!std::filesystem::exists(cal_file)) {
+            ALOGE("Calibration file not found: %s", cal_file.c_str());
+            return -EACCES;
+        }
+
+        std::ifstream file(cal_file, std::ios::binary);
+        if (!file.is_open()) {
+            ALOGE("Failed to open file: %s", cal_file.c_str());
+            return -EACCES;
+        }
+
+        // The calibration file contains one int per channel
+        num_channels = std::filesystem::file_size(cal_file) / sizeof(uint32_t);
+        const char** ctl_channel_prefix = (num_channels == 4) ? quad_prefix : stereo_prefix;
+        file.read(reinterpret_cast<char*>(cal_data), num_channels * 4);
+
+        /* First of all, check if smartpa driver is ready in case of working as module */
+        for (retry = 300; retry; retry--) {
+            if (mixer) {
+                mixer_close(mixer);
+            }
+            mixer = mixer_open(card);
+
+            if (!mixer) {
+                ALOGE("%s: Failed to open mixer", __func__);
+                continue;
+            }
+
+            // Assume speaker is ready when firmware mixer is available
+            for (int i = 0; i < num_channels; i++) {
+                ctl = mixer_get_ctl_by_name(
+                        mixer,
+                        (std::string(ctl_channel_prefix[i]) + CRUS_SPK_DSP_FIRMWARE_MIXER).c_str());
+                if (!ctl) {
+                    ALOGD("%s: Could not get ctl for mixer cmd - %s(%d)", __func__,
+                          (std::string(ctl_channel_prefix[i]) + CRUS_SPK_DSP_FIRMWARE_MIXER)
+                                  .c_str(),
+                          retry);
+                    continue;
+                }
+            }
+            break;
+        }
+
+        /* Driver is not ready yet? */
+        if (!retry) {
+            ALOGE("%s: SmartPA driver is not ready yet!", __func__);
+            mixer_close(mixer);
+            return -EINVAL;
+        }
+
+        /* Update speaker calibration resistance */
+        for (int i = 0; i < num_channels; i++) {
+            if (cal_data[i] > SPK_CAL_VAL_MAX || cal_data[i] < SPK_CAL_VAL_MIN) {
+                ALOGD("%s: invalid resistance for channel %d: %fOhm (%u)", __func__, i,
+                      Z_TO_OHM(cal_data[i]), cal_data[i]);
+                continue;
+            }
+            struct mixer_ctl* ctl = mixer_get_ctl_by_name(
+                    mixer, (std::string(ctl_channel_prefix[i]) + CRUS_SPK_DSP_CAL_R_MIXER).c_str());
+            if (!ctl) {
+                ALOGE("%s: Could not get ctl for mixer cmd - %s", __func__,
+                      (std::string(ctl_channel_prefix[i]) + CRUS_SPK_DSP_CAL_R_MIXER).c_str());
+                continue;
+            }
+
+            ret = mixer_ctl_set_value(ctl, 0, cal_data[i]);
+            if (ret) {
+                ALOGE("%s: Failed to set ctl - %s", __func__,
+                      (std::string(ctl_channel_prefix[i]) + CRUS_SPK_DSP_CAL_R_MIXER).c_str());
+            }
+        }
+
+        mixer_close(mixer);
+        crus_smartpa_inited = true;
+        property_set("vendor.audio.crus.smartpa.inited", "true");
+    }
+
+    ALOGD("%s: exit", __func__);
+    return 0;
+}
+
 int ResourceManager::init_audio()
 {
     int retry = 0;
@@ -1310,6 +1419,8 @@ int ResourceManager::init_audio()
         status = -EINVAL;
         goto exit;
     }
+
+    adev_crus_smartpa_init(snd_hw_card);
 
     audio_virt_mixer = mixer_open(snd_virt_card);
     if(!audio_virt_mixer) {
