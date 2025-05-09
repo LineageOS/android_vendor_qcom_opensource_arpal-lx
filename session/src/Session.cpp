@@ -43,6 +43,7 @@
 #include "SessionAlsaUtils.h"
 #include "SessionAlsaVoice.h"
 
+#include <cutils/properties.h>
 #include <sstream>
 
 struct pcm *Session::pcmEcTx = NULL;
@@ -910,6 +911,7 @@ int32_t Session::setInitialVolume() {
     bool isStreamAvail = false;
     struct pal_vol_ctrl_ramp_param ramp_param = {};
     Session *session = NULL;
+    int master_volume;
 
     PAL_DBG(LOG_TAG, "Enter status: %d", status);
 
@@ -953,6 +955,27 @@ int32_t Session::setInitialVolume() {
             status = setParameters(streamHandle, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
             delete[] volPayload;
+            // Explicitly set the master gain for stereo playback
+            // if ro.vendor.audio.stereo_master_volume is set.
+            // This can be helpful when the acdb does not initialize the
+            // master gain to 1.
+            master_volume = property_get_int32("ro.vendor.audio.stereo_master_volume", -1);
+            if (master_volume >= 0 && streamHandle->mVolumeData->no_of_volpair == 2) {
+                volSize = (sizeof(struct pal_volume_data) + sizeof(struct pal_channel_vol_kv));
+                volPayload = new uint8_t[sizeof(pal_param_payload) + volSize]();
+                pal_volume_data* volumeData =
+                        (pal_volume_data*)(volPayload + sizeof(pal_param_payload));
+
+                // channel_mask of volume_pair is not needed to set the master gain
+                volumeData->no_of_volpair = 1;
+                volumeData->volume_pair[0].vol = master_volume;
+
+                pal_param_payload* pld = (pal_param_payload*)volPayload;
+                pld->payload_size = volSize;
+                status = setParameters(streamHandle, TAG_STREAM_VOLUME,
+                                       PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void*)pld);
+                delete[] volPayload;
+            }
         }
         if (sAttr.direction == PAL_AUDIO_OUTPUT) {
             //set ramp period back to default.
