@@ -27,9 +27,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -113,6 +112,7 @@ typedef enum {
     ST_MODULE_TYPE_HW       = 101, // Internal constant to identify hotword module
     ST_MODULE_TYPE_CUSTOM_1 = 102, // Reserved for Custom Engine 1
     ST_MODULE_TYPE_CUSTOM_2 = 103, // Reserved for Custom Engine 2
+    ST_MODULE_TYPE_MMA      = 200, // MMA usecase
 } st_module_type_t;
 
 typedef struct _SML_GlobalHeaderType {
@@ -169,13 +169,22 @@ typedef struct _SML_ModelType {
 #define ST_MAX_USERS 10
 
 enum st_param_key {
-    ST_PARAM_KEY_CONFIDENCE_LEVELS,
-    ST_PARAM_KEY_HISTORY_BUFFER_CONFIG,
-    ST_PARAM_KEY_KEYWORD_INDICES,
-    ST_PARAM_KEY_TIMESTAMP,
-    ST_PARAM_KEY_DETECTION_PERF_MODE,
-    ST_PARAM_KEY_CONTEXT_RECOGNITION_INFO,
-    ST_PARAM_KEY_CONTEXT_EVENT_INFO,
+    ST_PARAM_KEY_CONFIDENCE_LEVELS = 0x0,
+    ST_PARAM_KEY_HISTORY_BUFFER_CONFIG = 0x1,
+    ST_PARAM_KEY_KEYWORD_INDICES = 0x2,
+    ST_PARAM_KEY_TIMESTAMP = 0x3,
+    ST_PARAM_KEY_DETECTION_PERF_MODE = 0x4,
+    ST_PARAM_KEY_CONTEXT_RECOGNITION_INFO = 0x5,
+    ST_PARAM_KEY_CONTEXT_EVENT_INFO = 0x6,
+    ST_PARAM_KEY_DETECTION_CH_INFO = 0x7,
+    ST_PARAM_KEY_MMA_THRESHOLD_CONFIG = 0x8,
+    ST_PARAM_KEY_MMA_DETECTION_RESULT = 0x9,
+
+    // Keys for optional detection payload information
+    ST_PARAM_KEY_KEYWORD_BUFFER = 0x10001,
+    ST_PARAM_KEY_SSTAGE_KW_ENGINE_INFO = 0x10002,
+    ST_PARAM_KEY_SSTAGE_UV_ENGINE_INFO = 0x10003,
+    ST_PARAM_KEY_IS_BARGEIN = 0x10004,
 };
 
 typedef enum st_param_key st_param_key_t;
@@ -298,6 +307,22 @@ struct __attribute__((__packed__)) st_det_perf_mode_info
     uint32_t mode; /* 0 -Low Power, 1 -High performance */
 };
 
+struct __attribute__((__packed__)) st_det_engine_stats
+{
+    uint32_t version; /* value: 0x01 */
+    int32_t detection_state;
+    uint32_t processed_length;
+    uint32_t total_process_duration;
+    uint32_t total_capi_process_duration;
+    uint32_t total_capi_get_param_duration;
+};
+
+struct __attribute__((__packed__)) st_channel_index_info
+{
+    uint32_t version; /* value: 0x01 */
+    uint32_t channel_index; /* range: {0..15} */
+};
+
 typedef enum st_sound_model_type {
     ST_SM_TYPE_NONE,
     ST_SM_TYPE_KEYWORD_DETECTION,
@@ -335,6 +360,22 @@ struct model_stats
     uint32_t kw_end_timestamp_msw;
     uint32_t detection_timestamp_lsw;
     uint32_t detection_timestamp_msw;
+};
+
+struct detection_event_info_mma
+{
+    uint32_t context_id;
+    uint32_t mode_mask_bits;
+    uint32_t detection_event_bits;
+    uint32_t detection_event_bits_after_mask;
+    int32_t multi_modal_detection_flag;
+    int32_t curr_detection_timer_enabled_flag;
+    int32_t curr_detection_timer_counter_in_frames;
+    int32_t detection_timeout_in_frames;
+    int32_t continuous_listen_enabled_flag;
+    int32_t continuous_listen_mode_on_flag_after_detection;
+    int32_t continuous_listen_timer_counter_in_frames;
+    int32_t continuous_listen_timeout_in_frames;
 };
 
 struct detection_event_info_pdk
