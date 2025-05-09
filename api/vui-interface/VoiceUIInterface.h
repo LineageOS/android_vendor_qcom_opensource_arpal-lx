@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -61,6 +61,11 @@ typedef struct sound_model_list {
     std::vector<sound_model_data_t *> sm_list;
 } sound_model_list_t;
 
+// property list indicating if extension detection payload exists
+typedef struct detection_prop_list {
+    std::vector<uint32_t> prop_list;
+} detection_prop_list_t;
+
 // sound model info for interface operation
 struct sound_model_info {
     pal_st_sound_model_type_t type;
@@ -75,9 +80,14 @@ struct sound_model_info {
     struct buffer_config buf_config;
     sec_stage_level_t sec_threshold;
     sec_stage_level_t sec_det_level;
+    struct st_det_engine_stats sec_kw_det_info;
+    struct st_det_engine_stats sec_uv_det_info;
+    std::vector<uint32_t> det_prop_list;
     uint32_t det_result;
     SoundModelInfo *info;
     bool state;
+    uint8_t *ftrt_data_;
+    uint32_t ftrt_data_size_;
 };
 
 /*
@@ -134,6 +144,10 @@ typedef enum {
     PARAM_BUFFERING_CONFIG = 29,
     PARAM_ENGINE_RESET = 30,
     PARAM_DETECTION_STREAM_LIST = 31,
+    PARAM_DETECTION_PROP_LIST = 32,
+    PARAM_SSTAGE_KW_DET_STATS = 33,
+    PARAM_SSTAGE_UV_DET_STATS = 34,
+    PARAM_DETECTION_PERF_MODE = 35,
     // new custom param id can be added here
 } intf_param_id_t;
 
