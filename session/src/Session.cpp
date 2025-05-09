@@ -952,6 +952,15 @@ int32_t Session::setInitialVolume() {
             memcpy(pld->payload, streamHandle->mVolumeData, volSize);
             status = setParameters(streamHandle, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
+            if (streamHandle->mVolumeData->no_of_volpair == 2) {
+                // set the initial volume parameter for one channel
+                // such that the master gain is also set
+                pld->payload_size =
+                        sizeof(struct pal_volume_data) + sizeof(struct pal_channel_vol_kv);
+                ((pal_volume_data*)pld->payload)->no_of_volpair = 1;
+                status = setParameters(streamHandle, TAG_STREAM_VOLUME,
+                                       PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void*)pld);
+            }
             delete[] volPayload;
         }
         if (sAttr.direction == PAL_AUDIO_OUTPUT) {
