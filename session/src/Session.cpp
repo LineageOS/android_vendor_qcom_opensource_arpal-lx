@@ -953,6 +953,24 @@ int32_t Session::setInitialVolume() {
             status = setParameters(streamHandle, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
             delete[] volPayload;
+            // Explicitly set the master gain for stereo playback
+            if (streamHandle->mVolumeData->no_of_volpair == 2) {
+                volSize = (sizeof(struct pal_volume_data) + sizeof(struct pal_channel_vol_kv));
+                volPayload = new uint8_t[sizeof(pal_param_payload) + volSize]();
+                pal_volume_data* volumeData =
+                        (pal_volume_data*)(volPayload + sizeof(pal_param_payload));
+
+                // Setting default volume to unity
+                volumeData->no_of_volpair = 1;
+                volumeData->volume_pair[0].channel_mask = 0x03;
+                volumeData->volume_pair[0].vol = 1.0f;
+
+                pal_param_payload* pld = (pal_param_payload*)volPayload;
+                pld->payload_size = volSize;
+                status = setParameters(streamHandle, TAG_STREAM_VOLUME,
+                                       PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void*)pld);
+                delete[] volPayload;
+            }
         }
         if (sAttr.direction == PAL_AUDIO_OUTPUT) {
             //set ramp period back to default.
