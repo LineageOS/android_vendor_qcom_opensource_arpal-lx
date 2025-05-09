@@ -942,6 +942,7 @@ int32_t Session::setInitialVolume() {
         }
         // apply if there is any cached volume
         if (streamHandle->mVolumeData) {
+            streamHandle->mVolumeData->no_of_volpair--;
             volSize = (sizeof(struct pal_volume_data) +
                       (sizeof(struct pal_channel_vol_kv) *
                       (streamHandle->mVolumeData->no_of_volpair)));
@@ -953,6 +954,7 @@ int32_t Session::setInitialVolume() {
             status = setParameters(streamHandle, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
             delete[] volPayload;
+            streamHandle->mVolumeData->no_of_volpair++;
         }
         if (sAttr.direction == PAL_AUDIO_OUTPUT) {
             //set ramp period back to default.
