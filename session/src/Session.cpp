@@ -953,6 +953,17 @@ int32_t Session::setInitialVolume() {
             status = setParameters(streamHandle, TAG_STREAM_VOLUME,
                     PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void *)pld);
             delete[] volPayload;
+            if (streamHandle->mVolumeData->no_of_volpair == 2) {
+                volSize = (sizeof(struct pal_volume_data) + (sizeof(struct pal_channel_vol_kv)));
+                volPayload = new uint8_t[sizeof(pal_param_payload) + volSize]();
+                pal_param_payload* pld = (pal_param_payload*)volPayload;
+                pld->payload_size = sizeof(struct pal_volume_data);
+                memcpy(pld->payload, streamHandle->mVolumeData, volSize);
+                ((pal_volume_data*)pld->payload)->no_of_volpair = 1;
+                status = setParameters(streamHandle, TAG_STREAM_VOLUME,
+                                       PAL_PARAM_ID_VOLUME_USING_SET_PARAM, (void*)pld);
+                delete[] volPayload;
+            }
         }
         if (sAttr.direction == PAL_AUDIO_OUTPUT) {
             //set ramp period back to default.
