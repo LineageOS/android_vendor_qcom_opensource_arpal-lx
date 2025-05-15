@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d69655a_861e46c7",
+        "filename": "session/src/Session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-05-15T15:03:09Z",
+      "side": 1,
+      "message": "While looking at it, shouldn\u0027t this be volSize?",
+      "range": {
+        "startLine": 951,
+        "startChar": 32,
+        "endLine": 951,
+        "endChar": 63
+      },
+      "revId": "b95a90c21bf825139c26ddc84a767712a2626bfd",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
