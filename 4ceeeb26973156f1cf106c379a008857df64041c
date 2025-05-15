@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae5aac4a_428f1dbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-05-15T22:15:07Z",
+      "side": 1,
+      "message": "We don\u0027t have any other devices enabling volume using set_param: https://github.com/search?q\u003dorg%3ALineageOS%20use_volume_set_param\u0026type\u003dcode\n\nI think this should be safe on all devices, or do you prefer to guard this and introduce a flag / property?",
+      "revId": "4ceeeb26973156f1cf106c379a008857df64041c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
