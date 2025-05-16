@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a04edf5_e16f997d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 33800
+      },
+      "writtenOn": "2025-05-16T17:18:21Z",
+      "side": 1,
+      "message": "Fixes issues on bengal-5.15 on Xiaomi devices with awinic speaker",
+      "revId": "eadc432dde85f18cb43184dc42a04d442a446a19",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
