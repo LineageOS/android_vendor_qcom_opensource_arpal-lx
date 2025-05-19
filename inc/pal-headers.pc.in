@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: mm-audio-headers
+Description: Common mm-audio-headers for Audio-Reach
+Version: @VERSION@
+Libs: -L${libdir}
+Cflags: -I${includedir}/pal

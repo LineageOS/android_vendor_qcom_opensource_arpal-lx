@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -155,6 +155,7 @@ uint32_t pal_log_lvl = (PAL_LOG_ERR|PAL_LOG_INFO);
 static struct str_parms *configParamKVPairs;
 
 char rmngr_xml_file[XML_PATH_MAX_LENGTH] = {0};
+char rmngr_xml_file_wo_variant[XML_PATH_MAX_LENGTH] = {0};
 
 char vendor_config_path[VENDOR_CONFIG_PATH_MAX_LENGTH] = {0};
 
@@ -756,7 +757,10 @@ ResourceManager::ResourceManager()
         throw std::runtime_error("error in init audio route and audio mixer");
     }
 
+    cardState = CARD_STATUS_ONLINE;
     ret = ResourceManager::XmlParser(rmngr_xml_file);
+    if (ret == -ENOENT) // try resourcemanager xml without variant name
+        ret = ResourceManager::XmlParser(rmngr_xml_file_wo_variant);
     if (ret) {
         PAL_ERR(LOG_TAG, "error in resource xml parsing ret %d", ret);
         throw std::runtime_error("error in resource xml parsing");
@@ -5452,6 +5456,11 @@ void  ResourceManager::checkSpeakerConcurrency(struct pal_device *deviceattr,
                     PAL_ERR(LOG_TAG, "Getting Device instance failed");
                     continue;
                 }
+                //This is intent to check if any wired headset/headphones active streams only, so ignoring other devices’ active streams
+                if (( curDevAttr->id != PAL_DEVICE_OUT_WIRED_HEADSET) && ( curDevAttr->id != PAL_DEVICE_OUT_WIRED_HEADPHONE)) {
+                    PAL_INFO(LOG_TAG, "Shared BE device[%d] not wired headset, ignore",  curDevAttr->id);
+                    continue;
+                }
                 curDev->getDeviceAttributes(curDevAttr);
                 if (((curDevAttr->config.sample_rate % SAMPLINGRATE_44K == 0) &&
                     (sAttr->out_media_config.sample_rate % SAMPLINGRATE_44K != 0)) ||
@@ -6496,7 +6505,7 @@ void ResourceManager::getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream
                     (*it)->getAssociatedDevices(devices);
                     typename std::vector<std::shared_ptr<Device>>::iterator result =
                              std::find(devices.begin(), devices.end(), dev);
-                    if (result != devices.end())
+                    if ((result != devices.end()) && (i == dev_id))
                         activeStreams.push_back(*it);
                 }
                 PAL_DBG(LOG_TAG, "got dev %d active streams on dev is %zu", i, activeStreams.size() );
@@ -11448,7 +11457,7 @@ int ResourceManager::XmlParser(std::string xmlFile)
     PAL_INFO(LOG_TAG, "XML parsing started - file name %s", xmlFile.c_str());
     file = fopen(xmlFile.c_str(), "r");
     if(!file) {
-        ret = EINVAL;
+        ret = -ENOENT;
         PAL_ERR(LOG_TAG, "Failed to open xml file name %s ret %d", xmlFile.c_str(), ret);
         goto done;
     }

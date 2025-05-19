@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1378,14 +1378,21 @@ void BtA2dp::open_a2dp_source()
                 ret = audio_source_open_api(get_session_type());
                 if (ret != 0) {
                     PAL_ERR(LOG_TAG, "Failed to open source stream for a2dp: status %d", ret);
+                    return;
+                } else {
+                    a2dpState = A2DP_STATE_CONNECTED;
+                    PAL_VERBOSE(LOG_TAG, "open source stream for a2dp success: %d ", ret);
                 }
             } else {
                 ret = audio_source_open();
                 if (ret != 0) {
                     PAL_ERR(LOG_TAG, "Failed to open source stream for a2dp: status %d", ret);
+                    return;
+                } else {
+                    a2dpState = A2DP_STATE_CONNECTED;
+                    PAL_VERBOSE(LOG_TAG, "open source stream for a2dp success: %d ", ret);
                 }
             }
-            a2dpState = A2DP_STATE_CONNECTED;
         } else {
             PAL_DBG(LOG_TAG, "Called a2dp open with improper state %d", a2dpState);
         }

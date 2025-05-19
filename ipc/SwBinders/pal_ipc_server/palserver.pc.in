@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: palserver
+Description: palserver library
+Version: @VERSION@
+Libs: -L${libdir} -lpalserver
+Cflags: -I${includedir}/palserver

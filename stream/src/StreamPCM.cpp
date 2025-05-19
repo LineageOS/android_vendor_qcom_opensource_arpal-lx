@@ -593,10 +593,10 @@ int32_t StreamPCM::start()
                       if (dev_id <= PAL_DEVICE_OUT_MIN || dev_id >= PAL_DEVICE_OUT_MAX)
                           continue;
 
-                      status = mDevices[i]->stop();
-                      if (0 != status) {
+                      int32_t tempStatus = mDevices[i]->stop();
+                      if (0 != tempStatus) {
                           PAL_ERR(LOG_TAG, "Rx device stop is failed with status %d",
-                                                              status);
+                                                              tempStatus);
                           goto exit;
                       }
 

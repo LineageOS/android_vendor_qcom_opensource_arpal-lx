@@ -78,7 +78,7 @@ std::shared_ptr<SignalHandler> SignalHandler::getInstance() {
 
 // static
 void SignalHandler::invokeDefaultHandler(std::shared_ptr<struct sigaction> sAct,
-            int code, struct siginfo *si, void *sc) {
+            int code, siginfo_t *si, void *sc) {
     ALOGV("%s: invoke default handler for signal %d", __func__, code);
     // Remove custom handler so that default handler is invoked
     sigaction(code, sAct.get(), NULL);
@@ -105,7 +105,7 @@ void SignalHandler::invokeDefaultHandler(std::shared_ptr<struct sigaction> sAct,
 
 // static
 void SignalHandler::customSignalHandler(
-            int code, struct siginfo *si, void *sc) {
+            int code, siginfo_t *si, void *sc) {
     ALOGV("%s: enter", __func__);
     std::lock_guard<std::mutex> lock(sDefaultSigMapLock);
     if (sClientCb) {

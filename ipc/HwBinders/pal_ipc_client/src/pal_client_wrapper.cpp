@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -69,7 +70,7 @@ android::sp<IPAL> get_pal_server() {
         if(Server_death_notifier == NULL) {
             Server_death_notifier = new server_death_notifier();
             pal_client->linkToDeath(Server_death_notifier, 0);
-            ALOGE("palclient linked to death server death \n", __func__);
+            ALOGE("%s : palclient linked to death server death \n", __func__);
         }
     }
 exit:

@@ -83,6 +83,11 @@ h_sources = ${top_srcdir}/stream/inc/Stream.h \
             ${top_srcdir}/stream/inc/StreamPCM.h \
             ${top_srcdir}/stream/inc/StreamSoundTrigger.h \
             ${top_srcdir}/stream/inc/StreamUltraSound.h \
+	    ${top_srcdir}/stream/inc/StreamACDB.h \
+            ${top_srcdir}/stream/inc/StreamACD.h \
+            ${top_srcdir}/stream/inc/StreamCommon.h \
+            ${top_srcdir}/stream/inc/StreamContextProxy.h \
+            ${top_srcdir}/stream/inc/StreamSensorPCMData.h\
             ${top_srcdir}/device/inc/Device.h \
             ${top_srcdir}/device/inc/Speaker.h \
             ${top_srcdir}/device/inc/Headphone.h \
@@ -115,10 +120,14 @@ h_sources = ${top_srcdir}/stream/inc/Stream.h \
             ${top_srcdir}/PalApi.h \
             ${top_srcdir}/PalAudioRoute.h \
             ${top_srcdir}/PalCommon.h \
-            ${top_srcdir}/utils/inc/PalRingBuffer.h \
             ${top_srcdir}/utils/inc/SoundTriggerUtils.h \
             ${top_srcdir}/utils/inc/SoundTriggerPlatformInfo.h \
             ${top_srcdir}/utils/inc/ChargerListener.h \
+	    ${top_srcdir}/utils/inc/SoundTriggerXmlParser.h \
+	    ${top_srcdir}/utils/inc/ACDPlatformInfo.h \
+	    ${top_srcdir}/utils/inc/PalRingBuffer.h \
+	    ${top_srcdir}/utils/inc/SignalHandler.h \
+	    ${top_srcdir}/utils/inc/MetadataParser.h  \
             ${top_srcdir}/context_manager/inc/ContextManager.h
 
 AM_CPPFLAGS := -I $(top_srcdir)/stream/inc
@@ -139,7 +148,7 @@ AM_CPPFLAGS += -I ${WORKSPACE}/audio/mm-audio-headers/audio-listen/
 AM_CPPFLAGS += -Wno-sign-compare -Wno-unused-result
 AM_CPPFLAGS += -D__unused=__attribute__\(\(__unused__\)\) -DLINUX_ENABLED
 AM_CPPFLAGS += -DSND_AUDIOCODEC_ALAC=0x00000020 -DSND_AUDIOCODEC_APE=0x00000021
-AM_CPPFLAGS += -DCONFIG_GSL
+AM_CPPFLAGS += -DCONFIG_GSL -DEC_REF_CAPTURE_ENABLED
 
 pal_sources = ${top_srcdir}/stream/src/Stream.cpp \
               ${top_srcdir}/stream/src/StreamCompress.cpp \
@@ -175,9 +184,6 @@ pal_sources = ${top_srcdir}/stream/src/Stream.cpp \
               ${top_srcdir}/resource_manager/src/ResourceManager.cpp \
               ${top_srcdir}/resource_manager/src/SndCardMonitor.cpp \
               ${top_srcdir}/Pal.cpp \
-              ${top_srcdir}/utils/src/PalRingBuffer.cpp \
-              ${top_srcdir}/utils/src/SoundTriggerUtils.cpp \
-              ${top_srcdir}/utils/src/SoundTriggerPlatformInfo.cpp \
               ${top_srcdir}/context_manager/src/ContextManager.cpp \
               ${top_srcdir}/stream/src/StreamNonTunnel.cpp \
               ${top_srcdir}/stream/src/StreamACD.cpp \
@@ -188,9 +194,16 @@ pal_sources = ${top_srcdir}/stream/src/Stream.cpp \
               ${top_srcdir}/session/src/SessionAgm.cpp \
               ${top_srcdir}/session/src/ContextDetectionEngine.cpp \
               ${top_srcdir}/session/src/ACDEngine.cpp \
-              ${top_srcdir}/utils/src/SoundTriggerXmlParser.cpp \
+              ${top_srcdir}/device/src/HeadsetVaMic.cpp \
+	      ${top_srcdir}/utils/src/PalRingBuffer.cpp \
+              ${top_srcdir}/utils/src/SoundTriggerUtils.cpp \
+              ${top_srcdir}/utils/src/SoundTriggerPlatformInfo.cpp \
+	      ${top_srcdir}/utils/src/SoundTriggerXmlParser.cpp \
               ${top_srcdir}/utils/src/ACDPlatformInfo.cpp \
-              ${top_srcdir}/device/src/HeadsetVaMic.cpp
+	      ${top_srcdir}/stream/src/StreamACDB.cpp \
+	      ${top_srcdir}/utils/src/MetadataParser.cpp \
+	      ${top_srcdir}/device/src/ECRefDevice.cpp \
+              ${top_srcdir}/utils/src/SignalHandler.cpp
 
 acl_sources = ${top_srcdir}/utils/src/ChargerListener.cpp
 

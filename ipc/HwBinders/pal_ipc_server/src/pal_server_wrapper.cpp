@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1147,7 +1148,7 @@ Return<void>PAL::ipc_pal_stream_get_tags_with_module_info(PalStreamHandle stream
 
 
 IPAL* HIDL_FETCH_IPAL(const char* /* name */) {
-    ALOGV("%s");
+    ALOGV("%s", __func__);
     return new PAL();
 }
 

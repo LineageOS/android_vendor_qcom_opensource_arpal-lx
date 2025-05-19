@@ -56,8 +56,8 @@ struct SignalHandler {
     static void setClientCallback(std::function<void(int, pid_t, uid_t)> cb);
     static void asyncRegister(int signal);
     static void invokeDefaultHandler(std::shared_ptr<struct sigaction> sAct,
-                              int code, struct siginfo *si, void *sc);
-    static void customSignalHandler(int code, struct siginfo *si, void *sc);
+                              int code, siginfo_t *si, void *sc);
+    static void customSignalHandler(int code, siginfo_t *si, void *sc);
     static std::vector<int> getRegisteredSignals();
     void registerSignalHandler(std::vector<int> signalsToRegister);
     static std::mutex sDefaultSigMapLock;

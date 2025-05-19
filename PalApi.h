@@ -25,8 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /** \file pal_api.h
  *  \brief Function prototypes for the PAL(Platform Audio
  *   Layer).
@@ -52,7 +55,7 @@ extern "C" {
  *  @return the version string in the form of Major and Minor
  *  e.g '1.0'
  */
-char* pal_get_version( );
+const char* pal_get_version( );
 
 /**
  *  Initialize PAL. Increases ref count.
