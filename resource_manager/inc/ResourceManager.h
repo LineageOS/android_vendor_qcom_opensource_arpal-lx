@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1088,6 +1088,7 @@ public:
     int32_t pauseInCallMusic();
     static void setProxyRecordActive(bool isActive);
     void WbSpeechConfig(pal_device_id_t devId, uint32_t param_id, void *param_payload);
+    void reconfigureScoStreams();
 };
 
 #endif
