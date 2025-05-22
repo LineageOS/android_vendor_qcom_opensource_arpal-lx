@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ec9aed5_bf1b545c",
+        "filename": "session/src/Session.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-22T12:24:40Z",
+      "side": 1,
+      "message": "this is different compared to the code above. the main problem is that the code above looks incorrect.\nThey do\n`            pld-\u003epayload_size \u003d sizeof(struct pal_volume_data);`\nso they don\u0027t add pal_channel_vol_kv * num?\nThis seems to work just because they never use the payload_size on the other side...\nCan you make another change to fix that before?",
+      "range": {
+        "startLine": 974,
+        "startChar": 36,
+        "endLine": 974,
+        "endChar": 43
+      },
+      "revId": "6eed7ae829ca4c07c287b0556ab91c4fceaaac1b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
