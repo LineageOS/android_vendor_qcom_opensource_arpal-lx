@@ -2388,6 +2388,8 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
     std::vector<std::shared_ptr<Device>> associatedDevices;
     std::vector<std::pair<selector_type_t, std::string>> filled_selector_pairs;
     std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+    std::istringstream customKeys;
+    std::string customKey;
 
     PAL_DBG(LOG_TAG, "Enter");
     sattr = new struct pal_stream_attributes();
@@ -2507,11 +2509,12 @@ std::vector<std::pair<selector_type_t, std::string>> PayloadBuilder::getSelector
                 break;
             case CUSTOM_CONFIG_SEL:
                 if (dAttr && strlen(dAttr->custom_config.custom_key)) {
-                    filled_selector_pairs.push_back(
-                        std::make_pair(CUSTOM_CONFIG_SEL,
-                        dAttr->custom_config.custom_key));
-                    PAL_INFO(LOG_TAG, "custom config key:%s",
-                        dAttr->custom_config.custom_key);
+                    customKeys.str(dAttr->custom_config.custom_key);
+                    while (std::getline(customKeys, customKey, ';')) {
+                        filled_selector_pairs.push_back(
+                                std::make_pair(CUSTOM_CONFIG_SEL, customKey.c_str()));
+                        PAL_INFO(LOG_TAG, "custom config key:%s", customKey.c_str());
+                    }
                 }
                 break;
             default:
