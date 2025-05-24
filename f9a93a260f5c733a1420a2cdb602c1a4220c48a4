@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d575861_ae0bbc68",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-05-24T15:49:35Z",
+      "side": 1,
+      "message": "It tries to load the custom config \"camcorder_landscape;\" without this change, which fails as expected:\n`05-24 16:48:45.228  1237  9650 I PAL: PayloadBuilder: getSelectorValues: 2495: stream type: 205-24 16:48:45.228  1237  9650 I PAL: PayloadBuilder: getSelectorValues: 2514: custom config key:camcorder_landscape;\n05-24 16:48:45.228  1237  9650 I PAL: PayloadBuilder: retrieveKVs: 2358: Fallback to find KVs without custom config camcorder_landscape;\n05-24 16:48:45.228  1237  9650 I PAL: PayloadBuilder: findKVs: 2315: key: 0xa3000000 value: 0xa3000001\n05-24 16:48:45.228  1237  9650 I PAL: PayloadBuilder: findKVs: 2315: key: 0xad000000 value: 0xad000002`",
+      "revId": "f9a93a260f5c733a1420a2cdb602c1a4220c48a4",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
