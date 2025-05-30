@@ -16,6 +16,115 @@
       "message": "Note that asus also set \"DSP1 Firmware\" to \"Protection\", set \"DSP1 Preload Switch\" and \"DSP Booted\", but these were set to constant values and can thus be set using mixer_paths.xml",
       "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f73cecf7_45bcca9e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-30T14:33:46Z",
+      "side": 1,
+      "message": "Mostly nitpicks, feel free to simply ack them",
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa60b57e_7cf03b8d",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1250,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-30T14:33:46Z",
+      "side": 1,
+      "message": "make it void?\nor actually check return value and fail init in case",
+      "range": {
+        "startLine": 1250,
+        "startChar": 0,
+        "endLine": 1250,
+        "endChar": 52
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6f2ab62_7d0b331e",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1265,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-30T14:33:46Z",
+      "side": 1,
+      "message": "early return please",
+      "range": {
+        "startLine": 1265,
+        "startChar": 0,
+        "endLine": 1265,
+        "endChar": 31
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41c7532b_1e45af9a",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-30T14:33:46Z",
+      "side": 1,
+      "message": "std::string name \u003d ...\nand the use it in the log instead of creating another one?",
+      "range": {
+        "startLine": 1325,
+        "startChar": 28,
+        "endLine": 1325,
+        "endChar": 89
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a85cc088_9f332869",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1428,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-30T14:33:46Z",
+      "side": 1,
+      "message": "use audio_hw_mixer directly?\nAt this point in time I don\u0027t think the mixer is used so you can call it directly?",
+      "range": {
+        "startLine": 1428,
+        "startChar": 27,
+        "endLine": 1428,
+        "endChar": 38
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
