@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24aeccf3_aae26c49",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1272,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n        return 0;\n```",
+      "range": {
+        "startLine": 1272,
+        "startChar": 0,
+        "endLine": 1272,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "514ff148_9acab66e",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1278,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n        return -EINVAL;\n```",
+      "range": {
+        "startLine": 1277,
+        "startChar": 0,
+        "endLine": 1278,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed8db95a_f4f76d29",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1284,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n        return 0;\n```",
+      "range": {
+        "startLine": 1284,
+        "startChar": 0,
+        "endLine": 1284,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21ed785e_4d1e5493",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1291,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n        return -EACCES;\n```",
+      "range": {
+        "startLine": 1290,
+        "startChar": 0,
+        "endLine": 1291,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5989b49_485104f2",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n        return -EINVAL;\n```",
+      "range": {
+        "startLine": 1320,
+        "startChar": 0,
+        "endLine": 1321,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb833521_9ac83eb2",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1337,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n            return -EINVAL;\n```",
+      "range": {
+        "startLine": 1336,
+        "startChar": 0,
+        "endLine": 1337,
+        "endChar": 22
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac2323e0_2695f80c",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1344,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n            return -EINVAL;\n```",
+      "range": {
+        "startLine": 1343,
+        "startChar": 0,
+        "endLine": 1344,
+        "endChar": 22
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1469c01f_166176f7",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1353,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-06-04T16:04:08Z",
+      "side": 1,
+      "message": "```suggestion\n\n    return 0;\n```\n\nDon\u0027t use goto unless it\u0027s to free up resources, you don\u0027t own any resource",
+      "range": {
+        "startLine": 1350,
+        "startChar": 0,
+        "endLine": 1353,
+        "endChar": 15
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
