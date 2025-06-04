@@ -58,6 +58,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6c79890c_5f2371dd",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1250,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-04T15:27:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa60b57e_7cf03b8d",
+      "range": {
+        "startLine": 1250,
+        "startChar": 0,
+        "endLine": 1250,
+        "endChar": 52
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f6f2ab62_7d0b331e",
@@ -71,6 +95,30 @@
       "writtenOn": "2025-05-30T14:33:46Z",
       "side": 1,
       "message": "early return please",
+      "range": {
+        "startLine": 1265,
+        "startChar": 0,
+        "endLine": 1265,
+        "endChar": 31
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d056d64_65c68cc5",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1265,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-04T15:27:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f6f2ab62_7d0b331e",
       "range": {
         "startLine": 1265,
         "startChar": 0,
@@ -104,6 +152,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d29ecdec_bea106fc",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-04T15:27:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "41c7532b_1e45af9a",
+      "range": {
+        "startLine": 1325,
+        "startChar": 28,
+        "endLine": 1325,
+        "endChar": 89
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a85cc088_9f332869",
@@ -117,6 +189,30 @@
       "writtenOn": "2025-05-30T14:33:46Z",
       "side": 1,
       "message": "use audio_hw_mixer directly?\nAt this point in time I don\u0027t think the mixer is used so you can call it directly?",
+      "range": {
+        "startLine": 1428,
+        "startChar": 27,
+        "endLine": 1428,
+        "endChar": 38
+      },
+      "revId": "27522568c18147b71c8a20d2f1348afe31f847f7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1988c342_eb2630b6",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1428,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-04T15:27:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a85cc088_9f332869",
       "range": {
         "startLine": 1428,
         "startChar": 27,
