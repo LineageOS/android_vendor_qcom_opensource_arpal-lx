@@ -24,6 +24,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f137f21c_bfe8930a",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1272,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "24aeccf3_aae26c49",
+      "range": {
+        "startLine": 1272,
+        "startChar": 0,
+        "endLine": 1272,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "514ff148_9acab66e",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-06-04T16:04:08Z",
       "side": 1,
       "message": "```suggestion\n        return -EINVAL;\n```",
+      "range": {
+        "startLine": 1277,
+        "startChar": 0,
+        "endLine": 1278,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "81f11e59_907ccfb9",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1278,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "514ff148_9acab66e",
       "range": {
         "startLine": 1277,
         "startChar": 0,
@@ -70,6 +118,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec5054c9_d32729cb",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1284,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "ed8db95a_f4f76d29",
+      "range": {
+        "startLine": 1284,
+        "startChar": 0,
+        "endLine": 1284,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "21ed785e_4d1e5493",
@@ -83,6 +155,30 @@
       "writtenOn": "2025-06-04T16:04:08Z",
       "side": 1,
       "message": "```suggestion\n        return -EACCES;\n```",
+      "range": {
+        "startLine": 1290,
+        "startChar": 0,
+        "endLine": 1291,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "94b5d929_287adb26",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1291,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "21ed785e_4d1e5493",
       "range": {
         "startLine": 1290,
         "startChar": 0,
@@ -116,6 +212,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "13ff6ee8_df161e95",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "d5989b49_485104f2",
+      "range": {
+        "startLine": 1320,
+        "startChar": 0,
+        "endLine": 1321,
+        "endChar": 18
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cb833521_9ac83eb2",
@@ -129,6 +249,30 @@
       "writtenOn": "2025-06-04T16:04:08Z",
       "side": 1,
       "message": "```suggestion\n            return -EINVAL;\n```",
+      "range": {
+        "startLine": 1336,
+        "startChar": 0,
+        "endLine": 1337,
+        "endChar": 22
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c80127f_05790e3a",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1337,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "cb833521_9ac83eb2",
       "range": {
         "startLine": 1336,
         "startChar": 0,
@@ -162,6 +306,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "87a0379b_ea7a5265",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1344,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "ac2323e0_2695f80c",
+      "range": {
+        "startLine": 1343,
+        "startChar": 0,
+        "endLine": 1344,
+        "endChar": 22
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1469c01f_166176f7",
@@ -175,6 +343,30 @@
       "writtenOn": "2025-06-04T16:04:08Z",
       "side": 1,
       "message": "```suggestion\n\n    return 0;\n```\n\nDon\u0027t use goto unless it\u0027s to free up resources, you don\u0027t own any resource",
+      "range": {
+        "startLine": 1350,
+        "startChar": 0,
+        "endLine": 1353,
+        "endChar": 15
+      },
+      "revId": "781395d7f5a03a91455a59fc32dec60f62563f5b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08cb309e_9049e4f1",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1353,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-06-05T12:37:43Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "1469c01f_166176f7",
       "range": {
         "startLine": 1350,
         "startChar": 0,
