@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0869f9a7_9c19a4c5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10258
+      },
+      "writtenOn": "2025-07-05T14:31:35Z",
+      "side": 1,
+      "message": "Revert due to lack of ST_PARAM_KEY_SSTAGE_UV_ENGINE_INFO and st_det_engine_stats, would be better not if we can get them from elsewhere",
+      "revId": "0b5ae518b46a3f08dfd36009b07fd322f89605af",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
