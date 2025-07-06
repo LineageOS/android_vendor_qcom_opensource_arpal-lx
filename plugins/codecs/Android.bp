@@ -1,0 +1,89 @@
+cc_library_shared {
+    name: "lib_bt_bundle",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ] + select(soong_config_variable("qtiaudio", "feature_bt_a2dp_lpi"), {
+        "true": ["-DBT_A2DP_LPI_ENABLED"],
+        default: [],
+    }),
+
+    srcs: [
+        "bt_base.c",
+        "bt_bundle.c",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+}
+
+cc_library_shared {
+    name: "lib_bt_aptx",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ],
+
+    srcs: [
+        "bt_aptx.c",
+        "bt_base.c",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+}
+
+cc_library_shared {
+    name: "lib_bt_ble",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ],
+
+    srcs: [
+        "bt_base.c",
+        "bt_ble.c",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+}
