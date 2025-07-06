@@ -1,0 +1,40 @@
+cc_library_shared {
+    name: "vendor.qti.hardware.pal@1.0-impl",
+
+    defaults: [
+        "android_hardware_audio_config_defaults",
+    ],
+
+    owner: "qti",
+    vendor: true,
+    cflags: [
+        "-Wno-format",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-function",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+        "-v",
+    ],
+
+    srcs: ["src/pal_server_wrapper.cpp"],
+
+    export_include_dirs: ["inc"],
+
+    shared_libs: [
+        "libhidlbase",
+
+        "libar-pal",
+        "libbase",
+        "libcutils",
+        "libhardware",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal@1.0",
+    ],
+
+    header_libs: [
+        "libarosal_headers",
+        "libarpal_headers",
+        "libspf-headers",
+    ],
+}

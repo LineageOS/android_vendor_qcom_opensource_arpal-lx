@@ -1,0 +1,89 @@
+cc_library_shared {
+    name: "lib_bt_bundle",
+
+    srcs: [
+        "bt_base.c",
+        "bt_bundle.c",
+    ],
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    owner: "qti",
+    vendor: true,
+}
+
+cc_library_shared {
+    name: "lib_bt_aptx",
+
+    srcs: [
+        "bt_aptx.c",
+        "bt_base.c",
+    ],
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    owner: "qti",
+    vendor: true,
+}
+
+cc_library_shared {
+    name: "lib_bt_ble",
+
+    srcs: [
+        "bt_base.c",
+        "bt_ble.c",
+    ],
+
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libdl",
+        "liblog",
+    ],
+
+    include_dirs: ["system/media/audio/include"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libspf-headers",
+    ],
+
+    owner: "qti",
+    vendor: true,
+}
