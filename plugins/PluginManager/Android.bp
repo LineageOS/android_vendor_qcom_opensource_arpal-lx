@@ -5,3 +5,30 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libplugin_manager",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: ["src/PluginManager.cpp"],
+
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "liblisten_headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+    ],
+}

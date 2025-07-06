@@ -1,0 +1,226 @@
+cc_library_headers {
+    name: "libsession_compress_config_headers",
+    vendor: true,
+
+    export_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaCompress/inc"],
+        default: ["default/ConfigSessionAlsaCompress/inc"],
+    }),
+}
+
+cc_library_headers {
+    name: "libsession_pcm_config_headers",
+    vendor: true,
+
+    export_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaPcm/inc"],
+        default: ["default/ConfigSessionAlsaPcm/inc"],
+    }),
+}
+
+cc_library_headers {
+    name: "libsession_voice_config_headers",
+    vendor: true,
+
+    export_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaVoice/inc"],
+        default: ["default/ConfigSessionAlsaVoice/inc"],
+    }),
+}
+
+cc_library_headers {
+    name: "libsession_config_utils_headers",
+    vendor: true,
+
+    export_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionUtils/inc"],
+        default: ["default/ConfigSessionUtils/inc"],
+    }),
+}
+
+cc_library_shared {
+    name: "libsession_compress_config",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaCompress/src/ConfigSessionAlsaCompress.cpp"],
+        default: ["default/ConfigSessionAlsaCompress/src/ConfigSessionAlsaCompress.cpp"],
+    }),
+
+    local_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaCompress/inc"],
+        default: ["default/ConfigSessionAlsaCompress/inc"],
+    }),
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libsession_compress_headers",
+        "libsession_config_utils_headers",
+        "libspf-headers",
+        "plugin_manager_headers",
+    ],
+
+    static_libs: ["libsession_config_utils"],
+
+    shared_libs: [
+        "libar-pal",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libsession_compress",
+        "libtinyalsa",
+        "libtinycompress",
+    ],
+}
+
+cc_library_shared {
+    name: "libsession_pcm_config",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaPcm/src/ConfigSessionAlsaPcm.cpp"],
+        default: ["default/ConfigSessionAlsaPcm/src/ConfigSessionAlsaPcm.cpp"],
+    }),
+
+    local_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaPcm/inc"],
+        default: ["default/ConfigSessionAlsaPcm/inc"],
+    }),
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libsession_config_utils_headers",
+        "libsession_pcm_headers",
+        "libspf-headers",
+        "plugin_manager_headers",
+    ],
+
+    static_libs: ["libsession_config_utils"],
+
+    shared_libs: [
+        "libar-pal",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libsession_pcm",
+        "libtinyalsa",
+    ],
+}
+
+cc_library_shared {
+    name: "libsession_voice_config",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaVoice/src/ConfigSessionAlsaVoice.cpp"],
+        default: ["default/ConfigSessionAlsaVoice/src/ConfigSessionAlsaVoice.cpp"],
+    }),
+
+    local_include_dirs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionAlsaVoice/inc"],
+        default: ["default/ConfigSessionAlsaVoice/inc"],
+    }),
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libsession_config_utils_headers",
+        "libsession_voice_headers",
+        "libspf-headers",
+        "plugin_manager_headers",
+    ],
+
+    static_libs: ["libsession_config_utils"],
+
+    shared_libs: [
+        "libar-pal",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libsession_voice",
+        "libtinyalsa",
+    ],
+}
+
+cc_library_static {
+    name: "libsession_config_utils",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["sun/ConfigSessionUtils/src/ConfigSessionUtils.cpp"],
+        default: ["default/ConfigSessionUtils/src/ConfigSessionUtils.cpp"],
+    }),
+
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libsession_config_utils_headers",
+        "libsession_pcm_headers",
+        "libspf-headers",
+        "plugin_manager_headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_pcm",
+        "libtinyalsa",
+    ],
+}
