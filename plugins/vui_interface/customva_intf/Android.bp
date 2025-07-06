@@ -1,0 +1,27 @@
+cc_library_shared {
+    name: "customva_plugin",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+
+    srcs: ["src/CustomVA.cpp"],
+
+    local_include_dirs: ["inc"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarvui_intf_headers",
+        "liblisten_headers",
+        "libspf-headers",
+        "libvui_utils_headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "liblx-osal",
+        "libvui_utils",
+    ],
+}

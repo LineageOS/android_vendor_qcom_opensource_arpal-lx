@@ -1,42 +1,39 @@
-cc_library_headers {
-
-    name: "libstream_pcm_headers",
-    export_include_dirs: ["inc"],
-    vendor: true,
-
-}
-
 cc_library_shared {
-    name: "libstream_pcm",
+    name: "libpal_sounddose",
     owner: "qti",
     vendor: true,
 
+    srcs: ["src/SoundDoseUtility.cpp"],
 
-    cppflags: ["-fexceptions"],
-    rtti: true,
-
-    srcs: ["src/StreamPCM.cpp"],
-
-    local_include_dirs: ["inc"],
-    include_dirs: ["system/media/audio_route/include"],
+    export_include_dirs: ["inc"],
+    include_dirs: [
+        "system/media/audio/include",
+        "system/media/audio_route/include",
+    ],
 
     header_libs: [
         "libacdb_headers",
+        "libagm_headers",
         "libarmemlog_headers",
+        "libarosal_headers",
         "libarpal_headers",
         "libarpal_internalheaders",
         "libarvui_intf_headers",
         "libaudiofeaturestats_headers",
         "liblisten_headers",
+        "libsession_agm_headers",
+        "libsession_ar_headers",
         "libspf-headers",
-        "libvui_dmgr_headers",
     ],
 
     shared_libs: [
         "libar-pal",
+        "libaudioroute",
         "libcutils",
         "libexpat",
         "liblog",
-        "liblx-osal",
+        "libsession_agm",
+        "libsession_ar",
+        "libtinyalsa",
     ],
 }

@@ -5,3 +5,55 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libdev_speaker",
+    owner: "qti",
+    vendor: true,
+
+    cflags: ["-DPAL_SP_TEMP_PATH=\"/data/vendor/audio/audio.cal\""],
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: [
+        "src/Speaker.cpp",
+        "src/SpeakerProtection.cpp",
+        "src/SpeakerProtectionwsa883x.cpp",
+        "src/SpeakerProtectionwsa884x.cpp",
+        "src/SpeakerProtectionwsa885x.cpp",
+        "src/SpeakerProtectionwsa885xI2s.cpp",
+    ],
+
+    local_include_dirs: ["inc"],
+    include_dirs: [
+        "system/media/audio/include",
+        "system/media/audio_route/include",
+    ],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarmemlog_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libtinyalsa",
+        "libtinycompress",
+        "libutilscallstack",
+    ],
+}

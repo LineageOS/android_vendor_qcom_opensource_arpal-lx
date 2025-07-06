@@ -1,0 +1,39 @@
+cc_library_shared {
+    name: "libpaleventnotifier",
+    owner: "qti",
+    vendor: true,
+
+    tidy: true,
+
+    cflags: [
+        "-v",
+        "-Wall",
+        "-Wthread-safety",
+    ],
+
+    srcs: [
+        "PalServerNotify.cpp",
+        "Service.cpp",
+    ],
+
+    header_libs: [
+        "libarpal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal-V1-ndk",
+        "vendor.qti.hardware.paleventnotifier-V2-ndk",
+    ],
+
+    static_libs: [
+        "libaidlcommonsupport",
+        "libpalaidltypeconverter",
+    ],
+}

@@ -1,0 +1,27 @@
+cc_library_headers {
+    name: "libvui_utils_headers",
+    vendor: true,
+    export_include_dirs: ["inc"],
+}
+
+cc_library_shared {
+    name: "libvui_utils",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+
+    srcs: ["src/VUIInterfaceUtils.cpp"],
+
+    local_include_dirs: ["inc"],
+
+    header_libs: [
+        "liblisten_headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "liblx-osal",
+    ],
+}
