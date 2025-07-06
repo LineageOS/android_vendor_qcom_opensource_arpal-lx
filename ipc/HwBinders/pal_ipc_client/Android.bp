@@ -1,0 +1,31 @@
+cc_library_shared {
+    name: "libpalclient",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-Wno-format",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ],
+
+    srcs: ["src/pal_client_wrapper.cpp"],
+
+    export_header_lib_headers: ["libarpal_headers"],
+
+    header_libs: ["libarpal_headers"],
+
+    shared_libs: [
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhardware",
+        "libhidlbase",
+        "libhidlmemory",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal@1.0",
+    ],
+}
