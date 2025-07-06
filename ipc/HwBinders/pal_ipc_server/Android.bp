@@ -1,0 +1,35 @@
+cc_library_shared {
+    name: "vendor.qti.hardware.pal@1.0-impl",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-v",
+    ],
+
+    srcs: ["src/pal_server_wrapper.cpp"],
+
+    export_include_dirs: ["inc"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libar-pal",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhardware",
+        "libhidlbase",
+        "libhidlmemory",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal@1.0",
+    ],
+}
