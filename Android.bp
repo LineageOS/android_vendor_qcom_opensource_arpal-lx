@@ -1,0 +1,161 @@
+cc_library_headers {
+    name: "libarpal_headers",
+    vendor: true,
+
+    export_include_dirs: [
+        "inc",
+    ],
+}
+
+cc_library_shared {
+    name: "libar-pal",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-D_ANDROID_",
+        "-D_GNU_SOURCE",
+        "-DACD_SM_FILEPATH=\"/vendor/etc/models/acd/\"",
+        "-DADSP_SLEEP_MONITOR",
+        "-DCONFIG_GSL",
+        "-DPAL_SP_TEMP_PATH=\"/data/vendor/audio/audio.cal\"",
+        "-Wall",
+        "-Werror",
+        "-Wno-macro-redefined",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ] + select(soong_config_variable("qtiaudio", "feature_ec_ref_capture"), {
+        "true": ["-DEC_REF_CAPTURE_ENABLED"],
+        default: [],
+    }) + select(soong_config_variable("qtiaudio", "feature_dynamic_sr"), {
+        "true": ["-DDYNAMIC_SR_ENABLED"],
+        default: [],
+    }),
+
+    cppflags: [
+        "-fexceptions",
+    ],
+
+    rtti: true,
+
+    srcs: [
+        "Pal.cpp",
+        "context_manager/src/ContextManager.cpp",
+        "device/src/Bluetooth.cpp",
+        "device/src/Device.cpp",
+        "device/src/DisplayPort.cpp",
+        "device/src/ExtEC.cpp",
+        "device/src/FMDevice.cpp",
+        "device/src/Handset.cpp",
+        "device/src/HandsetMic.cpp",
+        "device/src/HandsetVaMic.cpp",
+        "device/src/HapticsDev.cpp",
+        "device/src/Headphone.cpp",
+        "device/src/HeadsetMic.cpp",
+        "device/src/HeadsetVaMic.cpp",
+        "device/src/RTProxy.cpp",
+        "device/src/Speaker.cpp",
+        "device/src/SpeakerMic.cpp",
+        "device/src/SpeakerProtection.cpp",
+        "device/src/USBAudio.cpp",
+        "device/src/UltrasoundDevice.cpp",
+        "resource_manager/src/ResourceManager.cpp",
+        "resource_manager/src/SndCardMonitor.cpp",
+        "session/src/ACDEngine.cpp",
+        "session/src/ContextDetectionEngine.cpp",
+        "session/src/PayloadBuilder.cpp",
+        "session/src/Session.cpp",
+        "session/src/SessionAgm.cpp",
+        "session/src/SessionAlsaCompress.cpp",
+        "session/src/SessionAlsaPcm.cpp",
+        "session/src/SessionAlsaUtils.cpp",
+        "session/src/SessionAlsaVoice.cpp",
+        "session/src/SoundTriggerEngine.cpp",
+        "session/src/SoundTriggerEngineCapi.cpp",
+        "session/src/SoundTriggerEngineGsl.cpp",
+        "stream/src/Stream.cpp",
+        "stream/src/StreamACD.cpp",
+        "stream/src/StreamACDB.cpp",
+        "stream/src/StreamCommon.cpp",
+        "stream/src/StreamCompress.cpp",
+        "stream/src/StreamContextProxy.cpp",
+        "stream/src/StreamInCall.cpp",
+        "stream/src/StreamNonTunnel.cpp",
+        "stream/src/StreamPCM.cpp",
+        "stream/src/StreamSensorPCMData.cpp",
+        "stream/src/StreamSoundTrigger.cpp",
+        "stream/src/StreamUltraSound.cpp",
+        "utils/src/ACDPlatformInfo.cpp",
+        "utils/src/MetadataParser.cpp",
+        "utils/src/PalRingBuffer.cpp",
+        "utils/src/SignalHandler.cpp",
+        "utils/src/SoundTriggerPlatformInfo.cpp",
+        "utils/src/SoundTriggerUtils.cpp",
+        "utils/src/SoundTriggerXmlParser.cpp",
+    ] + select(soong_config_variable("qtiaudio", "feature_ec_ref_capture"), {
+        "true": ["device/src/ECRefDevice.cpp"],
+        default: [],
+    }),
+
+    export_include_dirs: ["inc"],
+
+    include_dirs: [
+        "system/media/audio/include",
+        "system/media/audio_route/include",
+    ],
+
+    local_include_dirs: [
+        "context_manager/inc",
+        "device/inc",
+        "plugins/codecs",
+        "resource_manager/inc",
+        "session/inc",
+        "stream/inc",
+        "utils/inc",
+    ],
+
+    header_libs: [
+        "generated_kernel_headers",
+        "libacdb_headers",
+        "libagm_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libcapiv2_headers",
+        "liblisten_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libagmclient",
+        "libar-gsl",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libtinyalsa",
+        "libtinycompress",
+    ],
+}
+
+cc_library_shared {
+    name: "libaudiochargerlistener",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-function",
+        "-Wno-unused-variable",
+    ],
+
+    srcs: ["utils/src/ChargerListener.cpp"],
+
+    local_include_dirs: ["utils/inc"],
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+    ],
+}
