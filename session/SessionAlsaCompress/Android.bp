@@ -5,3 +5,43 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libsession_compress",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: ["src/SessionAlsaCompress.cpp"],
+
+    local_include_dirs: ["inc"],
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarmemlog_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libtinyalsa",
+        "libtinycompress",
+        "libutilscallstack",
+    ],
+}

@@ -1,7 +1,156 @@
 cc_library_headers {
-
     name: "libarpal_headers",
-    export_include_dirs: ["inc"],
     vendor: true,
 
+    export_include_dirs: [
+        "inc",
+    ],
+}
+
+cc_library_headers {
+    name: "libarpal_internalheaders",
+    vendor: true,
+
+    export_include_dirs: [
+        ".",
+        "context_manager/inc",
+        "device/inc",
+        "plugins/PluginManager/inc",
+        "plugins/codecs",
+        "resource_manager/inc",
+        "session/inc",
+        "sounddose/inc",
+        "stream/inc",
+        "utils/inc",
+    ],
+}
+
+cc_library_shared {
+    name: "libar-pal",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-D_ANDROID_",
+        "-D_GNU_SOURCE",
+        "-DA2DP_SINK_SUPPORTED",
+        "-DACD_SM_FILEPATH=\"/vendor/etc/models/acd/\"",
+        "-DADSP_SLEEP_MONITOR",
+        "-DCONFIG_GSL",
+        "-DPAL_SP_TEMP_PATH=\"/data/vendor/audio/audio.cal\"",
+        "-Wall",
+        "-Werror",
+        "-Wno-macro-redefined",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["-DSOC_PERIPHERAL_PROT"],
+        default: [],
+    }),
+
+    cppflags: [
+        "-fexceptions",
+    ],
+
+    rtti: true,
+
+    srcs: [
+        "Pal.cpp",
+        "context_manager/src/ContextManager.cpp",
+        "device/src/Device.cpp",
+        "resource_manager/src/ResourceManager.cpp",
+        "resource_manager/src/SndCardMonitor.cpp",
+        "session/src/Session.cpp",
+        "stream/src/Stream.cpp",
+        "utils/src/ACDPlatformInfo.cpp",
+        "utils/src/ASRPlatformInfo.cpp",
+        "utils/src/AudioHapticsInterface.cpp",
+        "utils/src/BTUtils.cpp",
+        "utils/src/MemLogBuilder.cpp",
+        "utils/src/MetadataParser.cpp",
+        "utils/src/PerfLock.cpp",
+        "utils/src/STUtils.cpp",
+        "utils/src/SignalHandler.cpp",
+        "utils/src/SoundTriggerPlatformInfo.cpp",
+        "utils/src/VoiceUIPlatformInfo.cpp",
+    ],
+
+    export_include_dirs: ["inc"],
+
+    include_dirs: [
+        "system/media/audio/include",
+        "system/media/audio_route/include",
+    ],
+
+    local_include_dirs: [
+        "context_manager/inc",
+        "device/inc",
+        "plugins/codecs",
+        "resource_manager/inc",
+        "session/inc",
+        "stream/inc",
+        "utils/inc",
+    ],
+
+    header_libs: [
+        "generated_kernel_headers",
+        "libacdb_headers",
+        "libagm_headers",
+        "libarmemlog_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "libcapiv2_headers",
+        "liblisten_headers",
+        "libspf-headers",
+        "libvui_dmgr_headers",
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": [
+            "mink_headers",
+            "peripheralstate_headers",
+        ],
+        default: [],
+    }),
+
+    shared_libs: [
+        "libagmclient",
+        "libar-gsl",
+        "libarmemlog",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "libhidlbase",
+        "liblog",
+        "liblx-osal",
+        "libplugin_manager",
+        "libtinyalsa",
+        "libtinycompress",
+        "libutilscallstack",
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["libPeripheralStateUtils"],
+        default: [],
+    }),
+}
+
+cc_library_shared {
+    name: "libaudiochargerlistener",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-function",
+        "-Wno-unused-variable",
+    ],
+
+    srcs: ["utils/src/ChargerListener.cpp"],
+
+    local_include_dirs: ["utils/inc"],
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+    ],
 }

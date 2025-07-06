@@ -27,6 +27,7 @@ aidl_interface {
             ],
         },
     ],
+    owner: "qti",
     frozen: true,
 
 }

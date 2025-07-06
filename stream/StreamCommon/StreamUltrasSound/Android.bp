@@ -5,3 +5,43 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libstream_ultrasound",
+    owner: "qti",
+    vendor: true,
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: ["src/StreamUltraSound.cpp"],
+
+    local_include_dirs: ["inc"],
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libarmemlog_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libsession_pcm_headers",
+        "libspf-headers",
+        "libstream_common_headers",
+        "libvui_dmgr_headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+        "libsession_pcm",
+        "libstream_common",
+    ],
+}

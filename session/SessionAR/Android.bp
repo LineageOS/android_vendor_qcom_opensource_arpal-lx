@@ -5,3 +5,61 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libsession_ar",
+    owner: "qti",
+    vendor: true,
+
+    cflags: ["-Wno-ignored-attributes"],
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: [
+        "src/PayloadBuilder.cpp",
+        "src/SessionAR.cpp",
+        "src/SessionAlsaUtils.cpp",
+    ],
+
+    local_include_dirs: ["inc"],
+    include_dirs: [
+        "system/media/audio/include",
+        "system/media/audio_route/include",
+    ],
+
+    header_libs: [
+        "libacdb_headers",
+        "libagm_headers",
+        "libarmemlog_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "liblisten_headers",
+        "libspf-headers",
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": [
+            "mink_headers",
+            "peripheralstate_headers",
+        ],
+        default: [],
+    }),
+
+    shared_libs: [
+        "libagmclient",
+        "libar-gsl",
+        "libar-pal",
+        "libaudioroute",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libtinyalsa",
+        "libtinycompress",
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "sun": ["libPeripheralStateUtils"],
+        default: [],
+    }),
+}

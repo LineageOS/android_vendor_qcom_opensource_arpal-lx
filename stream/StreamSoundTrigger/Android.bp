@@ -5,3 +5,54 @@ cc_library_headers {
     vendor: true,
 
 }
+
+cc_library_shared {
+    name: "libstream_soundtrigger",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-macro-redefined",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ],
+
+    cppflags: ["-fexceptions"],
+    rtti: true,
+
+    srcs: [
+        "src/PalRingBuffer.cpp",
+        "src/SoundTriggerEngine.cpp",
+        "src/SoundTriggerEngineCapi.cpp",
+        "src/SoundTriggerEngineGsl.cpp",
+        "src/StreamSoundTrigger.cpp",
+    ],
+
+    local_include_dirs: ["inc"],
+    include_dirs: ["system/media/audio_route/include"],
+
+    header_libs: [
+        "libacdb_headers",
+        "libarmemlog_headers",
+        "libarpal_headers",
+        "libarpal_internalheaders",
+        "libarvui_intf_headers",
+        "libaudiofeaturestats_headers",
+        "libcapiv2_headers",
+        "liblisten_headers",
+        "libsession_ar_headers",
+        "libspf-headers",
+        "libvui_dmgr_headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libcutils",
+        "libexpat",
+        "liblog",
+        "liblx-osal",
+        "libsession_ar",
+    ],
+}
