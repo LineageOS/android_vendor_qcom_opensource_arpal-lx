@@ -2441,7 +2441,7 @@ void PayloadBuilder::payloadCopV2StreamInfo(uint8_t **payload, size_t *size,
     uint8_t* payloadInfo = NULL;
     audio_lc3_codec_cfg_t *bleCfg = NULL;
     struct cop_v2_stream_info_map_t* streamMap = NULL;
-    size_t payloadSize = 0, padBytes = 0;
+    size_t payloadSize = 0, padBytes = 0, streamMapSize = 0;
     uint64_t channel_mask = 0;
     int i = 0;
 
@@ -2452,13 +2452,18 @@ void PayloadBuilder::payloadCopV2StreamInfo(uint8_t **payload, size_t *size,
     }
 
     if (!isStreamMapDirIn) {
+        if (!bleCfg->is_enc_config_set)
+            streamMapSize = DEF_STREAM_MAP_SZ;
+        else
+            streamMapSize = bleCfg->enc_cfg.stream_map_size;
         payloadSize = sizeof(struct apm_module_param_data_t) +
                       sizeof(struct param_id_cop_v2_stream_info_t) +
-                      sizeof(struct cop_v2_stream_info_map_t) * bleCfg->enc_cfg.stream_map_size;
+                      sizeof(struct cop_v2_stream_info_map_t) * streamMapSize;
     } else if (isStreamMapDirIn && bleCfg->dec_cfg.stream_map_size != 0) {
+        streamMapSize = bleCfg->dec_cfg.stream_map_size;
         payloadSize = sizeof(struct apm_module_param_data_t) +
                       sizeof(struct param_id_cop_v2_stream_info_t) +
-                      sizeof(struct cop_v2_stream_info_map_t) * bleCfg->dec_cfg.stream_map_size;
+                      sizeof(struct cop_v2_stream_info_map_t) * streamMapSize;
     } else if (isStreamMapDirIn && bleCfg->dec_cfg.stream_map_size == 0) {
         PAL_ERR(LOG_TAG, "isStreamMapDirIn is true, but empty streamMapIn");
         return;
@@ -2486,9 +2491,17 @@ void PayloadBuilder::payloadCopV2StreamInfo(uint8_t **payload, size_t *size,
                       header->module_instance_id, header->param_id,
                       header->error_code, header->param_size);
 
-    if (!isStreamMapDirIn) {
-        streamInfo->num_streams = bleCfg->enc_cfg.stream_map_size;;
-        for (i = 0; i < streamInfo->num_streams; i++) {
+    streamInfo->num_streams = streamMapSize;
+    if (!isStreamMapDirIn && !bleCfg->is_enc_config_set) {
+        for (i = 0; i < streamMapSize; i++) {
+            channel_mask = convert_channel_map(def_stream_map_out[i].audio_location);
+            streamMap[i].stream_id = def_stream_map_out[i].stream_id;
+            streamMap[i].direction = def_stream_map_out[i].direction;
+            streamMap[i].channel_mask_lsw = channel_mask  & 0x00000000FFFFFFFF;
+            streamMap[i].channel_mask_msw = (channel_mask & 0xFFFFFFFF00000000) >> 32;
+        }
+    } else if (!isStreamMapDirIn) {
+        for (i = 0; i < streamMapSize; i++) {
             channel_mask = convert_channel_map(bleCfg->enc_cfg.streamMapOut[i].audio_location);
             streamMap[i].stream_id = bleCfg->enc_cfg.streamMapOut[i].stream_id;
             streamMap[i].direction = bleCfg->enc_cfg.streamMapOut[i].direction;
@@ -2496,8 +2509,7 @@ void PayloadBuilder::payloadCopV2StreamInfo(uint8_t **payload, size_t *size,
             streamMap[i].channel_mask_msw = (channel_mask & 0xFFFFFFFF00000000) >> 32;
         }
     } else {
-        streamInfo->num_streams = bleCfg->dec_cfg.stream_map_size;
-        for (i = 0; i < streamInfo->num_streams; i++) {
+        for (i = 0; i < streamMapSize; i++) {
             channel_mask = convert_channel_map(bleCfg->dec_cfg.streamMapIn[i].audio_location);
             streamMap[i].stream_id = bleCfg->dec_cfg.streamMapIn[i].stream_id;
             streamMap[i].direction = bleCfg->dec_cfg.streamMapIn[i].direction;

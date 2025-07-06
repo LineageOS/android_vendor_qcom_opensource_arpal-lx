@@ -485,6 +485,7 @@
 
     <path name="speaker-mic">
         <path name="amic1" />
+        <ctl name="TX_DEC2 Volume" value="96" />
     </path>
 
     <path name="speaker-mic-liquid">

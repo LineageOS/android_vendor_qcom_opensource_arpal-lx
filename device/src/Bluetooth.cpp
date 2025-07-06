@@ -26,7 +26,7 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
@@ -69,7 +69,6 @@ Bluetooth::Bluetooth(struct pal_device *device, std::shared_ptr<ResourceManager>
       isTwsMonoModeOn(false),
       isScramblingEnabled(false),
       isDummySink(false),
-      isEncDecConfigured(false),
       abrRefCnt(0),
       totalActiveSessionRequests(0)
 {
@@ -489,7 +488,6 @@ int Bluetooth::configureGraphModules()
     codecConfig.ch_info.channels = out_buf->channel_count;
 
     isAbrEnabled = out_buf->is_abr_enabled;
-    isEncDecConfigured = (out_buf->is_enc_config_set && out_buf->is_dec_config_set);
     codecVersion = out_buf->codec_version;
 
     /* Reset device GKV for AAC ABR */
@@ -956,23 +954,6 @@ void Bluetooth::startAbr()
         if (ret) {
             PAL_ERR(LOG_TAG, "getMiid for feedback device failed");
             goto disconnect_fe;
-        }
-
-        switch (codecFormat) {
-        case CODEC_TYPE_LC3:
-        case CODEC_TYPE_APTX_AD_QLEA:
-        case CODEC_TYPE_APTX_AD_R4:
-            if (!isEncDecConfigured) {
-                /* In case of BLE stereo recording/voice_call_decode_session, if only decoder
-                 * path configs are present so use the same config for RX feeedback path too
-                 */
-                 bt_ble_codec = (audio_lc3_codec_cfg_t*)codecInfo;
-                 memcpy(&bt_ble_codec->enc_cfg.toAirConfig, &bt_ble_codec->dec_cfg.fromAirConfig,
-                     sizeof(lc3_cfg_t));
-            }
-            break;
-        default:
-            break;
         }
 
         ret = getPluginPayload(&pluginLibHandle, &codec, &out_buf, (codecType == DEC ? ENC : DEC));

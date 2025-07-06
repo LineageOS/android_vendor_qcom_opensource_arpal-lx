@@ -26,9 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -40,6 +40,8 @@
 
 #define NUM_CODEC          2
 #define AUDIO_LOCATION_MAX 28
+#define VERSION_IDX        7
+
 
 /* Information about BT LC3 encoder configuration
  * This data is used between audio HAL module and
@@ -178,6 +180,24 @@ static struct codec_specific_config LC3_CSC[LC3_CSC_TBL_SIZE] = {
     {16000, 10000, 40, 24},
     {32000, 7500,  60, 24},
     {32000, 10000, 80, 24},
+};
+
+#define DEF_STREAM_MAP_SZ 2
+static lc3_stream_map_t def_stream_map_out[DEF_STREAM_MAP_SZ] = {
+    {2, 0, 0},
+    {1, 1, 0},
+};
+
+static lc3_cfg_t def_toair_cfg = {
+    33,
+    16000,
+    40,
+    10000,
+    24,
+    1,
+    0,
+    {0},
+    1,
 };
 
 #endif /* _BT_BLE_H_ */

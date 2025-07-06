@@ -26,9 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,7 +43,91 @@
 #include <lc3_encoder_api.h>
 #include <lc3_decoder_api.h>
 
-#define VERSION_IDX 7
+static int ble_pack_def_enc_config(bt_codec_t *codec, void *src, void **dst)
+{
+    audio_lc3_codec_cfg_t *ble_bt_cfg = NULL;
+    bt_enc_payload_t *enc_payload = NULL;
+    struct param_id_lc3_encoder_config_payload_t *enc_init = NULL;
+    int ret = 0, num_blks = 1, payload_sz = 0, i = 0;
+    custom_block_t *blk[1] = {NULL};
+
+    ble_bt_cfg = (audio_lc3_codec_cfg_t *)src;
+
+    enc_payload = (bt_enc_payload_t *)calloc(1, sizeof(bt_enc_payload_t) +
+                   num_blks * sizeof(custom_block_t *));
+    if (enc_payload == NULL) {
+        ALOGE("%s: fail to allocate memory", __func__);
+        return -ENOMEM;
+    }
+
+    enc_payload->bit_format     = def_toair_cfg.bit_depth;
+    enc_payload->sample_rate    = def_toair_cfg.sampling_freq;
+    enc_payload->num_blks       = def_toair_cfg.num_blocks;
+    enc_payload->channel_count  = CH_STEREO;
+
+    enc_payload->is_abr_enabled    = true;
+    enc_payload->is_enc_config_set = ble_bt_cfg->is_enc_config_set;
+    enc_payload->is_dec_config_set = ble_bt_cfg->is_dec_config_set;
+
+    for (i = 0; i < num_blks; i++) {
+        blk[i] = (custom_block_t *)calloc(1, sizeof(custom_block_t));
+        if (!blk[i]) {
+            ret = -ENOMEM;
+            goto free_payload;
+        }
+    }
+
+    /* populate payload for PARAM_ID_LC3_ENC_INIT */
+    payload_sz = sizeof(struct param_id_lc3_encoder_config_payload_t) +
+                 sizeof(stream_map_t) * DEF_STREAM_MAP_SZ;
+    enc_init = (struct param_id_lc3_encoder_config_payload_t *)calloc(1, payload_sz);
+    if (enc_init == NULL) {
+        ALOGE("%s: fail to allocate memory", __func__);
+        ret = -ENOMEM;
+        goto free_payload;
+    }
+
+    enc_init->stream_map_size                  = DEF_STREAM_MAP_SZ;
+    enc_init->toAirConfig.num_blocks           = def_toair_cfg.num_blocks;
+    enc_init->toAirConfig.api_version          = def_toair_cfg.api_version;
+    enc_init->toAirConfig.sampling_Frequency   = def_toair_cfg.sampling_freq;
+    enc_init->toAirConfig.max_octets_per_frame = def_toair_cfg.max_octets_per_frame;
+    enc_init->toAirConfig.frame_duration       = def_toair_cfg.frame_duration;
+    enc_init->toAirConfig.bit_depth            = def_toair_cfg.bit_depth;
+    enc_init->toAirConfig.mode                 = def_toair_cfg.mode;
+    for (i = 0; i < 16; i++) {
+        enc_init->toAirConfig.vendor_specific[i] =
+            ble_bt_cfg->enc_cfg.toAirConfig.vendor_specific[i];
+    }
+
+    for (i = 0; i < enc_init->stream_map_size; i++) {
+        enc_init->streamMapOut[i].audio_location = def_stream_map_out[i].audio_location;
+        enc_init->streamMapOut[i].stream_id = def_stream_map_out[i].stream_id;
+        enc_init->streamMapOut[i].direction = def_stream_map_out[i].direction;
+    }
+    ret = bt_base_populate_enc_cmn_param(blk[0], PARAM_ID_LC3_ENC_INIT,
+            enc_init, payload_sz);
+    free(enc_init);
+    if (ret)
+        goto free_payload;
+
+    enc_payload->blocks[0] = blk[0];
+    *dst = enc_payload;
+    codec->payload = enc_payload;
+
+    return ret;
+free_payload:
+    for (i = 0; i < num_blks; i++) {
+        if (blk[i]) {
+            if (blk[i]->payload)
+                free(blk[i]->payload);
+            free(blk[i]);
+        }
+    }
+    if (enc_payload)
+        free(enc_payload);
+    return ret;
+}
 
 static int ble_pack_enc_config(bt_codec_t *codec, void *src, void **dst)
 {
@@ -60,6 +144,12 @@ static int ble_pack_enc_config(bt_codec_t *codec, void *src, void **dst)
     }
 
     ble_bt_cfg = (audio_lc3_codec_cfg_t *)src;
+
+    if (!ble_bt_cfg->is_enc_config_set) {
+        ALOGI("%s: is_enc_config_set is false; setting default enc params",
+                __func__);
+        return ble_pack_def_enc_config(codec, src, dst);
+    }
 
     enc_payload = (bt_enc_payload_t *)calloc(1, sizeof(bt_enc_payload_t) +
                    num_blks * sizeof(custom_block_t *));
