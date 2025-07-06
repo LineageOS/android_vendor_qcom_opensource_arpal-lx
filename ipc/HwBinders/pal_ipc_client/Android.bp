@@ -1,0 +1,28 @@
+
+
+cc_library_shared {
+    name: "libpalclient",
+
+    owner: "qti",
+    vendor: true,
+    cflags: [
+        "-Wno-format",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ],
+    srcs: ["src/pal_client_wrapper.cpp"],
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal@1.0",
+    ],
+
+    header_libs: [
+        "libarpal_headers",
+    ],
+}
