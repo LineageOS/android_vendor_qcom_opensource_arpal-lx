@@ -1,0 +1,41 @@
+cc_library_shared {
+    name: "libpalipcservice",
+    owner: "qti",
+    vendor: true,
+
+    tidy: true,
+
+    cflags: [
+        "-v",
+        "-Wall",
+        "-Wthread-safety",
+    ],
+
+    srcs: [
+        "PalServerWrapper.cpp",
+        "Service.cpp",
+    ],
+
+    header_libs: [
+        "libacdb_headers",
+        "libarosal_headers",
+        "libarpal_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libar-pal",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "liblog",
+        "libutils",
+        "vendor.qti.hardware.pal-V1-ndk",
+    ],
+
+    static_libs: [
+        "libaidlcommonsupport",
+        "libpalaidltypeconverter",
+    ],
+}
