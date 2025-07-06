@@ -60,6 +60,8 @@
 #include "ECRefDevice.h"
 #endif
 #define MAX_CHANNEL_SUPPORTED 2
+#define DEFAULT_OUTPUT_SAMPLING_RATE 48000
+#define DEFAULT_OUTPUT_CHANNEL 2
 
 std::shared_ptr<Device> Device::getInstance(struct pal_device *device,
                                                  std::shared_ptr<ResourceManager> Rm)
@@ -471,7 +473,29 @@ int Device::start_l()
             status = -EINVAL;
             goto exit;
         }
-
+        if (rm->isPluginPlaybackDevice(this->deviceAttr.id)) {
+            /* avoid setting invalid device attribute and the failure of starting device
+             * when plugin device disconnects. Audio Policy Manager will go on finishing device switch.
+             */
+            if (this->deviceAttr.config.sample_rate == 0) {
+                PAL_DBG(LOG_TAG, "overwrite samplerate to default value");
+                this->deviceAttr.config.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+            }
+            if (this->deviceAttr.config.bit_width == 0) {
+                PAL_DBG(LOG_TAG, "overwrite bit width to default value");
+                this->deviceAttr.config.bit_width = 16;
+            }
+            if (this->deviceAttr.config.ch_info.channels == 0) {
+                PAL_DBG(LOG_TAG, "overwrite channel to default value");
+                this->deviceAttr.config.ch_info.channels = DEFAULT_OUTPUT_CHANNEL;
+                this->deviceAttr.config.ch_info.ch_map[0] = PAL_CHMAP_CHANNEL_FL;
+                this->deviceAttr.config.ch_info.ch_map[1] = PAL_CHMAP_CHANNEL_FR;
+            }
+            if (this->deviceAttr.config.aud_fmt_id == 0) {
+                PAL_DBG(LOG_TAG, "overwrite aud_fmt_id to default value");
+                this->deviceAttr.config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+            }
+        }
         SessionAlsaUtils::setDeviceMediaConfig(rm, backEndName, &(this->deviceAttr));
 
         if (customPayloadSize) {

@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 package vendor.qti.hardware.pal@1.0;
@@ -266,14 +270,28 @@ struct PalExternAllocBuffInfo{
 
 /** PAL buffer structure used for reading/writing buffers from/to the stream */
 struct PalBuffer {
-    vec<uint8_t> buffer;                //  buffer pointer
+    vec<uint8_t> buffer;                // buffer pointer
     uint32_t size;                      // number of bytes
     uint32_t offset;                    // offset in buffer from where valid byte starts
-    TimeSpec timeStamp;                 // timestmap
-    uint32_t flags;             // meta data flags
-    uint32_t metadataSz;
-    vec<uint8_t> metadata;
-    PalExternAllocBuffInfo alloc_info; /**< holds info for extern buff */
+    TimeSpec timeStamp;                 // timestamp
+    uint32_t flags;                     // stream flags
+    PalExternAllocBuffInfo alloc_info;  // holds info for extern buff
+    uint64_t frame_index;               // frame index of the buffer
+};
+
+struct PalCallbackBufferInfo {
+    uint64_t frame_index;       // frame index of the buffer
+    uint32_t sample_rate;       // updated sample rate
+    uint32_t bit_width;         // updated bit width
+    uint16_t channel_count;     // updated channel count
+};
+
+struct PalCallbackBuffer {
+    vec<uint8_t> buffer;                // buffer pointer
+    uint32_t size;                      // filled length of the buffer
+    TimeSpec timeStamp;                 // timestamp
+    uint32_t status;                    // status of payload
+    PalCallbackBufferInfo cbBufInfo;    // buffer info
 };
 
 struct PalChannelVolKv {

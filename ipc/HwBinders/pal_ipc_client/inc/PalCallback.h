@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #pragma once
@@ -97,9 +101,9 @@ struct PalCallback : public IPALCallback {
                                uint32_t event_id, uint32_t event_data_size,
                                const hidl_vec<uint8_t>& event_data,
                                uint64_t cookie) override;
-    Return<int32_t> event_callback_rw_done(uint64_t stream_handle,
+    Return<void> event_callback_rw_done(uint64_t stream_handle,
                                uint32_t event_id, uint32_t event_data_size,
-                               const hidl_vec<PalEventReadWriteDonePayload>& event_data,
+                               const hidl_vec<PalCallbackBuffer>& event_data,
                                uint64_t cookie) override;
 
     PalCallback(pal_stream_callback callBack)

@@ -754,7 +754,7 @@ enum {
 /** metadata flags, can be OR'able */
 typedef uint32_t pal_meta_data_flags_t;
 
-typedef struct pal_extern_alloc_buff_info{
+typedef struct pal_extern_alloc_buff_info {
     int      alloc_handle;/**< unique memory handle identifying extern mem allocation */
     uint32_t alloc_size;  /**< size of external allocation */
     uint32_t offset;      /**< offset of buffer within extern allocation */
@@ -762,7 +762,7 @@ typedef struct pal_extern_alloc_buff_info{
 
 /** PAL buffer structure used for reading/writing buffers from/to the stream */
 struct pal_buffer {
-    uint8_t *buffer;                  /**<  buffer pointer */
+    uint8_t *buffer;               /**<  buffer pointer */
     size_t size;                   /**< number of bytes */
     size_t offset;                 /**< offset in buffer from where valid byte starts */
     struct timespec *ts;           /**< timestmap */

@@ -50,7 +50,7 @@ int MetadataParser::parseMetadata(uint8_t* metadata, size_t metadataSize,
                 }
                 bufferInfo->frame_index = static_cast<uint64_t>((static_cast<uint64_t>(
                         startMetadata->buffer_index_msw) << 32) | startMetadata->buffer_index_lsw);
-                ALOGV("%s: startMetadata frame_index %llu", __func__, bufferInfo->frame_index);
+                ALOGV("%s: startMetadata frame_index %u", __func__, bufferInfo->frame_index);
                 mdBytesRead += sizeof(module_cmn_md_buffer_start_t);
                 break;
             }

@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 package vendor.qti.hardware.pal@1.0;
@@ -34,9 +38,9 @@ interface IPALCallback
     event_callback (PalStreamHandle streamHandle, uint32_t event_id,
                     uint32_t event_data_size, vec<uint8_t> event_data,
                     uint64_t cookie) generates(int32_t ret);
-    event_callback_rw_done (PalStreamHandle streamHandle, uint32_t event_id,
+    oneway event_callback_rw_done (PalStreamHandle streamHandle, uint32_t event_id,
                             uint32_t event_data_size,
-                            vec<PalEventReadWriteDonePayload> rw_done_payload,
-                            uint64_t cookie) generates(int32_t ret);
+                            vec<PalCallbackBuffer> rw_done_payload,
+                            uint64_t cookie);
 };
 

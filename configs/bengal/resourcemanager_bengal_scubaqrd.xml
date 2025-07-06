@@ -518,6 +518,13 @@ should always be in sync with it -->
                 <priority>1</priority>
                 <samplerate>96000</samplerate>
             </usecase>
+            <usecase>
+                <name>PAL_STREAM_LOW_LATENCY</name>
+                <custom-config key="speaker-and-headphones">
+                    <channels>2</channels>
+                    <snd_device_name>speaker-and-headphones</snd_device_name>
+                </custom-config>
+            </usecase>
         </out-device>
         <out-device>
             <id>PAL_DEVICE_OUT_HANDSET</id>
