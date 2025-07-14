@@ -156,7 +156,7 @@
 #define CLOCK_SRC_DEFAULT 1
 
 /*this can be over written by the config file settings*/
-uint32_t pal_log_lvl = (PAL_LOG_ERR|PAL_LOG_INFO);
+uint32_t pal_log_lvl = (PAL_LOG_ERR|PAL_LOG_INFO|PAL_LOG_DBG|PAL_LOG_VERBOSE);
 
 static struct str_parms *configParamKVPairs;
 
@@ -7848,8 +7848,6 @@ int ResourceManager::setConfigParams(struct str_parms *parms)
         goto exit;
     }
     ret = setNativeAudioParams(parms, value, len);
-
-    ret = setLoggingLevelParams(parms, value, len);
 
     ret = setContextManagerEnableParam(parms, value, len);
 
