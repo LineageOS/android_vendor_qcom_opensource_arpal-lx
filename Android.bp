@@ -171,3 +171,8 @@ cc_library_shared {
         "liblog",
     ],
 }
+
+cc_library_shared {
+    name: "libPeripheralStateUtils",
+    vendor: true,
+}
