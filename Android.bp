@@ -125,9 +125,7 @@ cc_library_shared {
         "libvui_dmgr_headers",
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "kalama": [
-            "mink_headers",
             "peripheralstate_headers",
-            "vendor_common_inc",
         ],
         default: [],
     }),
