@@ -216,6 +216,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 
 include $(PAL_BASE_PATH)/api/vui-interface/Android.mk
+include $(PAL_BASE_PATH)/audio-feature-stats/Android.mk
 include $(PAL_BASE_PATH)/mink/Android.mk
 include $(PAL_BASE_PATH)/peripheral_utils/Android.mk
 include $(PAL_BASE_PATH)/plugins/Android.mk
