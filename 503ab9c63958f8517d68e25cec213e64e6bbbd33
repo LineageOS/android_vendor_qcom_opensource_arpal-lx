@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8468a7c_6d25010d",
+        "filename": "Android.bp",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-07-16T20:08:45Z",
+      "side": 1,
+      "message": "this is proprietary it seems",
+      "revId": "503ab9c63958f8517d68e25cec213e64e6bbbd33",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
