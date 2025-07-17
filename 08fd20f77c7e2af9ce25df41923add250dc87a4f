@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea9cf766_bbfdbfda",
+        "filename": "utils/inc/MemLogBuilder.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 10258
+      },
+      "writtenOn": "2025-07-17T02:39:02Z",
+      "side": 1,
+      "message": "overkill, check https://review.lineageos.org/c/LineageOS/android_vendor_qcom_opensource_arpal-lx/+/436282",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 6
+      },
+      "revId": "08fd20f77c7e2af9ce25df41923add250dc87a4f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
