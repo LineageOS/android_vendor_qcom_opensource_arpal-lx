@@ -16,6 +16,24 @@
       "message": "```suggestion\n    ST_MODULE_TYPE_MMA      \u003d 200,\n```",
       "revId": "17257072110388e2e2c07068096c3194862af732",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4d480ba_0f3d6b94",
+        "filename": "vui-interface/SoundTriggerUtils.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2025-07-17T10:28:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ab543fef_5e687ce5",
+      "revId": "17257072110388e2e2c07068096c3194862af732",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
