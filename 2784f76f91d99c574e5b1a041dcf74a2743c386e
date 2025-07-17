@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24acc28b_756c10a0",
+        "filename": "Android.bp",
+        "patchSetId": 4
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-07-17T09:54:51Z",
+      "side": 1,
+      "message": "move to peripheral_utils/Android.bp",
+      "range": {
+        "startLine": 176,
+        "startChar": 0,
+        "endLine": 179,
+        "endChar": 1
+      },
+      "revId": "2784f76f91d99c574e5b1a041dcf74a2743c386e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
