@@ -32,6 +32,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#define LOG_TAG "PAL: SoundTriggerUtils"
+
 #include <dlfcn.h>
 #include <errno.h>
 
@@ -63,7 +65,6 @@
 #include <algorithm>
 #include "SoundTriggerUtils.h"
 
-#define LOG_TAG "PAL: SoundTriggerUtils"
 //#define LOG_NDEBUG 0
 #define SML_LIB "liblistensoundmodel2vendor.so"
 
