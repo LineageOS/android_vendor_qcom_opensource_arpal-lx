@@ -1,0 +1,28 @@
+cc_library_shared {
+    name: "libvui_intf",
+    owner: "qti",
+    vendor: true,
+
+    srcs: [
+        "src/SoundTriggerUtils.cpp",
+        "src/SVAExtension.cpp",
+        "src/SVAInterface.cpp",
+        "src/VoiceUIInterface.cpp",
+    ],
+
+    local_include_dirs: ["inc"],
+
+    header_libs: [
+        "libarosal_headers",
+        "libarpal_headers",
+        "libarvui_intf_headers",
+        "liblisten_headers",
+        "libspf-headers",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "liblx-osal",
+    ],
+}
