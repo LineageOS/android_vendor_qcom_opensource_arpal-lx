@@ -39,7 +39,7 @@
 #include <sstream>
 #include "SVAExtension.h"
 
-#define LOG_TAG "PAL: SVAExtension"
+//#define LOG_TAG "PAL: SVAExtension"
 //#define LOG_NDEBUG 0
 
 #define SM_FILE_PATH "/vendor/etc/models/vui/"
@@ -190,7 +190,7 @@ int32_t SVAExtension::GetParameters(uint32_t param_id,
 int32_t SVAExtension::ParseClientId(void *payload, char **save) {
 
     int32_t client_id = 0;
-    char *delims = ",:";
+    char delims[] = ",:";
     char *token = nullptr;
 
     if (!payload)
@@ -212,7 +212,7 @@ int32_t SVAExtension::HandleSVAOnOff(int32_t client_id, char **save) {
 
     int32_t status = 0;
     bool va_on = false;
-    char *delims = ",:";
+    char delims[] = ",:";
     char *token = nullptr;
     struct va_config va_cfg = {};
 
@@ -313,7 +313,7 @@ va_error:
 int32_t SVAExtension::EnableSVA(int32_t client_id, struct va_config *va_cfg) {
 
     int32_t status = 0;
-    char *delims = ",:";
+    char delims[] = ",:";
     char *token = nullptr;
     struct client_config *client_cfg = nullptr;
 
@@ -466,7 +466,7 @@ done:
 int32_t SVAExtension::GetPalHandle(int32_t client_id __unused,
     char **save, void **payload, size_t *payload_sz) {
 
-    char *delims = ",:";
+    char delims[] = ",:";
     char *token = nullptr;
     struct va_config *va_cfg;
     std::string kwd_name;
