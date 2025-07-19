@@ -18,6 +18,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c212e1b_9a54353c",
+        "filename": "plugins/vui_interface/src/SVAExtension.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-07-19T09:04:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1caf8ada_3be877f2",
+      "revId": "f88a523c03f276b02ed13346e30707bcf54ddc79",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22f6b8da_abd6024e",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-07-19T08:40:59Z",
       "side": 1,
       "message": "would probably make sense to do #undef LOG_TAG above, in case it\u0027s falling back to some generic log tag",
+      "revId": "f88a523c03f276b02ed13346e30707bcf54ddc79",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85c06371_482460ea",
+        "filename": "plugins/vui_interface/src/SoundTriggerUtils.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-07-19T09:04:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22f6b8da_abd6024e",
       "revId": "f88a523c03f276b02ed13346e30707bcf54ddc79",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
