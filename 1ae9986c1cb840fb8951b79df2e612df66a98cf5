@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "610370df_0c77808b",
+        "filename": "session/src/Session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1553,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2025-07-19T08:39:48Z",
+      "side": 1,
+      "message": "why isn\u0027t regdump_out_file const char * too?",
+      "revId": "1ae9986c1cb840fb8951b79df2e612df66a98cf5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
