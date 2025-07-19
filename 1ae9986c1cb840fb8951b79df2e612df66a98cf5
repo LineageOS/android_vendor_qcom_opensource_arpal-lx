@@ -16,6 +16,24 @@
       "message": "why isn\u0027t regdump_out_file const char * too?",
       "revId": "1ae9986c1cb840fb8951b79df2e612df66a98cf5",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b344fc4_ae0e3a79",
+        "filename": "session/src/Session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1553,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-07-19T10:08:58Z",
+      "side": 1,
+      "message": "Not needed. This was the bare minimum to address the errors:\n\n```\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:1662:24: error: ISO C++11 does not allow conversion from string literal to \u0027char *\u0027 [-Werror,-Wwritable-strings]\n 1662 |         dump_registers(BOLERO_PROC_INTF, out_file_name);\n      |                        ^\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:95:29: note: expanded from macro \u0027BOLERO_PROC_INTF\u0027\n   95 | #define BOLERO_PROC_INTF    \"/proc/lpass_cdc_reginfo/lpass_cdc_regdump\"\n      |                             ^\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:1669:24: error: ISO C++11 does not allow conversion from string literal to \u0027char *\u0027 [-Werror,-Wwritable-strings]\n 1669 |         dump_registers(VA_SWR_PROC_INTF, out_file_name);\n      |                        ^\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:103:28: note: expanded from macro \u0027VA_SWR_PROC_INTF\u0027\n  103 | #define VA_SWR_PROC_INTF   \"/proc/va_swr_ctrl/swr_mstr_ctrl_regdump\"\n      |                            ^\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:1676:24: error: ISO C++11 does not allow conversion from string literal to \u0027char *\u0027 [-Werror,-Wwritable-strings]\n 1676 |         dump_registers(WCD939X_PROC_INTF, out_file_name);\n      |                        ^\nhardware/qcom-caf/sm8750/audio/pal/session/src/Session.cpp:96:29: note: expanded from macro \u0027WCD939X_PROC_INTF\u0027\n   96 | #define WCD939X_PROC_INTF   \"/proc/wcd939x_reginfo/wcd939x_regdump\"\n      |                             ^\n```",
+      "parentUuid": "610370df_0c77808b",
+      "revId": "1ae9986c1cb840fb8951b79df2e612df66a98cf5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
