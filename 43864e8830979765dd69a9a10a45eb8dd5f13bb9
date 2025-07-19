@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1634c97_516bfe06",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-07-19T11:11:38Z",
+      "side": 1,
+      "message": "You should move the LOG_TAG definition instead like https://review.lineageos.org/c/LineageOS/android_vendor_qcom_opensource_power/+/437055",
+      "revId": "43864e8830979765dd69a9a10a45eb8dd5f13bb9",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
