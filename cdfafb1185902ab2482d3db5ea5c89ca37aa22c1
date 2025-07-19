@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13ee58a9_869e031d",
+        "filename": "resource_manager/src/ResourceManager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 3728,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2025-07-19T08:37:46Z",
+      "side": 0,
+      "message": "unrelated?",
+      "revId": "cdfafb1185902ab2482d3db5ea5c89ca37aa22c1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
