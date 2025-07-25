@@ -4744,14 +4744,14 @@ void ResourceManager::HandleStreamPauseResume(pal_stream_type_t st_type, bool ac
         return;
 
     if (active) {
-        if (++(*local_dis_count) == 1) {
+        ++(*local_dis_count);
+        if (*local_dis_count == 1) {
             // pause all sva/acd streams
             HandleDetectionStreamAction(st_type, ST_PAUSE, NULL);
         }
     } else {
-        if ((*local_dis_count) < 0) {
-            (*local_dis_count) = 0;
-        } else if ((*local_dis_count) > 0 && --(*local_dis_count) == 0) {
+        --(*local_dis_count);
+        if (*local_dis_count == 0) {
             // resume all sva/acd streams
             HandleDetectionStreamAction(st_type, ST_RESUME, NULL);
         }
