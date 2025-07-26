@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ef9b5ad_10098f9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14010
+      },
+      "writtenOn": "2025-07-26T15:49:59Z",
+      "side": 1,
+      "message": "Solves the issue with audio in incoming calls on ingot.",
+      "revId": "4c8963c9b2199a093b1ab56e53aca826f313242a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
