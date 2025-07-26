@@ -6623,7 +6623,7 @@ void ResourceManager::getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream
                     (*it)->getAssociatedDevices(devices);
                     typename std::vector<std::shared_ptr<Device>>::iterator result =
                              std::find(devices.begin(), devices.end(), dev);
-                    if ((result != devices.end()) && (i == dev_id))
+                    if ((result != devices.end()) && (i != (*result)->id))
                         activeStreams.push_back(*it);
                 }
                 PAL_DBG(LOG_TAG, "got dev %d active streams on dev is %zu", i, activeStreams.size() );
