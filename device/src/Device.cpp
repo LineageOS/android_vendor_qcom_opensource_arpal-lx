@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -372,6 +373,51 @@ int Device::deinit(pal_param_device_connection_t device_conn __unused)
     return 0;
 }
 
+int Device::updateCustomAnalogMicControls()
+{
+    int ret = 0;
+    struct mixer *mixerHdl = NULL;
+    struct mixer_ctl *adc1_switch_ctl = NULL;
+    struct mixer_ctl *adc1_chmap_ctl = NULL;
+
+    PAL_DBG(LOG_TAG, "Entered %s ", __func__);
+    ret = rm->getHwAudioMixer(&mixerHdl);
+    if (ret) {
+        PAL_ERR(LOG_TAG, "getHwAudioMixer() failed %d", ret);
+        goto exit;
+    }
+
+    adc1_chmap_ctl = mixer_get_ctl_by_name(mixerHdl, "ADC1 ChMap");
+    adc1_switch_ctl = mixer_get_ctl_by_name(mixerHdl, "ADC1_MIXER Switch");
+    if (!adc1_chmap_ctl || !adc1_switch_ctl) {
+        PAL_ERR(LOG_TAG, " ADC1  mixer control not identified" );
+        goto exit;
+    }
+
+    PAL_VERBOSE(LOG_TAG, "Setting ADC1 ChMap: SWRM_TX1_CH1 ");
+    ret = mixer_ctl_set_enum_by_string(adc1_chmap_ctl, "SWRM_TX1_CH1");
+    if (ret)
+        PAL_ERR(LOG_TAG, "Failed to set enum SWRM_TX1_CH1 : %d", ret);
+
+    PAL_VERBOSE(LOG_TAG, "Setting ADC1_MIXER Switch: 1 ");
+    ret = mixer_ctl_set_value(adc1_switch_ctl, 0, 1);
+    if (ret)
+        PAL_ERR(LOG_TAG, "Failed to set ADC1_Mixer Switch to 1: %d", ret);
+
+    PAL_VERBOSE(LOG_TAG, "Setting ADC1 ChMap: ZERO ");
+    ret = mixer_ctl_set_enum_by_string(adc1_chmap_ctl, "ZERO");
+    if (ret)
+        PAL_ERR(LOG_TAG, "Error: Invalid enum value to ZERO : %d", ret);
+
+    PAL_VERBOSE(LOG_TAG, "Setting ADC1_MIXER Switch: 0 ");
+    ret = mixer_ctl_set_value(adc1_switch_ctl, 0, 0);
+    if (ret)
+        PAL_ERR(LOG_TAG, "Failed to set ADC1_Mixer Switch to 0: %d", ret);
+
+exit:
+    return ret;
+}
+
 int Device::open()
 {
     int status = 0;
@@ -407,6 +453,11 @@ int Device::open()
         if (0 != status) {
             PAL_ERR(LOG_TAG, "Failed to obtain the device name from ResourceManager status %d", status);
             goto exit;
+        }
+        if (PAL_DEVICE_IN_HANDSET_MIC == this->deviceAttr.id &&
+                                !strcmp(mSndDeviceName, "handset-amic")) {
+            PAL_DBG(LOG_TAG, "amic1 capture enabled ");
+            updateCustomAnalogMicControls();
         }
         enableDevice(audioRoute, mSndDeviceName);
     }

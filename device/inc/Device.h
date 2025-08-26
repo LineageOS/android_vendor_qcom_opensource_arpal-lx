@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DEVICE_H
@@ -85,6 +89,7 @@ public:
     virtual int getCodecConfig(struct pal_media_config *config);
     static std::shared_ptr<Device> getObject(pal_device_id_t dev_id);
     int updateCustomPayload(void *payload, size_t size);
+    int updateCustomAnalogMicControls();
     void* getCustomPayload();
     size_t getCustomPayloadSize();
     virtual int32_t setDeviceParameter(uint32_t param_id, void *param);

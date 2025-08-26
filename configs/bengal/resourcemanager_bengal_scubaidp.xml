@@ -49,17 +49,18 @@
 -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-
-<!-- Changes from Qualcomm Innovation Center, Inc. are provided under the following license: -->
-<!--                                                                                   -->
-<!-- Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.          -->
-<!-- SPDX-License-Identifier: BSD-3-Clause-Clear                                       -->
+<-- Changes from Qualcomm Technologies, Inc. are provided under the following license:
+-->
+<!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+-->
+<!-- SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
 <resource_manager_info>
     <config_params>
         <param key="native_audio_mode" value="multiple_mix_dsp"/>
         <param key="max_sessions" value="128"/>
         <param key="logging_level" value ="3" />
-        <param key="context_manager_enable" value ="true" />
+        <param key="context_manager_enable" value ="false" />
         <param key="upd_dedicated_be" value ="false" />
         <param key="upd_set_custom_gain" value ="false" />
     </config_params>
@@ -819,7 +820,7 @@ ports not conflicting with other audio paths  -->
                     <!-- see kvh2xml.h -->
                     <kvpair key="0xAD000000" value="0xAD00000C"/>
                 </devicePP-metadata>
-                <param snd_name="va-mic-dmic" />
+                <param snd_name="va-mic-dmic-lpi" />
             </capture_profile>
             <capture_profile name="DUAL_MIC_16KHZ_16BIT_RAW_NLPI">
                 <param sample_rate="16000" />
@@ -849,7 +850,7 @@ ports not conflicting with other audio paths  -->
                     <!-- see kvh2xml.h -->
                     <kvpair key="0xAD000000" value="0xAD00000B"/>
                 </devicePP-metadata>
-                <param snd_name="va-mic-dmic" />
+                <param snd_name="va-mic-dmic-lpi" />
             </capture_profile>
             <capture_profile name="SINGLE_MIC_16KHZ_16BIT_FFECNS">
                 <param sample_rate="16000" />
