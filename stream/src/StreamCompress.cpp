@@ -304,7 +304,8 @@ int32_t StreamCompress::stop()
     mStreamMutex.lock();
     PAL_DBG(LOG_TAG,"Enter. state %d session handle - %p mStreamAttr->direction %d",
                 currentState, session, mStreamAttr->direction);
-    if (currentState == STREAM_STARTED || currentState == STREAM_PAUSED) {
+    if (currentState == STREAM_STARTED || currentState == STREAM_PAUSED ||
+            currentState == STREAM_OPENED) {
         mStreamMutex.unlock();
         rm->lockActiveStream();
         mStreamMutex.lock();

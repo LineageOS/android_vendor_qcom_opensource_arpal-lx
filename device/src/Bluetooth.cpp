@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: Bluetooth"
@@ -1436,8 +1440,6 @@ int BtA2dp::close_audio_source()
         mDeviceMutex.unlock();
     }
     totalActiveSessionRequests = 0;
-    param_bt_a2dp.a2dp_suspended = false;
-    param_bt_a2dp.reconfig = false;
     param_bt_a2dp.latency = 0;
     a2dpState = A2DP_STATE_DISCONNECTED;
     isConfigured = false;
@@ -1508,8 +1510,6 @@ void BtA2dp::init_a2dp_source()
         PAL_DBG(LOG_TAG, "calling BT module preinit");
         bt_audio_pre_init();
     }
-    usleep(20 * 1000); //TODO: to add interval properly
-    open_a2dp_source();
 }
 
 void BtA2dp::init_a2dp_sink()
@@ -1565,12 +1565,6 @@ void BtA2dp::init_a2dp_sink()
                 dlsym(bt_lib_sink_handle, "audio_stream_open");
             audio_sink_close = (audio_sink_close_t)
                 dlsym(bt_lib_sink_handle, "audio_stream_close");
-
-#ifdef A2DP_SINK_SUPPORTED
-
-                open_a2dp_sink();
-#endif
-
 #else
             // On Linux Builds - A2DP Sink Profile is supported via different lib
             PAL_ERR(LOG_TAG, "DLOPEN failed for %s", BT_IPC_SINK_LIB);
@@ -1641,9 +1635,6 @@ int BtA2dp::close_audio_sink()
         mDeviceMutex.unlock();
     }
     totalActiveSessionRequests = 0;
-    param_bt_a2dp.a2dp_suspended = false;
-    param_bt_a2dp.a2dp_capture_suspended = false;
-    param_bt_a2dp.reconfig = false;
     param_bt_a2dp.latency = 0;
     a2dpState = A2DP_STATE_DISCONNECTED;
     isConfigured = false;
@@ -2111,9 +2102,6 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
                 status = close_audio_sink();
 #else
                 totalActiveSessionRequests = 0;
-                param_bt_a2dp.a2dp_suspended = false;
-                param_bt_a2dp.a2dp_capture_suspended = false;
-                param_bt_a2dp.reconfig = false;
                 param_bt_a2dp.latency = 0;
                 a2dpState = A2DP_STATE_DISCONNECTED;
 #endif
@@ -2147,10 +2135,11 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
             else
                 audio_source_suspend();
         } else {
+            param_bt_a2dp.a2dp_suspended = false;
+            if (a2dpState == A2DP_STATE_DISCONNECTED)
+                goto exit;
             if (clear_source_a2dpsuspend_flag)
                 clear_source_a2dpsuspend_flag();
-
-            param_bt_a2dp.a2dp_suspended = false;
 
             if (totalActiveSessionRequests > 0) {
                 if (audio_source_start_api) {

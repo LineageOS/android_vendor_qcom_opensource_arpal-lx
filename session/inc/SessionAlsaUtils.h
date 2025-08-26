@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SESSION_ALSAUTILS_H
@@ -163,6 +167,7 @@ public:
    static int mixerWriteDatapathParams(struct mixer *mixer, int device,
                                         void *payload, int size);
    static int flush(std::shared_ptr<ResourceManager> rm, uint32_t id);
+   static int getScoDevCount(void);
 
 };
 
