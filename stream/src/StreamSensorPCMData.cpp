@@ -165,17 +165,35 @@ int32_t  StreamSensorPCMData::close()
     PAL_DBG(LOG_TAG, "Exit ret %d", status);
     return status;
 }
+
 int32_t StreamSensorPCMData::start()
 {
     int32_t status = 0;
-    bool backend_update = false;
-    std::shared_ptr<Device> device = nullptr;
 
     PAL_DBG(LOG_TAG,
             "Enter. session handle: %pK, state: %d, paused_: %s",
             session, currentState, paused_ ? "True" : "False");
 
+    /*
+     * If LPI to NLPI is deferred such as when another ST stream is buffering,
+     * and if this stream is configured to run in NLPI, defer start of the stream
+     * until the buffering is stopped.
+     */
+    if (!sm_cfg_->GetStreamLPIFlag() &&
+        (rm->getSTDeferedSwitchState() == DEFER_LPI_NLPI_SWITCH)) {
+        rm->updateDeferredSTStreams(this, true);
+        return status;
+    }
     std::lock_guard<std::mutex> lck(mStreamMutex);
+    return start_l();
+}
+
+int32_t StreamSensorPCMData::start_l()
+{
+    int32_t status = 0;
+    bool backend_update = false;
+    std::shared_ptr<Device> device = nullptr;
+
     if (true == paused_) {
         PAL_DBG(LOG_TAG,"concurrency is not supported, start the stream later");
         goto exit;
@@ -278,8 +296,17 @@ int32_t StreamSensorPCMData::stop()
     PAL_DBG(LOG_TAG, "Enter. session handle: %pK, state: %d, paused_: %s",
             session, currentState, paused_ ? "True" : "False");
 
-    std::lock_guard<std::mutex> lck(mStreamMutex);
+    /*
+     * Remove stream from start deferred stream if it hasn't been
+     * scheduled yet. If it's already started during handling
+     * deferred stream, it can be removed there.
+     */
+    if (!sm_cfg_->GetStreamLPIFlag()) {
+        rm->updateDeferredSTStreams(this, false);
+        return status;
+    }
 
+    std::lock_guard<std::mutex> lck(mStreamMutex);
     if (currentState == STREAM_STARTED || currentState == STREAM_PAUSED) {
         /* Do not update capture profile when pausing stream */
         if (false == paused_) {

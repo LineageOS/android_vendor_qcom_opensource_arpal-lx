@@ -4231,7 +4231,7 @@ int ResourceManager::getECEnableSetting(std::shared_ptr<Device> tx_dev,
     pal_device_id_t deviceId;
     std::string key = "";
     struct pal_stream_attributes curStrAttr;
-    PAL_DBG(TAG_LOG," : Enter");
+    PAL_DBG(LOG_TAG," : Enter");
 
     if (tx_dev == nullptr || ec_enable == nullptr || streamHandle == nullptr) {
         PAL_ERR(LOG_TAG, "invalid input");
@@ -4250,7 +4250,7 @@ int ResourceManager::getECEnableSetting(std::shared_ptr<Device> tx_dev,
     }
     deviceId = (pal_device_id_t)tx_dev->getSndDeviceId();
 
-    PAL_DBG(TAG_LOG, "stream type: %d, deviceid: %d, custom key: %s",
+    PAL_DBG(LOG_TAG, "stream type: %d, deviceid: %d, custom key: %s",
                       curStrAttr.type, deviceId, key.c_str());
     if (deviceInfo.empty()) {
         PAL_ERR(LOG_TAG, "deviceInfo empty");
@@ -4265,7 +4265,7 @@ int ResourceManager::getECEnableSetting(std::shared_ptr<Device> tx_dev,
                 continue;
             *ec_enable = usecaseInfo.ec_enable;
             for (auto custom_config : usecaseInfo.config) {
-                PAL_DBG(TAG_LOG,"existing custom config key = %s", custom_config.key.c_str());
+                PAL_DBG(LOG_TAG,"existing custom config key = %s", custom_config.key.c_str());
                 if (!custom_config.key.compare(key)) {
                     *ec_enable = custom_config.ec_enable;
                     break;
@@ -4276,7 +4276,7 @@ int ResourceManager::getECEnableSetting(std::shared_ptr<Device> tx_dev,
         break;
     }
 exit:
-    PAL_DBG(TAG_LOG,"ec_enable_setting:%d, status:%d", ec_enable ? *ec_enable : 0, status);
+    PAL_DBG(LOG_TAG,"ec_enable_setting:%d, status:%d", ec_enable ? *ec_enable : 0, status);
     return status;
 }
 
@@ -4818,6 +4818,22 @@ bool ResourceManager::getLPIUsage()
         mResourceManagerMutex.unlock();
 
     return !nlpi_active && use_lpi_;
+}
+
+defer_switch_state_t ResourceManager::getSTDeferedSwitchState()
+{
+
+    std::lock_guard<std::mutex> lck(mActiveStreamMutex);
+    return deferredSwitchState;
+}
+
+void ResourceManager::updateDeferredSTStreams(Stream* s, bool active)
+{
+    std::lock_guard<std::mutex> lck(mActiveStreamMutex);
+    if (active)
+        mStartDeferredStreams.push_back(s);
+    else
+        mStartDeferredStreams.remove(s);
 }
 
 void ResourceManager::GetSoundTriggerConcurrencyCount(
@@ -5850,7 +5866,7 @@ void ResourceManager::voiceUIDeferredSwitchLoop(std::shared_ptr<ResourceManager>
 void ResourceManager::handleDeferredSwitch()
 {
     int32_t status = 0;
-    bool active = false;
+    bool switch_to_nlpi = false;
     std::vector<pal_stream_type_t> st_streams;
     do {
         status = mActiveStreamMutex.try_lock();
@@ -5868,11 +5884,11 @@ void ResourceManager::handleDeferredSwitch()
 
     if (!isAnyVUIStreamBuffering() && deferredSwitchState != NO_DEFER) {
         if (deferredSwitchState == DEFER_LPI_NLPI_SWITCH)
-            active = true;
+            switch_to_nlpi = true;
         else if (deferredSwitchState == DEFER_NLPI_LPI_SWITCH)
-            active = false;
+            switch_to_nlpi = false;
 
-        use_lpi_ = !active;
+        use_lpi_ = !switch_to_nlpi;
 
         if (active_streams_st.size())
             st_streams.push_back(PAL_STREAM_VOICE_UI);
@@ -5886,6 +5902,18 @@ void ResourceManager::handleDeferredSwitch()
         handleConcurrentStreamSwitch(st_streams);
         // reset the defer switch state after handling LPI/NLPI switch
         deferredSwitchState = NO_DEFER;
+
+        // now start deferred NLPI ST streams which was not started
+        // previously due to LPI to NLPI switch deferred
+        if (switch_to_nlpi) {
+            for (auto it = mStartDeferredStreams.begin();
+                      it != mStartDeferredStreams.end(); it++) {
+                (*it)->lockStreamMutex();
+                (*it)->start_l();
+                (*it)->unlockStreamMutex();
+            }
+            mStartDeferredStreams.clear();
+        }
     }
     mActiveStreamMutex.unlock();
     PAL_DBG(LOG_TAG, "Exit");
@@ -8191,6 +8219,70 @@ done:
     return ret;
 }
 
+void ResourceManager::handleHFPConcurrency(
+    Stream* streamHandle,
+    std::vector <std::tuple<Stream *, uint32_t>> &streamDevDisconnect,
+    std::vector <std::tuple<Stream *, struct pal_device *>> &StreamDevConnect)
+
+{
+    static struct pal_device curDevAttr = {};
+    std::vector <Stream *> streams;
+    pal_stream_attributes sAttr {};
+    std::shared_ptr<Device> curDev = nullptr;
+    std::string streamAttrList;
+    std::string devList;
+    static struct pal_device dummyDevAttr = {};
+
+    PAL_DBG(LOG_TAG, "enter");
+    if (streamDevDisconnect.size() == 0 || streamHandle == nullptr) {
+        PAL_DBG(LOG_TAG, "Empty disconnect streams list. HFP call needs no update");
+        return;
+    }
+    /* find out current device for HFP RX stream to be disconnected */
+    auto it = std::find_if(streamDevDisconnect.begin(), streamDevDisconnect.end(),
+        [&](std::tuple<Stream *, uint32_t> iter) {
+            Stream* stream = std::get<0>(iter);
+            return (stream == streamHandle);
+    });
+
+    if (it != streamDevDisconnect.end()) {
+        curDevAttr.id = (pal_device_id_t)std::get<1>(*it);
+        curDev = Device::getInstance(&curDevAttr, rm);
+        if (curDev == nullptr) {
+            PAL_ERR(LOG_TAG, "exit:failed to get curDev instance");
+            return;
+        }
+        PAL_DBG(LOG_TAG, "found current device %d is running on HFP call",
+                curDevAttr.id);
+        getActiveStream_l(streams, curDev);
+    }
+    /*
+     * find out other active streams on current device of HFP call,
+     * then switch them fo dummy device first before final HFP call dev switch.
+     */
+    dummyDevAttr.id = PAL_DEVICE_OUT_DUMMY;
+    if (getDeviceConfig(&dummyDevAttr, NULL)) {
+        PAL_ERR(LOG_TAG, "getDeviceConfig failed for out_dummy device");
+        return;
+    }
+    for (auto sIter : streams) {
+        if (sIter == streamHandle)
+            continue;
+        PAL_DBG(LOG_TAG, "found the active stream also running on the device %d",
+                  (pal_device_id_t)std::get<1>(*it));
+        streamDevDisconnect.push_back({sIter, (uint32_t)(curDevAttr.id)});
+        StreamDevConnect.push_back({sIter, &dummyDevAttr});
+        if (!sIter->getStreamAttributes(&sAttr)) {
+            streamAttrList.append(streamNameLUT.at(sAttr.type));
+            streamAttrList.append(",");
+        }
+        devList.append(deviceNameLUT.at(curDevAttr.id));
+        devList.append(",");
+    }
+    PAL_DBG(LOG_TAG,
+    "exit: to be switched temporarily: stream: [%s] switching from dev [%s] to dummy",
+    streamAttrList.c_str(), devList.c_str());
+}
 /*
  * For shared backend setup, it's crucial to restore the correct device configuration
  * for the UPD stream.
@@ -8401,6 +8493,7 @@ error:
 int32_t ResourceManager::streamDevConnect_l(std::vector <std::tuple<Stream *, struct pal_device *>> streamDevConnectList){
     int status = 0;
     std::vector <std::tuple<Stream *, struct pal_device *>>::iterator sIter;
+    std::set<Stream *> connected_streams;
 
     PAL_DBG(LOG_TAG, "Enter");
     /* connect active list from the current devices they are attached to */
@@ -8414,7 +8507,9 @@ int32_t ResourceManager::streamDevConnect_l(std::vector <std::tuple<Stream *, st
                 PAL_DBG(LOG_TAG,"connected stream %pK from device %d",
                         std::get<0>(*sIter), (std::get<1>(*sIter))->id);
             }
-            std::get<0>(*sIter)->unlockStreamMutex();
+            auto result = connected_streams.insert(std::get<0>(*sIter));
+            if (result.second)
+                std::get<0>(*sIter)->unlockStreamMutex();
         }
     }
 
@@ -11443,6 +11538,8 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
             hfpDev.push_back(PAL_DEVICE_IN_BLUETOOTH_HFP);
             for (auto devId: hfpDev) {
                 dattr.id = devId;
+                if (!isDeviceAvailable(dattr.id))
+                    continue;
                 dev = std::dynamic_pointer_cast<BtSco>
                       (BtSco::getInstance(&dattr, rm));
                 if (!dev) {
@@ -11450,9 +11547,15 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     status = -ENODEV;
                     goto exit;
                 }
-                status = dev->setDeviceParameter(param_id, param_payload);
-                if (status)
-                    PAL_ERR(LOG_TAG, "set Parameter %d failed on HFP devices", param_id);
+                isScoOn = dev->isDeviceReady();
+                if (isScoOn != param_bt_sco->bt_sco_on) {
+                    status = dev->setDeviceParameter(param_id, param_payload);
+                    if (status) {
+                        PAL_ERR(LOG_TAG, "set Parameter %d failed on HFP devices", param_id);
+                    }
+                } else {
+                    PAL_INFO(LOG_TAG, "SCO already in requested state for HFP device, ignoring");
+                }
             }
         }
         break;
@@ -13037,6 +13140,29 @@ bool ResourceManager::isBtDevice(pal_device_id_t id)
         default:
             return false;
     }
+}
+
+bool ResourceManager::isHFPUsecase(Stream* streamHandle)
+{
+    struct pal_device dAttr;
+    std::shared_ptr<BtSco> dev = nullptr;
+    pal_stream_attributes strAttr;
+    std::vector<std::shared_ptr<Device>> associatedDevices;
+    bool isHFPUsecase = false;
+    if (streamHandle == nullptr)
+        return isHFPUsecase;
+
+    streamHandle->getStreamAttributes(&strAttr);
+    if (strAttr.type == PAL_STREAM_LOOPBACK &&
+        strAttr.info.opt_stream_info.loopback_type == PAL_STREAM_LOOPBACK_HFP_RX) {
+        streamHandle->getAssociatedDevices(associatedDevices);
+        if (!associatedDevices.empty() &&
+            associatedDevices[0]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_HFP) {
+            isHFPUsecase = true;
+        }
+    }
+    PAL_DBG(TAG_LOG,"isHFPUsecase:%d", isHFPUsecase);
+    return isHFPUsecase;
 }
 
 void ResourceManager::updateBtCodecMap(std::pair<uint32_t, std::string> key, std::string value)
