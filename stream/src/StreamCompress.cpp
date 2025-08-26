@@ -98,6 +98,7 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
     std::ignore = modifiers;
     std::ignore = no_of_modifiers;
     currentState = STREAM_IDLE;
+    streamCb = NULL;
 
     // Setting default volume to unity
     mVolumeData = (struct pal_volume_data *)calloc(1, sizeof(struct pal_volume_data)
@@ -259,10 +260,6 @@ closeDevice:
 exit:
     palStateEnqueue(this, PAL_STATE_OPENED, status);
     mStreamMutex.unlock();
-    if (status && mStreamAttr->direction == PAL_AUDIO_OUTPUT) {
-        PAL_ERR(LOG_TAG, "Stream open failed, sending error callback");
-        handleSessionCallBack((uint64_t)this, PAL_STREAM_CBK_EVENT_ERROR, (void*)NULL, 0);
-    }
     PAL_DBG(LOG_TAG,"Exit status: %d", status);
     return status;
 }
@@ -770,8 +767,13 @@ int32_t StreamCompress::registerCallBack(pal_stream_callback cb, uint64_t cookie
 
 int32_t StreamCompress::getCallBack(pal_stream_callback *cb)
 {
-    *cb = streamCb;
-    return 0;
+    if (streamCb) {
+        *cb = streamCb;
+        return 0;
+    } else {
+        PAL_INFO(LOG_TAG, "cb is not registered yet");
+        return -EINVAL;
+    }
 }
 
 int32_t StreamCompress::getParameters(uint32_t /*param_id*/, void ** /*payload*/)

@@ -54,6 +54,7 @@ public:
     int32_t addRemoveEffect(pal_audio_effect_t effect, bool enable);
     int32_t open() override;
     int32_t start() override;
+    int32_t start_l() override;
     int32_t stop() override;
     int32_t close() override;
     int32_t Resume(bool is_internal __unused) override;

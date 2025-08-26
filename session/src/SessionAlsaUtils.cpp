@@ -28,7 +28,7 @@
 *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1181,7 +1181,14 @@ int SessionAlsaUtils::getModuleInstanceId(struct mixer *mixer, int device, const
         PAL_ERR(LOG_TAG, "Device name from id %d not found", device);
         return -EINVAL;
     }
-
+    if (!intf_name) {
+        PAL_ERR(LOG_TAG, "Invalid interface name");
+        return -EINVAL;
+    }
+    if (!mixer) {
+        PAL_ERR(LOG_TAG, "Invalid mixer pointer");
+        return -EINVAL;
+    }
     ret = setStreamMetadataType(mixer, device, intf_name);
     if (ret)
         return ret;
@@ -1355,6 +1362,14 @@ int SessionAlsaUtils::setStreamMetadataType(struct mixer *mixer, int device, con
     pcmDeviceName = rm->getDeviceNameFromID(device);
     if(!pcmDeviceName){
         PAL_ERR(LOG_TAG, "Device name from id %d not found", device);
+        return -EINVAL;
+    }
+    if (!mixer) {
+        PAL_ERR(LOG_TAG, "Invalid mixer pointer");
+        return -EINVAL;
+    }
+    if (!val) {
+        PAL_ERR(LOG_TAG, "Invalid interface name");
         return -EINVAL;
     }
     ctl_len = strlen(pcmDeviceName) + 1 + strlen(control) + 1;

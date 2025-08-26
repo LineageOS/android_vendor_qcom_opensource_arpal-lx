@@ -1476,6 +1476,8 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
                 ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
                 ((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_SCO) ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
                  isMMap)) && !isDeviceStopped) {
                 status = mDevices[i]->stop();
@@ -1611,6 +1613,8 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
         ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
         ((dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
         (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+        (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_SCO) ||
+        (dev->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
         (dev->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
         isMMap)) {
         status = dev->start();
@@ -1772,6 +1776,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     pal_device_id_t newBtDevId;
     bool isBtReady = false;
     std::vector <Stream *> tempMutedStreams;
+    bool hasNoneDevice = false;
 
     rm->lockActiveStream();
     mStreamMutex.lock();
@@ -1785,6 +1790,12 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 
     streamHandle->getStreamAttributes(&strAttr);
 
+    for (int i = 0; i < numDev; i++) {
+         if (newDevices[i].id == PAL_DEVICE_NONE) {
+             hasNoneDevice = true;
+             break;
+         }
+    }
     for (int i = 0; i < mDevices.size(); i++) {
         pal_device_id_t curDevId = (pal_device_id_t)mDevices[i]->getSndDeviceId();
         /*
@@ -1800,7 +1811,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                  PAL_ERR(LOG_TAG, "Silence Detection disable failed \n");
         }
 
-        if (curDevId < PAL_DEVICE_OUT_MAX &&
+        if (hasNoneDevice && (curDevId < PAL_DEVICE_OUT_MAX) &&
             (((rm->isBtA2dpDevice(curDevId) || rm->isBtScoDevice(curDevId))
             && (!rm->isDeviceReady(curDevId))) ||
             curDevId == PAL_DEVICE_OUT_PROXY ||
@@ -2193,6 +2204,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         rm->unlockActiveStream();
         goto done;
     }
+
+    /* Handle scenario when there is HFP call.
+       e.g. need to disconnect old devices totaly before switching new devices for HFP call*/
+    if (rm->isHFPUsecase(streamHandle))
+        rm->handleHFPConcurrency(streamHandle, streamDevDisconnect, StreamDevConnect);
 
     mStreamMutex.unlock();
     rm->unlockActiveStream();

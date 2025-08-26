@@ -93,6 +93,7 @@ class StreamASR : public Stream {
     int32_t close() override;
     int32_t prepare() override { return 0; }
     int32_t start() override;
+    int32_t start_l() override;
     int32_t stop() override;
 
     static int32_t isSampleRateSupported(uint32_t sampleRate);

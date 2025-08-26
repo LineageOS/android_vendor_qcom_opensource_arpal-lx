@@ -543,6 +543,11 @@ int32_t StreamPCM::start()
 
             rm->lockGraph();
             for (int32_t i=0; i < mDevices.size(); i++) {
+                if ((rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId())) && isMMap) {
+                    PAL_DBG(LOG_TAG, "skip IN BT A2DP/BLE device start, as its done already");
+                    status = 0;
+                    continue;
+                }
                 status = mDevices[i]->start();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "Tx device start is failed with status %d",
@@ -754,6 +759,11 @@ int32_t StreamPCM::stop()
 
             rm->lockGraph();
             for (int32_t i=0; i < mDevices.size(); i++) {
+                if ((rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId())) && isMMap) {
+                    PAL_DBG(LOG_TAG, "skip IN BT A2DP/BLE device stop, to be done in close/disconnect");
+                    status = 0;
+                    continue;
+                }
                 status = mDevices[i]->stop();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "Tx device stop failed with status %d", status);
@@ -1857,9 +1867,23 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
     mStreamMutex.lock();
     if (currentState == STREAM_INIT) {
         rm->lockGraph();
+
         for (int32_t i=0; i < mDevices.size(); i++) {
             if (rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId()) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) {
+
+                if (rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId()) &&
+                    !rm->isDeviceReady((pal_device_id_t) mDevices[i]->getSndDeviceId())) {
+                     if (mDevices.size() == 1) {
+                         PAL_ERR(LOG_TAG, "createMmapBuffer failed for a2dp/ble/sco devices as device not ready");
+                         status = -EINVAL;
+                         rm->unlockGraph();
+                         goto exit;
+                     } else {
+                           continue;
+                     }
+                }
+
                 PAL_DBG(LOG_TAG, "start BT devices as to populate the full GKVs");
                 status = mDevices[i]->start();
                 btDevStarted = !status;
@@ -1870,6 +1894,7 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
                 }
             }
         }
+
         status = session->createMmapBuffer(this, min_size_frames, info);
         if (0 != status) {
             PAL_ERR(LOG_TAG, "createMmapBuffer failed with status = %d", status);
