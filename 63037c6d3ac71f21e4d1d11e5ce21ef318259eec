@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cfd14a60_ab7382fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-09-03T15:45:45Z",
+      "side": 1,
+      "message": "necessary to build 8650 and FP6 which does not use this works fine",
+      "revId": "63037c6d3ac71f21e4d1d11e5ce21ef318259eec",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
