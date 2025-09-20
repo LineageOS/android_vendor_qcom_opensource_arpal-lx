@@ -207,6 +207,7 @@ public:
     virtual int32_t open() = 0;
     virtual int32_t close() = 0;
     virtual int32_t start() = 0;
+    virtual int32_t start_l() {return 0;}
     virtual int32_t stop() = 0;
     virtual int32_t prepare() = 0;
     virtual int32_t drain(pal_drain_type_t type __unused) {return 0;}

@@ -120,6 +120,7 @@ public:
 
     int32_t close() override;
     int32_t start() override;
+    int32_t start_l() override;
     int32_t stop() override;
 
     int32_t prepare() override { return 0; }

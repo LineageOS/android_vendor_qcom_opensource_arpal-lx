@@ -318,10 +318,20 @@ void StreamSoundTrigger::UpdateCaptureHandleInfo(bool start) {
 }
 
 int32_t StreamSoundTrigger::start() {
-    int32_t status = 0;
-    stream_state_t prev_state;
+    int status = 0;
 
     PAL_DBG(LOG_TAG, "Enter, stream direction %d", mStreamAttr->direction);
+
+    /*
+     * If LPI to NLPI is deferred such as when another ST stream is buffering,
+     * and if this stream is configured to run in NLPI, defer start of the stream
+     * until the buffering is stopped.
+     */
+    if (!sm_cfg_->GetStreamLPIFlag() &&
+        (rm->getSTDeferedSwitchState() == DEFER_LPI_NLPI_SWITCH)) {
+        rm->updateDeferredSTStreams(this, true);
+        return status;
+    }
 
     /*
      * Guard with mActiveStreamMutex to avoid concurrent
@@ -329,6 +339,16 @@ int32_t StreamSoundTrigger::start() {
      */
     rm->lockActiveStream();
     std::lock_guard<std::mutex> lck(mStreamMutex);
+    status  = start_l();
+    rm->unlockActiveStream();
+
+    return status;
+}
+
+int32_t StreamSoundTrigger::start_l() {
+    int32_t status = 0;
+    stream_state_t prev_state;
+
     // cache current state after mutex locked
     prev_state = currentState;
     currentState = STREAM_STARTED;
@@ -344,7 +364,7 @@ int32_t StreamSoundTrigger::start() {
         UpdateCaptureHandleInfo(true);
     }
     palStateEnqueue(this, PAL_STATE_STARTED, status);
-    rm->unlockActiveStream();
+
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
     return status;
 }
@@ -353,6 +373,16 @@ int32_t StreamSoundTrigger::stop() {
     int32_t status = 0;
 
     PAL_DBG(LOG_TAG, "Enter, stream direction %d", mStreamAttr->direction);
+
+    /*
+     * Remove stream from start deferred stream if it hasn't been
+     * scheduled yet. If it's already started during handling
+     * deferred stream, it can be removed there.
+     */
+    if (!sm_cfg_->GetStreamLPIFlag()) {
+        rm->updateDeferredSTStreams(this, false);
+        return status;
+    }
 
     /*
      * Guard with mActiveStreamMutex to avoid concurrent
@@ -530,6 +560,7 @@ release:
                 PAL_ERR(LOG_TAG, "Device close failed, status %d", ret);
                 status = ret;
             }
+            mDevices[0]->setSndName("");
         }
     } else if (gsl_engine_) {
         status = gsl_engine_->GetParameters(param_id, payload);
@@ -548,6 +579,7 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
     int32_t status = 0;
     pal_param_payload *param_payload = (pal_param_payload *)payload;
     struct pal_st_recognition_config *new_rec_config = nullptr;
+    bool lock_status = false;
 
     if (param_id != PAL_PARAM_ID_STOP_BUFFERING && !param_payload) {
         PAL_ERR(LOG_TAG, "Invalid payload for param ID: %d", param_id);
@@ -556,9 +588,9 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
 
     PAL_DBG(LOG_TAG, "Enter, param id %d", param_id);
 
-    mStreamMutex.lock();
     switch (param_id) {
         case PAL_PARAM_ID_LOAD_SOUND_MODEL: {
+            std::lock_guard<std::mutex> lck(mStreamMutex);
             std::shared_ptr<StEventConfig> ev_cfg(
                 new StLoadEventConfig((void *)param_payload->payload));
             status = cur_state_->ProcessEvent(ev_cfg);
@@ -570,6 +602,7 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
             break;
         }
         case PAL_PARAM_ID_RECOGNITION_CONFIG: {
+            std::lock_guard<std::mutex> lck(mStreamMutex);
             new_rec_config =
                 (struct pal_st_recognition_config *)param_payload->payload;
             std::shared_ptr<StEventConfig> ev_cfg(
@@ -578,6 +611,15 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
             break;
         }
         case PAL_PARAM_ID_STOP_BUFFERING: {
+            do {
+                lock_status = mStreamMutex.try_lock();
+            } while (!lock_status && GetCurrentStateId() == ST_STATE_BUFFERING);
+
+            if (GetCurrentStateId() != ST_STATE_BUFFERING) {
+                if (lock_status)
+                    mStreamMutex.unlock();
+                break;
+            }
             std::shared_ptr<StEventConfig> ev_cfg(
                 new StStopBufferingEventConfig());
             status = cur_state_->ProcessEvent(ev_cfg);
@@ -586,6 +628,8 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
                 ST_DBG_FILE_CLOSE(lab_fd_);
                 lab_fd_ = nullptr;
             }
+            if (lock_status)
+                mStreamMutex.unlock();
             break;
         }
         default: {
@@ -594,7 +638,6 @@ int32_t StreamSoundTrigger::setParameters(uint32_t param_id, void *payload) {
             break;
         }
     }
-    mStreamMutex.unlock();
 
     if (!status && param_id == PAL_PARAM_ID_LOAD_SOUND_MODEL) {
         rm->ConcurrentStreamStatus(this, true);
