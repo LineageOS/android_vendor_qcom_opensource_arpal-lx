@@ -26,9 +26,11 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -121,7 +123,7 @@ public:
     static std::shared_ptr<Device> getInstance(struct pal_device *device,
                                                std::shared_ptr<ResourceManager> Rm);
     int getSndDeviceId();
-    int getDeviceCount() { return deviceCount; }
+    int getDeviceCount();
     std::string getPALDeviceName();
     int setDeviceAttributes(struct pal_device &dattr);
     virtual int getDeviceAttributes(struct pal_device *dattr,

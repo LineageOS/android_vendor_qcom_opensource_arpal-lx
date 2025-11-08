@@ -149,6 +149,13 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
         dev = Device::getInstance((struct pal_device *)&dattr[i] , rm);
         if (!dev) {
             PAL_ERR(LOG_TAG, "Device creation failed");
+            if (str_registered) {
+                mStreamMutex.unlock();
+                rm->deregisterStream(this);
+                for (int32_t i = 0; i < mPalDevices.size(); i++)
+                    mPalDevices[i]->removeStreamDeviceAttr(this);
+                mStreamMutex.lock();
+            }
             free(mStreamAttr);
             mStreamAttr = NULL;
             free(mVolumeData);
@@ -156,11 +163,6 @@ StreamPCM::StreamPCM(const struct pal_stream_attributes *sattr, struct pal_devic
             delete session;
             session = nullptr;
             mStreamMutex.unlock();
-            if (str_registered) {
-                rm->deregisterStream(this);
-                for (int32_t i = 0; i < mPalDevices.size(); i++)
-                    mPalDevices[i]->removeStreamDeviceAttr(this);
-            }
             throw std::runtime_error("failed to create device object");
         }
         dev->insertStreamDeviceAttr(&dattr[i], this);

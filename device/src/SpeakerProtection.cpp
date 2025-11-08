@@ -2479,6 +2479,7 @@ void SpeakerProtection::updateSPcustomPayload()
     if (customPayloadSize) {
         free(customPayload);
         customPayloadSize = 0;
+        customPayload = NULL;
     }
 
     spModeConfg.operation_mode = NORMAL_MODE;
@@ -2864,6 +2865,7 @@ void SpeakerFeedback::updateVIcustomPayload()
     if (customPayloadSize) {
         free(customPayload);
         customPayloadSize = 0;
+        customPayload = NULL;
     }
 
     memset(&modeConfg, 0, sizeof(modeConfg));

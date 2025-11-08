@@ -154,6 +154,13 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
         dev = Device::getInstance((struct pal_device *)&dattr[i] , rm);
         if (dev == nullptr) {
             PAL_ERR(LOG_TAG, "Device creation is failed");
+            if (str_registered) {
+                mStreamMutex.unlock();
+                rm->deregisterStream(this);
+                for (int32_t i = 0; i < mPalDevices.size(); i++)
+                    mPalDevices[i]->removeStreamDeviceAttr(this);
+                mStreamMutex.lock();
+            }
             free(mStreamAttr);
             mStreamAttr = NULL;
             free(mVolumeData);
@@ -161,11 +168,6 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
             delete session;
             session = nullptr;
             mStreamMutex.unlock();
-            if (str_registered) {
-                rm->deregisterStream(this);
-                for (int32_t i = 0; i < mPalDevices.size(); i++)
-                    mPalDevices[i]->removeStreamDeviceAttr(this);
-            }
             throw std::runtime_error("failed to create device object");
         }
         dev->insertStreamDeviceAttr(&dattr[i], this);
@@ -575,13 +577,16 @@ int32_t StreamCompress::start()
                 rm->unlockGraph();
                 goto session_fail;
             }
+            rm->unlockGraph();
+            mStreamMutex.unlock();
+            rm->lockActiveStream();
+            mStreamMutex.lock();
             for (int i = 0; i < mDevices.size(); i++) {
                 rm->registerDevice(mDevices[i], this);
             }
+            rm->unlockActiveStream();
             currentState = STREAM_STARTED;
             PAL_VERBOSE(LOG_TAG, "session start successful");
-
-            rm->unlockGraph();
 
             break;
         default:
@@ -1169,7 +1174,6 @@ int32_t StreamCompress::resume()
 
 int32_t StreamCompress::drain(pal_drain_type_t type)
 {
-    std::lock_guard<std::mutex> lck(mStreamMutex);
     if (PAL_CARD_STATUS_DOWN(rm->cardState)) {
         PAL_ERR(LOG_TAG, "Sound card offline/standby or session is null");
         return -EINVAL;

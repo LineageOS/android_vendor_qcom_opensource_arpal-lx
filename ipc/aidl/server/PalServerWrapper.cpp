@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -238,8 +238,8 @@ void ClientInfo::cleanup() {
             stream.second->closeSharedMemoryFdPairs();
         }
     }
-    clearCallbacks();
     clearStreams();
+    clearCallbacks();
 }
 
 std::shared_ptr<StreamInfo> ClientInfo::getStreamInfo_l(int64_t handle) {
