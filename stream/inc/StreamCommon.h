@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef STREAMCOMMON_H_
@@ -49,6 +53,7 @@ public:
     StreamCommon(const struct pal_stream_attributes *sattr, struct pal_device *dattr,
                  const uint32_t no_of_devices, const struct modifier_kv *modifiers,
                  const uint32_t no_of_modifiers, const std::shared_ptr<ResourceManager> rm);
+    StreamCommon() {};
     ~StreamCommon();
     uint64_t cookie_;
     pal_stream_callback callback_= 0;

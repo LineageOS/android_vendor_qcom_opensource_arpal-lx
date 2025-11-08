@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DISPLAYPORT_H
@@ -178,7 +182,8 @@ public:
     int getExtDispSysfsNodeIndex(int ext_disp_type);
     int updateExtDispSysfsNode(int node_value, int controller, int stream);
     int updateAudioAckState(int node_value, int controller, int stream);
-    int getDeviceAttributes (struct pal_device *dattr) override;
+    int getDeviceAttributes (struct pal_device *dattr,
+                            Stream* streamHandle = NULL) override;
 };
 
 

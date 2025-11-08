@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef STREAM_H_
@@ -145,6 +148,7 @@ protected:
     uint32_t mNoOfDevices;
     std::vector <std::shared_ptr<Device>> mDevices;
     std::vector <struct pal_device> mPalDevice;
+    std::vector <std::shared_ptr<Device>> mPalDevices; // pal devices set from client, which may differ from mDevices
     Session* session;
     struct pal_stream_attributes* mStreamAttr;
     int mGainLevel;
@@ -222,8 +226,9 @@ public:
     uint32_t getLatency();
     int32_t getAssociatedDevices(std::vector <std::shared_ptr<Device>> &adevices);
     int32_t getAssociatedPalDevices(std::vector <struct pal_device> &palDevices);
-    void clearOutPalDevices();
-    void addPalDevice(struct pal_device *dattr) { mPalDevice.push_back(*dattr); }
+    int32_t getPalDevices(std::vector <std::shared_ptr<Device>> &PalDevices);
+    void clearOutPalDevices(Stream *streamHandle);
+    void addPalDevice(Stream* streamHandle, struct pal_device *dattr);
     int32_t updatePalDevice(struct pal_device *dattr, pal_device_id_t dev_id);
     int32_t getSoundCardId();
     int32_t getAssociatedSession(Session** session);

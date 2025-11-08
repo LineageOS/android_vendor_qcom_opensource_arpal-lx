@@ -26,8 +26,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -643,13 +643,13 @@ std::string PayloadBuilder::removeSpaces(const std::string& str)
     return std::regex_replace(str, std::regex("^ +| +$|( ) +"), "$1");
 }
 
-std::vector<std::string> PayloadBuilder::splitStrings(const std::string& str)
+std::vector<std::string> PayloadBuilder::splitStrings(const std::string& str, char delimiter)
 {
     std::vector<std::string> tokens;
     std::stringstream check(str);
     std::string intermediate;
 
-    while (getline(check, intermediate, ',')) {
+    while (getline(check, intermediate, delimiter)) {
         if (!removeSpaces(intermediate).empty())
             tokens.push_back(removeSpaces(intermediate));
     }
@@ -679,7 +679,7 @@ void PayloadBuilder:: processKVSelectorData(struct user_xml_data *data,
         selector_type_t selector_type =  selectorstypeLUT.at(kvinfo.selector_names[i]);
 
         std::vector<std::string> selector_values =
-            splitStrings(sel_values_superset[i]);
+            splitStrings(sel_values_superset[i], ',');
 
         for (int j = 0; j < selector_values.size(); j++) {
             kvinfo.selector_pairs.push_back(std::make_pair(selector_type,
@@ -735,7 +735,7 @@ void PayloadBuilder:: processKVTypeData(struct user_xml_data *data,const XML_Cha
     PAL_DBG(LOG_TAG, "stream-device ID/type:%s, tag_name:%d", attr[1], data->tag);
     if (data->tag == TAG_STREAM_SEL || data->tag == TAG_STREAMPP_SEL) {
         if (!strcmp(attr[0], "type")) {
-            typeNames = splitStrings(attr[1]);
+            typeNames = splitStrings(attr[1], ',');
             for (int i = 0; i < typeNames.size(); i++) {
                 stream_id = ResourceManager::getStreamType(typeNames[i]);
                 sdTypeKV.id_type.push_back(stream_id);
@@ -753,7 +753,7 @@ void PayloadBuilder:: processKVTypeData(struct user_xml_data *data,const XML_Cha
     }
     if (data->tag == TAG_DEVICE_SEL || data->tag == TAG_DEVICEPP_SEL) {
         if (!strcmp(attr[0], "id")) {
-            typeNames = splitStrings(attr[1]);
+            typeNames = splitStrings(attr[1], ',');
             for (int i = 0; i < typeNames.size(); i++) {
                 dev_id = ResourceManager::getDeviceId(typeNames[i]);
                 sdTypeKV.id_type.push_back(dev_id);
@@ -2356,6 +2356,25 @@ int PayloadBuilder::retrieveKVs(std::vector<std::pair<selector_type_t, std::stri
             if (filled_selector_pairs[i].first == CUSTOM_CONFIG_SEL) {
                 PAL_INFO(LOG_TAG, "Fallback to find KVs without custom config %s",
                     filled_selector_pairs[i].second.c_str());
+
+                /* Copy combined custom configs to a variable */
+                std::string custom_config_all = filled_selector_pairs[i].second;
+
+                /* Separate the custom configs based on ';' */
+                std::vector<std::string> custom_keys = splitStrings(custom_config_all, ';');
+
+                /* Try to find KVs with each custom config */
+                for (const auto& key : custom_keys) {
+                    filled_selector_pairs[i].second = key;
+                    found = findKVs(filled_selector_pairs, type, any_type, keyVector);
+                    if (found) {
+                        PAL_DBG(LOG_TAG, "KVs found with token %s for the stream type/dev id: %d",
+                            key.c_str(), type);
+                        goto exit;
+                    }
+                }
+
+                /* If no KVs found, proceed with fallback mechanism */
                 filled_selector_pairs.erase(filled_selector_pairs.begin() + i);
                 custom_config_fallback = true;
             }
@@ -2730,7 +2749,7 @@ int PayloadBuilder::populateDeviceKV(Stream* s, int32_t beDevId,
         dAttr.id = (pal_device_id_t)beDevId;
         dev = Device::getInstance(&dAttr, rm);
         if (dev) {
-            status = dev->getDeviceAttributes(&dAttr);
+            status = dev->getDeviceAttributes(&dAttr, s);
             selectors = retrieveSelectors(beDevId, all_devices);
             if (selectors.empty() != true)
                 filled_selector_pairs = getSelectorValues(selectors, s, &dAttr);
@@ -2850,7 +2869,6 @@ int PayloadBuilder::populateDevicePPKV(Stream* s, int32_t rxBeDevId,
     std::vector <std::pair<selector_type_t, std::string>> filled_selector_pairs;
 
     PAL_DBG(LOG_TAG, "Enter");
-
     /* Populate Rx Device PP KV */
     if (rxBeDevId > 0) {
         PAL_INFO(LOG_TAG, "Rx device id:%d", rxBeDevId);
@@ -2858,7 +2876,7 @@ int PayloadBuilder::populateDevicePPKV(Stream* s, int32_t rxBeDevId,
         dAttr.id = (pal_device_id_t)rxBeDevId;
         dev = Device::getInstance(&dAttr, rm);
         if (dev) {
-            status = dev->getDeviceAttributes(&dAttr);
+            status = dev->getDeviceAttributes(&dAttr, s);
             selectors = retrieveSelectors(dAttr.id, all_devicepps);
             if (selectors.empty() != true)
                 filled_selector_pairs = getSelectorValues(selectors, s, &dAttr);
@@ -2877,7 +2895,7 @@ int PayloadBuilder::populateDevicePPKV(Stream* s, int32_t rxBeDevId,
         dAttr.id = (pal_device_id_t)txBeDevId;
         dev = Device::getInstance(&dAttr, rm);
         if (dev) {
-            status = dev->getDeviceAttributes(&dAttr);
+            status = dev->getDeviceAttributes(&dAttr, s);
             selectors = retrieveSelectors(dAttr.id, all_devicepps);
             if (selectors.empty() != true)
                 filled_selector_pairs = getSelectorValues(selectors, s, &dAttr);

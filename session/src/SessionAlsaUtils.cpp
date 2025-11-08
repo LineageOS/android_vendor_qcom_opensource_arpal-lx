@@ -26,8 +26,8 @@
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Changes from Qualcomm Innovation Center are provided under the following license:
-* Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+* Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -435,7 +435,7 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
                     emptyKV);
         else {
             for (i = 0; i < associatedDevices.size(); i++) {
-                associatedDevices[i]->getDeviceAttributes(&dAttr);
+                associatedDevices[i]->getDeviceAttributes(&dAttr, streamHandle);
                 if (be->first == dAttr.id) {
                     break;
                 }
@@ -1443,7 +1443,7 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
     // get keyvalue pair info
     for (i = 0; i < associatedDevices.size(); i++) {
-        associatedDevices[i]->getDeviceAttributes(&dAttr);
+        associatedDevices[i]->getDeviceAttributes(&dAttr, streamHandle);
         if (txBackEnds[0].first == dAttr.id) {
             isDeviceFound = true;
             break;

@@ -888,6 +888,8 @@ public:
     void unlockResourceManagerMutex() {mResourceManagerMutex.unlock();};
     void getSharedBEActiveStreamDevs(std::vector <std::tuple<Stream *, uint32_t>> &activeStreamDevs,
                                      int dev_id);
+    bool compareSharedBEStreamDevAttr(std::vector <std::tuple<Stream *, uint32_t>> &sharedBEStreamDev,
+                                     pal_device *newDevAttr, bool enable);
     int32_t streamDevSwitch(std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnectList,
                             std::vector <std::tuple<Stream *, struct pal_device *>> streamDevConnectList);
     char* getDeviceNameFromID(uint32_t id);
@@ -909,16 +911,7 @@ public:
     void getVendorConfigPath(char* config_file_path, int path_size);
     void restoreDevice(std::shared_ptr<Device> dev);
     bool doDevAttrDiffer(struct pal_device *inDevAttr,
-                         const char *CurrentSndDeviceName,
                          struct pal_device *curDevAttr);
-    int updatePriorityAttr(pal_device_id_t dev_id,
-                           std::vector <std::tuple<Stream *, uint32_t>> activestreams,
-                           struct pal_device *incomingDev,
-                           const pal_stream_attributes* currentStrAttr);
-    bool compareAndUpdateDevAttr(const struct pal_device *Dev1Attr,
-                                 const struct pal_device_info *Dev1Info,
-                                 struct pal_device *Dev2Attr,
-                                 const struct pal_device_info *Dev2Info);
     int32_t voteSleepMonitor(Stream *str, bool vote, bool force_nlpi_vote = false);
     bool checkAndUpdateDeferSwitchState(bool stream_active);
     static uint32_t palFormatToBitwidthLookup(const pal_audio_fmt_t format);

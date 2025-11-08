@@ -26,8 +26,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,12 +43,129 @@
 
 StreamUltraSound::StreamUltraSound(const struct pal_stream_attributes *sattr __unused, struct pal_device *dattr __unused,
                     const uint32_t no_of_devices __unused, const struct modifier_kv *modifiers __unused,
-                    const uint32_t no_of_modifiers __unused, const std::shared_ptr<ResourceManager> rm):
-                  StreamCommon(sattr,dattr,no_of_devices,modifiers,no_of_modifiers,rm)
+                    const uint32_t no_of_modifiers __unused, const std::shared_ptr<ResourceManager> rm)
 {
+    mStreamMutex.lock();
+    uint32_t in_channels = 0, out_channels = 0;
+    uint32_t attribute_size = 0;
+
+    if (PAL_CARD_STATUS_DOWN(rm->cardState)) {
+        PAL_ERR(LOG_TAG, "Error:Sound card offline/standby, can not create stream");
+        usleep(SSR_RECOVERY);
+        mStreamMutex.unlock();
+        throw std::runtime_error("Sound card offline/standby");
+    }
+
+    session = NULL;
+    mGainLevel = -1;
+    std::shared_ptr<Device> dev = nullptr;
+    mStreamAttr = (struct pal_stream_attributes *)nullptr;
+    mDevices.clear();
+    currentState = STREAM_IDLE;
+    //Modify cached values only at time of SSR down.
+    cachedState = STREAM_IDLE;
+    cookie_ = 0;
+    bool isDeviceConfigUpdated = false;
+
+    PAL_DBG(LOG_TAG, "Enter");
+
+    //TBD handle modifiers later
+    mNoOfModifiers = 0; //no_of_modifiers;
+    mModifiers = (struct modifier_kv *) (NULL);
+    std::ignore = modifiers;
+    std::ignore = no_of_modifiers;
+
+    if (!sattr) {
+        PAL_ERR(LOG_TAG,"Error:invalid arguments");
+        mStreamMutex.unlock();
+        throw std::runtime_error("invalid arguments");
+    }
+
+    attribute_size = sizeof(struct pal_stream_attributes);
+    mStreamAttr = (struct pal_stream_attributes *) calloc(1, attribute_size);
+    if (!mStreamAttr) {
+        PAL_ERR(LOG_TAG, "Error:malloc for stream attributes failed %s", strerror(errno));
+        mStreamMutex.unlock();
+        throw std::runtime_error("failed to malloc for stream attributes");
+    }
+
+    memcpy(mStreamAttr, sattr, sizeof(pal_stream_attributes));
+
+    if (mStreamAttr->in_media_config.ch_info.channels > PAL_MAX_CHANNELS_SUPPORTED) {
+        PAL_ERR(LOG_TAG,"Error:in_channels is invalid %d", in_channels);
+        mStreamAttr->in_media_config.ch_info.channels = PAL_MAX_CHANNELS_SUPPORTED;
+    }
+    if (mStreamAttr->out_media_config.ch_info.channels > PAL_MAX_CHANNELS_SUPPORTED) {
+        PAL_ERR(LOG_TAG,"Error:out_channels is invalid %d", out_channels);
+        mStreamAttr->out_media_config.ch_info.channels = PAL_MAX_CHANNELS_SUPPORTED;
+    }
+
+    PAL_VERBOSE(LOG_TAG, "Create new Session for stream type %d", sattr->type);
+    session = Session::makeSession(rm, sattr);
+    if (!session) {
+        PAL_ERR(LOG_TAG, "Error:session creation failed");
+        free(mStreamAttr);
+        mStreamMutex.unlock();
+        throw std::runtime_error("failed to create session object");
+    }
+
+    PAL_VERBOSE(LOG_TAG, "Create new Devices with no_of_devices - %d", no_of_devices);
+    /* update handset/speaker sample rate for UPD with shared backend */
+    if ((sattr->type == PAL_STREAM_ULTRASOUND) && !rm->IsDedicatedBEForUPDEnabled()) {
+        struct pal_device devAttr = {};
+        struct pal_device_info inDeviceInfo;
+        pal_device_id_t upd_dev[] = {PAL_DEVICE_OUT_SPEAKER, PAL_DEVICE_OUT_HANDSET};
+        for (int i = 0; i < sizeof(upd_dev)/sizeof(upd_dev[0]); i++) {
+            devAttr.id = upd_dev[i];
+            dev = Device::getInstance(&devAttr, rm);
+            if (!dev)
+                continue;
+            rm->getDeviceInfo(devAttr.id, sattr->type, "", &inDeviceInfo);
+            dev->setSampleRate(inDeviceInfo.samplerate);
+            if (devAttr.id == PAL_DEVICE_OUT_HANDSET)
+                dev->setBitWidth(inDeviceInfo.bit_width);
+        }
+    }
+
+    bool str_registered = false;
+    for (int i = 0; i < no_of_devices; i++) {
+        //Check with RM if the configuration given can work or not
+        //for e.g., if incoming stream needs 24 bit device thats also
+        //being used by another stream, then the other stream should route
+
+        dev = Device::getInstance((struct pal_device *)&dattr[i] , rm);
+        if (!dev) {
+            PAL_ERR(LOG_TAG, "Error:Device creation failed");
+            free(mStreamAttr);
+
+            //TBD::free session too
+            mStreamMutex.unlock();
+            throw std::runtime_error("failed to create device object");
+        }
+        dev->insertStreamDeviceAttr(&dattr[i], this);
+        mPalDevices.push_back(dev);
+        mStreamMutex.unlock();
+        if (!str_registered) {
+            rm->registerStream(this);
+            str_registered = true;
+        }
+        isDeviceConfigUpdated = rm->updateDeviceConfig(&dev, &dattr[i], sattr);
+        mStreamMutex.lock();
+
+        if (isDeviceConfigUpdated)
+            PAL_VERBOSE(LOG_TAG, "Device config updated");
+
+        /* Create only update device attributes first time so update here using set*/
+        /* this will have issues if same device is being currently used by different stream */
+        mDevices.push_back(dev);
+    }
+
+    mStreamMutex.unlock();
+
     gain = PAL_ULTRASOUND_GAIN_MUTE;
     session->registerCallBack((session_callback)HandleCallBack,((uint64_t) this));
-    rm->registerStream(this);
+
+    PAL_DBG(LOG_TAG, "Exit. state %d", currentState);
 }
 
 StreamUltraSound::~StreamUltraSound()

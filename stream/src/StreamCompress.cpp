@@ -1,7 +1,5 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "PAL: StreamCompress"
@@ -86,7 +88,6 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
     inBufCount = COMPRESS_OFFLOAD_NUM_FRAGMENTS;
     outBufCount = COMPRESS_OFFLOAD_NUM_FRAGMENTS;
     mDevices.clear();
-    mPalDevice.clear();
     PAL_VERBOSE(LOG_TAG,"enter");
 
     //TBD handle modifiers later
@@ -144,7 +145,8 @@ StreamCompress::StreamCompress(const struct pal_stream_attributes *sattr, struct
             mStreamMutex.unlock();
             throw std::runtime_error("failed to create device object");
         }
-        mPalDevice.push_back(dattr[i]);
+        dev->insertStreamDeviceAttr(&dattr[i], this);
+        mPalDevices.push_back(dev);
         mStreamMutex.unlock();
         if (!str_registered) {
             rm->registerStream(this);
@@ -272,6 +274,11 @@ StreamCompress::~StreamCompress()
 {
     rm->resetStreamInstanceID(this);
     rm->deregisterStream(this);
+
+    /* remove the device-stream attribute entry for the stopped stream */
+    for (int32_t i=0; i < mPalDevices.size(); i++)
+        mPalDevices[i]->removeStreamDeviceAttr(this);
+
     if (mStreamAttr) {
         free(mStreamAttr);
         mStreamAttr = (struct pal_stream_attributes *)NULL;
@@ -287,7 +294,7 @@ StreamCompress::~StreamCompress()
         rm->restoreDevice(mDevices[i]);
 
     mDevices.clear();
-    mPalDevice.clear();
+    mPalDevices.clear();
     if (session) {
         delete session;
         session = nullptr;

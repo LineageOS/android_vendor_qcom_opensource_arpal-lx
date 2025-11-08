@@ -289,7 +289,7 @@ public:
         &filled_selector_pairs, uint32_t type, std::vector<allKVs> &any_type,
         std::vector<std::pair<int32_t, int32_t>> &keyVector);
     static std::string removeSpaces(const std::string& str);
-    static std::vector<std::string> splitStrings(const std::string& str);
+    static std::vector<std::string> splitStrings(const std::string& str, char delimiter);
     static int getBtDeviceKV(int dev_id, std::vector<std::pair<int, int>> &deviceKV,
         uint32_t codecFormat, bool isAbrEnabled, bool isHostless);
     static int getDeviceKV(int dev_id, std::vector<std::pair<int, int>> &deviceKV);

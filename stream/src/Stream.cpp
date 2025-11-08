@@ -26,38 +26,10 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *
- *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define LOG_TAG "PAL: Stream"
@@ -519,39 +491,50 @@ int32_t Stream::getAssociatedDevices(std::vector <std::shared_ptr<Device>> &aDev
     return status;
 }
 
-void Stream::clearOutPalDevices()
-{
-    std::vector <struct pal_device>::iterator dIter;
-
-    for (dIter = mPalDevice.begin(); dIter != mPalDevice.end();) {
-        if (!rm->isInputDevId((*dIter).id)) {
-            mPalDevice.erase(dIter);
-        } else {
-            dIter++;
-        }
-    }
-}
-
-int32_t Stream::updatePalDevice(struct pal_device *dattr, pal_device_id_t dev_id)
+int32_t Stream::getPalDevices(std::vector <std::shared_ptr<Device>> &PalDevices)
 {
     int32_t status = 0;
 
-    PAL_DBG(LOG_TAG, "updatePalDevice from %d to %d", dev_id, dattr->id);
-    for (int i = 0; i < mPalDevice.size(); i++) {
-        if (dev_id == mPalDevice[i].id) {
-            mPalDevice.erase(mPalDevice.begin() + i);
-            break;
-        }
+    PAL_DBG(LOG_TAG, "no. of devices %zu", mDevices.size());
+    for (int32_t i=0; i < mPalDevices.size(); i++) {
+        PalDevices.push_back(mPalDevices[i]);
     }
+     return status;
+}
 
-    mPalDevice.push_back(*dattr);
-    return status;
+
+void Stream::addPalDevice(Stream* streamHandle, struct pal_device *dattr)
+ {
+     std::shared_ptr<Device> dev = nullptr;
+
+    dev = Device::getInstance(dattr, rm);
+     if (!dev) {
+         PAL_ERR(LOG_TAG, "No device instance found");
+         return;
+     }
+     dev->insertStreamDeviceAttr(dattr, streamHandle);
+     mPalDevices.push_back(dev);
+ }
+
+void Stream::clearOutPalDevices(Stream* streamHandle)
+{
+     std::vector <std::shared_ptr<Device>>::iterator dIter;
+     int devId;
+
+     for (dIter = mPalDevices.begin(); dIter != mPalDevices.end();) {
+        devId = (*dIter)->getSndDeviceId();
+         if (!rm->isInputDevId(devId)) {
+             (*dIter)->removeStreamDeviceAttr(streamHandle);
+             dIter = mPalDevices.erase(dIter);
+         } else {
+             dIter++;
+         }
+     }
 }
 
 int32_t Stream::getAssociatedPalDevices(std::vector <struct pal_device> &palDevices)
 {
     int32_t status = 0;
-
     PAL_DBG(LOG_TAG, "no. of palDevices %zu", mPalDevice.size());
     for (int32_t i=0; i < mPalDevice.size(); i++) {
         palDevices.push_back(mPalDevice[i]);
@@ -562,10 +545,12 @@ int32_t Stream::getAssociatedPalDevices(std::vector <struct pal_device> &palDevi
 
 int32_t Stream::getSoundCardId()
 {
-    if (mPalDevice.size()) {
+    struct pal_device devAttr;
+    if (mDevices.size()) {
+        mDevices[0]->getDeviceAttributes(&devAttr);
         PAL_DBG(LOG_TAG, "sound card id = 0x%x",
-                    mPalDevice[0].address.card_id);
-        return mPalDevice[0].address.card_id;
+                    devAttr.address.card_id);
+        return devAttr.address.card_id;
     }
 
     return -EINVAL;
@@ -968,6 +953,7 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                 rm->unlockGraph();
             }
             mDevices.clear();
+	    clearOutPalDevices(this);
 
             /* Check whether there's active stream associated with handset or speaker
              * - Device selected to switch by default is speaker.
@@ -1035,7 +1021,6 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
                 goto exit;
             }
             dev->getDeviceAttributes(&dattr);
-            updatePalDevice(&dattr, dattr.id);
         }
     }
 
@@ -1309,11 +1294,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     bool isCurrentDeviceDpOut = false;
     bool matchFound = false;
     bool voice_call_switch = false;
+    uint32_t force_switch_dev_id = PAL_DEVICE_IN_MAX;
     uint32_t curDeviceSlots[PAL_DEVICE_IN_MAX], newDeviceSlots[PAL_DEVICE_IN_MAX];
     std::vector <std::tuple<Stream *, uint32_t>> streamDevDisconnect, sharedBEStreamDev, streamsSkippingSwitch;
     std::vector <std::tuple<Stream *, struct pal_device *>> StreamDevConnect;
     struct pal_device dAttr;
-    pal_stream_type_t type;
     struct pal_device_info deviceInfo;
     uint32_t temp_prio = MIN_USECASE_PRIORITY;
     pal_stream_attributes strAttr;
@@ -1323,7 +1308,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     std::vector <Stream*>::iterator sIter;
     bool VoiceorVoip_call_active = false;
     bool has_out_device = false, has_in_device = false;
-    std::vector <struct pal_device>::iterator dIter;
+    std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
     pal_device_id_t newBtDevId;
     bool isBtReady = false;
@@ -1351,10 +1336,10 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 
     for (int i = 0; i < mDevices.size(); i++) {
         pal_device_id_t curDevId = (pal_device_id_t)mDevices[i]->getSndDeviceId();
-        uint32_t tmp = numDev;
 
         mDevices[i]->getDeviceAttributes(&dAttr);
-        if (curDevId == PAL_DEVICE_OUT_BLUETOOTH_A2DP || curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE) {
+        if (curDevId == PAL_DEVICE_OUT_BLUETOOTH_A2DP ||
+            curDevId == PAL_DEVICE_OUT_BLUETOOTH_BLE){
             isCurDeviceA2dp = true;
             curBtDevId = curDevId;
         }
@@ -1367,14 +1352,26 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
             curDevId == PAL_DEVICE_OUT_HDMI)
             isCurrentDeviceDpOut = true;
 
-        /* If stream is currently running on same device, then check if
+        /*
+         * If stream is currently running on same device, then check if
          * it needs device switch. If not needed, then do not add it to
          * streamDevConnect and streamDevDisconnect list. This handles case 2,3.
          */
         matchFound = false;
-        for (int j = 0; j < tmp; j++) {
+        for (int j = 0; j < numDev; j++) {
             if (curDevId == newDevices[j].id) {
                 matchFound = true;
+                /* special handle if same device switch is triggered by different custom key */
+                struct pal_device curDevAttr;
+                mDevices[i]->getDeviceAttributes(&curDevAttr, streamHandle);
+                if (strcmp(newDevices[j].custom_config.custom_key,
+                               curDevAttr.custom_config.custom_key) != 0) {
+                    PAL_DBG(LOG_TAG, "found diff custom key is %s, running dev has %s, device switch needed",
+                        newDevices[j].custom_config.custom_key,
+                        curDevAttr.custom_config.custom_key);
+                    force_switch_dev_id = newDevices[j].id;
+                }
+                break;
             }
         }
         /* If mDevice[i] does not match with any of new device,
@@ -1386,17 +1383,20 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     }
 
     /* remove members of mPalDevices which has same dir with new devices*/
+    /* remove stream-device attr and mPalDevices which has same dir with new devices*/
     for (int i = 0; i < numDev; i++) {
         if (rm->isOutputDevId(newDevices[i].id))
             has_out_device = true;
         if (rm->isInputDevId(newDevices[i].id))
             has_in_device = true;
     }
-    for (dIter = mPalDevice.begin(); dIter != mPalDevice.end(); ) {
-        if (rm->isOutputDevId((*dIter).id) && has_out_device) {
-            dIter = mPalDevice.erase(dIter);
-        } else if (rm->isInputDevId((*dIter).id) && has_in_device) {
-            dIter = mPalDevice.erase(dIter);
+    for (dIter = mPalDevices.begin(); dIter != mPalDevices.end(); ) {
+        if (rm->isOutputDevId((*dIter)->getSndDeviceId()) && has_out_device) {
+	    (*dIter)->removeStreamDeviceAttr(streamHandle);
+            dIter = mPalDevices.erase(dIter);
+        } else if (rm->isInputDevId((*dIter)->getSndDeviceId()) && has_in_device) {
+	    (*dIter)->removeStreamDeviceAttr(streamHandle);
+            dIter = mPalDevices.erase(dIter);
         } else {
             dIter++;
         }
@@ -1496,10 +1496,17 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 isNewDeviceA2dp = true;
         }
 
-        /* store or update palDev before newDevices can be changed */
-        updatePalDevice(&(newDevices[i]), newDevices[i].id);
+        /* insert current stream-device attr to Device */
+        dev = Device::getInstance(&newDevices[i],rm);
+        if (!dev) {
+            PAL_ERR(LOG_TAG, "No device instance found");
+            mStreamMutex.unlock();
+            return -EINVAL;
+        }
+	//TODO
+        dev->insertStreamDeviceAttr(&newDevices[i], streamHandle);
+        mPalDevices.push_back(dev);
     }
-
     /*  No new device is ready */
     if ((numDev != 0) && (connectCount == 0)) {
         PAL_INFO(LOG_TAG, "No new device is ready to connect");
@@ -1516,17 +1523,14 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 
     for (int i = 0; i < connectCount; i++) {
         std::vector <Stream *> activeStreams;
-        std::shared_ptr<Device> dev = nullptr;
         pal_device_id_t newDeviceId = newDevices[newDeviceSlots[i]].id;
 
         sharedBEStreamDev.clear();
         // get active stream device pairs sharing the same backend with new devices.
         rm->getSharedBEActiveStreamDevs(sharedBEStreamDev, newDeviceId);
 
-        streamHandle->getStreamType(&type);
-
         rm->getDeviceInfo((pal_device_id_t)newDeviceId,
-                          type,newDevices[newDeviceSlots[i]].custom_config.custom_key,
+                          strAttr.type, newDevices[newDeviceSlots[i]].custom_config.custom_key,
                           &deviceInfo);
         PAL_DBG(LOG_TAG,"newDeviceId %d connectCount:%d ",newDeviceId,connectCount);
         if(connectCount > 1 && (newDeviceId == PAL_DEVICE_OUT_SPEAKER ||
@@ -1614,13 +1618,9 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 }
             }
             rm->getSndDeviceName(newDeviceId, CurrentSndDeviceName);
-            // update device attr based on prio
-            rm->updatePriorityAttr(newDeviceId,
-                                   sharedBEStreamDev,
-                                   &(newDevices[newDeviceSlots[i]]),
-                                   &strAttr);
+            /* compare new stream-device attr with current active stream-device attr */
+            bool switchStreams = rm->compareSharedBEStreamDevAttr(sharedBEStreamDev, &newDevices[newDeviceSlots[i]], true);
             for (const auto &elem : sharedBEStreamDev) {
-                struct pal_stream_attributes sAttr;
                 Stream *sharedStream = std::get<0>(elem);
                 struct pal_device curDevAttr;
                 std::shared_ptr<Device> curDev = nullptr;
@@ -1644,10 +1644,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                     ar_mem_cpy(&(newDevices[newDeviceSlots[i]]), sizeof(struct pal_device),
                                &curDevAttr, sizeof(struct pal_device));
                     rm->getSndDeviceName(newDevices[newDeviceSlots[i]].id, CurrentSndDeviceName);
-                    rm->updatePriorityAttr(newDevices[newDeviceSlots[i]].id,
-                                       sharedBEStreamDev,
-                                       &(newDevices[newDeviceSlots[i]]),
-                                       &strAttr);
                 }
 
                 /*
@@ -1655,19 +1651,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                  * like sample rate/channels/bit width/... are the same, still need
                  * to switch device to update custom config like devicePP
                  */
-                if (sharedStream == streamHandle) {
-                    if (strcmp(newDevices[newDeviceSlots[i]].custom_config.custom_key,
-                               curDevAttr.custom_config.custom_key) != 0) {
-                        PAL_DBG(LOG_TAG, "found diff custom key is %s, running dev has %s, device switch needed",
-                        newDevices[newDeviceSlots[i]].custom_config.custom_key,
-                        curDevAttr.custom_config.custom_key);
-                        custom_switch = true;
-                    }
+                if ((sharedStream == streamHandle) && (force_switch_dev_id == curDevAttr.id)) {
+                    custom_switch = true;
                 }
                 /* If prioirty based attr diffs with running dev switch all devices */
-                if (rm->doDevAttrDiffer(&(newDevices[newDeviceSlots[i]]),
-                                          CurrentSndDeviceName,
-                                          &curDevAttr) || custom_switch) {
+                if (switchStreams || custom_switch) {
                     streamDevDisconnect.push_back(elem);
                     StreamDevConnect.push_back({std::get<0>(elem), &newDevices[newDeviceSlots[i]]});
                     matchFound = true;
@@ -1724,7 +1712,7 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 if (mDeviceId == PAL_DEVICE_OUT_PROXY || newDeviceId == PAL_DEVICE_OUT_PROXY)
                     continue;
                 rm->getSharedBEActiveStreamDevs(sharedBEStreamDev, mDevices[j]->getSndDeviceId());
-                if (type == PAL_STREAM_VOICE_CALL &&
+                if (strAttr.type == PAL_STREAM_VOICE_CALL &&
                     newDeviceId != PAL_DEVICE_OUT_HEARING_AID) {
                     voice_call_switch = true;
                 }
@@ -1773,7 +1761,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
         }
 
         if (matchFound || (disconnectCount == 0)) {
-            dev = Device::getInstance(&newDevices[newDeviceSlots[i]],rm);
             StreamDevConnect.push_back({streamHandle, &newDevices[newDeviceSlots[i]]});
         }
     }
