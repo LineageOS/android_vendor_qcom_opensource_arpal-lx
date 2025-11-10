@@ -234,11 +234,11 @@ int32_t pal_stream_set_buffer_size(pal_stream_handle_t *stream_handle,
     RETURN_IF_PAL_SERVICE_NOT_REGISTERED(client);
 
     if (in_buff_cfg) {
-        ALOGV("%s:%d input incnt %d buf_sz %d max_metadata_size %d", __func__, __LINE__,
+        ALOGV("%s:%d input incnt %zu buf_sz %zu max_metadata_size %zu", __func__, __LINE__,
               in_buff_cfg->buf_count, in_buff_cfg->buf_size, in_buff_cfg->max_metadata_size);
     }
     if (out_buff_cfg) {
-        ALOGV("%s:%d output incnt %d buf_sz %d max_metadata_size %d", __func__, __LINE__,
+        ALOGV("%s:%d output incnt %zu buf_sz %zu max_metadata_size %zu", __func__, __LINE__,
               out_buff_cfg->buf_count, out_buff_cfg->buf_size, out_buff_cfg->max_metadata_size);
     }
 
@@ -276,7 +276,7 @@ ssize_t pal_stream_read(pal_stream_handle_t *stream_handle, struct pal_buffer *b
 
     auto aidlBuf = LegacyToAidl::convertPalBufferToAidl(buf);
 
-    ALOGV("%s:%d size %d %d", __func__, __LINE__, aidlBuf.size, buf->size);
+    ALOGV("%s:%d size %d %zu", __func__, __LINE__, aidlBuf.size, buf->size);
     ALOGV("%s:%d alloc handle %d sending %d", __func__, __LINE__, buf->alloc_info.alloc_handle,
           aidlBuf.allocInfo.allocSize);
 
@@ -287,7 +287,7 @@ ssize_t pal_stream_read(pal_stream_handle_t *stream_handle, struct pal_buffer *b
             client->ipc_pal_stream_read((int64_t)stream_handle, aidlPalBufVec, &_aidl_return_buf);
     if (_aidl_return_buf.ret > 0) {
         if (_aidl_return_buf.buffer.data()->size > buf->size) {
-            ALOGE("ret buf sz %d bigger than request buf sz %d",
+            ALOGE("ret buf sz %d bigger than request buf sz %zu",
                   _aidl_return_buf.buffer.data()->size, buf->size);
             return -ENOMEM;
         } else {
@@ -319,7 +319,7 @@ ssize_t pal_stream_write(pal_stream_handle_t *stream_handle, struct pal_buffer *
     std::vector<PalBuffer> aidlPalBufVec;
     auto aidlBuf = LegacyToAidl::convertPalBufferToAidl(buf);
 
-    ALOGV("%s:%d size %d %d", __func__, __LINE__, aidlBuf.size, buf->size);
+    ALOGV("%s:%d size %d %zu", __func__, __LINE__, aidlBuf.size, buf->size);
     ALOGV("%s:%d alloc handle %d sending %d", __func__, __LINE__, buf->alloc_info.alloc_handle,
           aidlBuf.allocInfo.allocSize);
 
