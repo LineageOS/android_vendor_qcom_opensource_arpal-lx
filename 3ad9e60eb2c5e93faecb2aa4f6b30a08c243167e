@@ -33,6 +33,46 @@
       "message": "That would require a script, sepolicy changes etc. while this simple change just works. Plus it\u0027s already present in sm8450 HAL",
       "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4941a34d_d835f538",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-11-17T12:42:52Z",
+      "side": 1,
+      "message": "I\u0027d keep the first flag the same as sm8450",
+      "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96d099ef_0e5b89ab",
+        "filename": "Android.bp",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-11-17T12:42:52Z",
+      "side": 1,
+      "message": "```suggestion\n    }) + select(soong_config_variable(\"qtiaudio\", \"pal_spkr_protection_path\"), {\n```",
+      "range": {
+        "startLine": 40,
+        "startChar": 51,
+        "endLine": 40,
+        "endChar": 76
+      },
+      "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
