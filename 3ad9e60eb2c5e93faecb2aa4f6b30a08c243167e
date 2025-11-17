@@ -16,6 +16,23 @@
       "message": "Can\u0027t you replace this with a simple script that copies from persist to /data/vendor during the first boot?",
       "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52b9086a_014b1e36",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-11-17T12:37:29Z",
+      "side": 1,
+      "message": "That would require a script, sepolicy changes etc. while this simple change just works. Plus it\u0027s already present in sm8450 HAL",
+      "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
