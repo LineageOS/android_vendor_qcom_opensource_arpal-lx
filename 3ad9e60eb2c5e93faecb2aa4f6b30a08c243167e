@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc343a55_0de29c13",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2025-11-17T11:44:10Z",
+      "side": 1,
+      "message": "Can\u0027t you replace this with a simple script that copies from persist to /data/vendor during the first boot?",
+      "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
