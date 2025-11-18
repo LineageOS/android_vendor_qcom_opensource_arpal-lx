@@ -91,6 +91,30 @@
       },
       "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "32bc1656_cc1e9d4c",
+        "filename": "Android.bp",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 19252
+      },
+      "writtenOn": "2025-11-18T05:16:47Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "96d099ef_0e5b89ab",
+      "range": {
+        "startLine": 40,
+        "startChar": 51,
+        "endLine": 40,
+        "endChar": 76
+      },
+      "revId": "3ad9e60eb2c5e93faecb2aa4f6b30a08c243167e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
