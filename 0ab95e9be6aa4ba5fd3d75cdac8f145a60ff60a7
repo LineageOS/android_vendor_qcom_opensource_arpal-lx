@@ -33,6 +33,23 @@
       "message": "Thanks, I had recently noticed the issue you describe. I will check if the original issue is still present on ingot ASAP.",
       "revId": "0ab95e9be6aa4ba5fd3d75cdac8f145a60ff60a7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d06c8f56_a5ea4f95",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14010
+      },
+      "writtenOn": "2025-11-25T14:16:14Z",
+      "side": 1,
+      "message": "Seems fine on ingot. Audio on incoming calls works fine and switching to and from speaker works as well.",
+      "revId": "0ab95e9be6aa4ba5fd3d75cdac8f145a60ff60a7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
