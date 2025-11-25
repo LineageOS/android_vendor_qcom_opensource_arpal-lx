@@ -16,6 +16,23 @@
       "message": "This fixes speaker mode after latest CLO merges. The previous \"fix\" might not be necessary anymore, please verify that on your devices which previously needed it.",
       "revId": "0ab95e9be6aa4ba5fd3d75cdac8f145a60ff60a7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d061917b_c7516802",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14010
+      },
+      "writtenOn": "2025-11-25T11:46:53Z",
+      "side": 1,
+      "message": "Thanks, I had recently noticed the issue you describe. I will check if the original issue is still present on ingot ASAP.",
+      "revId": "0ab95e9be6aa4ba5fd3d75cdac8f145a60ff60a7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
