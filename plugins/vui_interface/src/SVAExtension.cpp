@@ -411,7 +411,7 @@ int32_t SVAExtension::GetAvailableKeywords(int32_t client_id,
     *payload_sz = ostr.str().length() + 1;
     strlcpy(static_cast<char*>(*payload), ostr.str().c_str(), *payload_sz);
 
-    ALOGV("%s: %d: GetAvailableKeywords returned payload %s",
+    ALOGV("%s: %d: GetAvailableKeywords returned payload %p",
             __func__, __LINE__, *payload);
     return 0;
 }
@@ -514,7 +514,7 @@ void* SVAExtension::GetSoundModel(int32_t client_id __unused,
         if (iter.second == sm_name)
             kwd_count++;
     }
-    ALOGI("%s: %d: kwd num %d", __func__, __LINE__, kwd_count);
+    ALOGI("%s: %d: kwd num %zu", __func__, __LINE__, kwd_count);
 
     std::string filename = SM_FILE_PATH + sm_name;
     fp = fopen(filename.c_str(), "rb");
@@ -531,7 +531,7 @@ void* SVAExtension::GetSoundModel(int32_t client_id __unused,
         sizeof(struct pal_st_phrase_sound_model);
     param_payload = (pal_param_payload *)calloc(1, payload_size);
     if (!param_payload) {
-        ALOGE("%s: %d: sm payload allocation failed, size %d",
+        ALOGE("%s: %d: sm payload allocation failed, size %zu",
             __func__, __LINE__, payload_size);
         goto va_error;
     }
