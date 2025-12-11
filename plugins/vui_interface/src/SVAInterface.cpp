@@ -720,7 +720,7 @@ int32_t SVAInterface::ParseRecognitionConfig(void *s,
                     }
                     det_perf_mode = (struct st_det_perf_mode_info *)
                         (opaque_ptr + sizeof(struct st_param_header));
-                    ALOGD("%s: %d: set perf mode %d", det_perf_mode->mode,
+                    ALOGD("%u: %s: set perf mode %d", det_perf_mode->mode,
                         __func__, __LINE__);
                     opaque_size += sizeof(struct st_param_header) +
                         sizeof(struct st_det_perf_mode_info);

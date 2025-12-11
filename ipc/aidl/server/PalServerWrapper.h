@@ -29,7 +29,7 @@ class StreamInfo {
 
   public:
     StreamInfo(int64_t handle) : mHandle(handle) {
-        ALOGI("StreamInfo created for handle %llx", mHandle);
+        ALOGI("StreamInfo created for handle %lx", mHandle);
     }
     ~StreamInfo();
 
@@ -60,11 +60,11 @@ class CallbackInfo {
     CallbackInfo(const std::shared_ptr<IPALCallback> &callback, int64_t clientData) {
         mCallback = callback;
         mClientData = clientData;
-        ALOGV("%s, callback %p handle %llx clientData %llu", __func__, callback.get(), clientData);
+        ALOGV("%s, callback %p handle %lx clientData %llu", __func__, callback.get(), clientData);
     }
 
     ~CallbackInfo() {
-        ALOGV("%s, callback %p handle %llx clientData %llu", __func__, mCallback.get(), mHandle,
+        ALOGV("%s, callback %p handle %lx clientData %ld", __func__, mCallback.get(), mHandle,
               mClientData);
         if (mEfGroup) {
             EventFlag::deleteEventFlag(&mEfGroup);
