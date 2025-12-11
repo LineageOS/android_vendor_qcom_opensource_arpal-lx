@@ -92,7 +92,7 @@ void ACDSoundModelInfo::HandleEndTag(struct xml_userdata *data, const char* tag_
         std::string type(data->data_buf);
 
         if (!strstr(type.c_str(), "ACD_SOUND_MODEL")) {
-            PAL_ERR(LOG_TAG, "Error:%d invalid sound model: %s", type.c_str());
+            PAL_ERR(LOG_TAG, "Error: invalid sound model: %s", type.c_str());
         } else {
             model_type_ = type;
             model_id_ = sm_cfg_->GetAndUpdateSndMdlCnt();
