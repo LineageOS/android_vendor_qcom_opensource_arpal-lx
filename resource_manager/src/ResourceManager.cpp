@@ -1697,7 +1697,7 @@ int32_t ResourceManager::voiceuiDmgrRestartUseCases(vui_dmgr_param_restart_useca
     }
 
     // Reuse SSR mechanism for stream teardown and bring up.
-    PAL_INFO(LOG_TAG, "restart %d streams", st_streams.size());
+    PAL_INFO(LOG_TAG, "restart %zu streams", st_streams.size());
     for (auto &st : st_streams) {
         st->getStreamType(&st_type);
         status = st->ssrDownHandler();
@@ -7875,7 +7875,7 @@ int ResourceManager::findActiveStreamsNotInDisconnectList(
 
     rm->getActiveStream_l(activeStreams, devObj);
 
-    PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
+    PAL_DBG(LOG_TAG, "activeStreams size = %zu, device: %s", activeStreams.size(),
             deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
 
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
@@ -12479,7 +12479,7 @@ int ResourceManager::getStreamInstanceID(Stream *str) {
 done:
                 str->setInstanceId(instanceId);
                 PAL_DBG(LOG_TAG,
-                        "Sensor PCM Data instance id: %d, number of instances: %d",
+                        "Sensor PCM Data instance id: %d, number of instances: %zu",
                         instanceId, PCMDataInstances.size());
             }
             status = instanceId;
@@ -14312,7 +14312,7 @@ int ResourceManager::setUltrasoundGain(pal_ultrasound_gain_t gain, Stream *s)
     } else {
         status = getActiveStream_l(activeStreams, NULL);
         if ((0 != status) || (activeStreams.size() == 0)) {
-            PAL_DBG(LOG_TAG, "No active stream available, status = %d, nStream = %d",
+            PAL_DBG(LOG_TAG, "No active stream available, status = %d, nStream = %zu",
                     status, activeStreams.size());
             return -ENOENT;
         }
@@ -14418,7 +14418,7 @@ void ResourceManager::WbSpeechConfig(pal_device_id_t devId,
         dev->getDeviceAttributes(&curDevAttr);
         status = dev->setDeviceParameter(param_id, param_payload);
         if (status)
-            PAL_ERR(LOG_TAG, "set device param %d, status: ", param_id, status);
+            PAL_ERR(LOG_TAG, "set device param %d, status: %d", param_id, status);
         // check and force device switch.
         newDevAttr.id = devId;
         mActiveStreamMutex.lock();
@@ -14483,7 +14483,7 @@ void ResourceManager::reconfigureScoStreams() {
         dattr = nullptr;
     }
 
-    PAL_DBG(LOG_TAG, "streamDevDisconnect size=%d and streamDevConnect size=%d",
+    PAL_DBG(LOG_TAG, "streamDevDisconnect size=%zu and streamDevConnect size=%zu",
             streamDevDisconnect.size(), streamDevConnect.size());
     status = streamDevSwitch(streamDevDisconnect, streamDevConnect);
     if (status) {

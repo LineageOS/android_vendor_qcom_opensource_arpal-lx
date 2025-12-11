@@ -4,7 +4,6 @@ cc_library_shared {
     vendor: true,
 
     cflags: [
-        "-Wno-format",
         "-Wno-unused-parameter",
         "-Wno-unused-variable",
     ],
