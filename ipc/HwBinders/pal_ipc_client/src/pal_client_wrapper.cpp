@@ -153,7 +153,7 @@ Return<void> PalCallback::event_callback_rw_done(uint64_t strm_handle,
     cbBuffer->cb_buf_info.sample_rate = rwDonePayloadHidl->cbBufInfo.sample_rate;
     cbBuffer->cb_buf_info.bit_width = rwDonePayloadHidl->cbBufInfo.bit_width;
     cbBuffer->cb_buf_info.channel_count = rwDonePayloadHidl->cbBufInfo.channel_count;
-    ALOGV("%s:%d Bufsize %d  ret bufSize %d", __func__, __LINE__,
+    ALOGV("%s:%d Bufsize %d  ret bufSize %zu", __func__, __LINE__,
                 rwDonePayloadHidl->size, cbBuffer->size);
     ALOGV("event_payload_size %d", event_data_size);
     this->cb((pal_stream_handle_t *)strm_handle, event_id, (uint32_t *)cbBuffer.get(),
@@ -373,14 +373,14 @@ int32_t pal_stream_set_buffer_size(pal_stream_handle_t *stream_handle,
         PalBufferConfig out_buffer_cfg, in_buffer_cfg;
 
         if (in_buff_cfg) {
-         ALOGV("%s:%d input incnt %d buf_sz %d max_metadata_size %d", __func__,__LINE__,
+         ALOGV("%s:%d input incnt %zu buf_sz %zu max_metadata_size %zu", __func__,__LINE__,
                in_buff_cfg->buf_count, in_buff_cfg->buf_size, in_buff_cfg->max_metadata_size);
                in_buffer_cfg.buf_count = in_buff_cfg->buf_count;
                in_buffer_cfg.buf_size = in_buff_cfg->buf_size;
                in_buffer_cfg.max_metadata_size = in_buff_cfg->max_metadata_size;
         }
         if (out_buff_cfg) {
-         ALOGV("%s:%d output incnt %d buf_sz %d max_metadata_size %d", __func__,__LINE__,
+         ALOGV("%s:%d output incnt %zu buf_sz %zu max_metadata_size %zu", __func__,__LINE__,
                out_buff_cfg->buf_count, out_buff_cfg->buf_size, out_buff_cfg->max_metadata_size);
                out_buffer_cfg.buf_count = out_buff_cfg->buf_count;
                out_buffer_cfg.buf_size = out_buff_cfg->buf_size;
@@ -489,7 +489,7 @@ ssize_t pal_stream_read(pal_stream_handle_t *stream_handle, struct pal_buffer *b
         palBuff->alloc_info.alloc_size = buf->alloc_info.alloc_size;
         palBuff->alloc_info.offset = buf->alloc_info.offset;
 
-        ALOGV("%s:%d size %d %d",__func__,__LINE__,buf_hidl.data()->size, buf->size);
+        ALOGV("%s:%d size %d %zu",__func__,__LINE__,buf_hidl.data()->size, buf->size);
         ALOGV("%s:%d alloc handle %d sending %d",__func__,__LINE__,
                    buf->alloc_info.alloc_handle, allocHidlHandle->data[0]);
         pal_client->ipc_pal_stream_read((PalStreamHandle)stream_handle, buf_hidl,
@@ -497,7 +497,7 @@ ssize_t pal_stream_read(pal_stream_handle_t *stream_handle, struct pal_buffer *b
                   {
                       if (ret_ > 0) {
                           if (ret_buf_hidl.data()->size > buf->size) {
-                              ALOGE("ret buf sz %d bigger than request buf sz %d",
+                              ALOGE("ret buf sz %d bigger than request buf sz %zu",
                                      ret_buf_hidl.data()->size, buf->size);
                               ret_ = -ENOMEM;
                            } else {
@@ -875,7 +875,7 @@ int32_t pal_stream_get_tags_with_module_info(pal_stream_handle_t *stream_handle,
 {
     int32_t ret = -EINVAL;
     if (!pal_server_died) {
-        ALOGV("%s:%d: size %d", __func__, __LINE__, *size);
+        ALOGV("%s:%d: size %zu", __func__, __LINE__, *size);
         android::sp<IPAL> pal_client = get_pal_server();
         if (pal_client == nullptr)
             return ret;
