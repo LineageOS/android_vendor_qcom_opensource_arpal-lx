@@ -16,6 +16,23 @@
       "message": "works on rtwo",
       "revId": "34f1bf318827035f987a3873dadba880e5738925",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5a94c51_ef2dfbde",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 19252
+      },
+      "writtenOn": "2025-12-15T14:54:46Z",
+      "side": 1,
+      "message": "themard@themard-VirtualBox:~/android/lineage-23/out/target/product/rtwo/vendor/lib64$ strings libar-pal.so | grep audio.cal\n/mnt/vendor/persist/factory/audio/audio.cal",
+      "revId": "34f1bf318827035f987a3873dadba880e5738925",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
