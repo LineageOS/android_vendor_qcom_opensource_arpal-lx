@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73c6e493_6c4afba7",
+        "filename": "plugins/vui_interface/src/SVAInterface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-12-23T07:09:40Z",
+      "side": 1,
+      "message": "https://review.lineageos.org/c/LineageOS/android_vendor_qcom_opensource_arpal-lx/+/464919/3/plugins/vui_interface/src/SVAInterface.cpp",
+      "revId": "cfb808f26f01c9febef014abd13bb62588a6aca3",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
