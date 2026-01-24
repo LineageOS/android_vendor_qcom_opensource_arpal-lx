@@ -50,6 +50,24 @@
       "message": "themard@themard-VirtualBox:~/android/lineage-23/out/target/product/rtwo/vendor/lib64$ strings libar-pal.so | grep audio.cal\n/mnt/vendor/persist/factory/audio/audio.cal\n\nusing the sm8550-common commit that\u0027s on the same topic",
       "revId": "34f1bf318827035f987a3873dadba880e5738925",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df964834_242581b5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-01-24T15:31:00Z",
+      "side": 1,
+      "message": "No need to diverge, we\u0027ll fast-foward to 23.1+ branches.",
+      "parentUuid": "0e64b47d_9c1e37fd",
+      "revId": "34f1bf318827035f987a3873dadba880e5738925",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
