@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "29e9f887_5cf078f3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 33800
+      },
+      "writtenOn": "2026-01-25T17:28:33Z",
+      "side": 1,
+      "message": "Does this chain include all commits and work for sm8750? It isn\u0027t enough for me on parrot66.",
+      "revId": "7f00b3556e364f6a0eb61faa4287bdbdfe958c4e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
