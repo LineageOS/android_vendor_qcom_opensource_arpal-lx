@@ -34,6 +34,24 @@
       "parentUuid": "29e9f887_5cf078f3",
       "revId": "7f00b3556e364f6a0eb61faa4287bdbdfe958c4e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "819db423_e3314c59",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 33800
+      },
+      "writtenOn": "2026-01-25T20:30:01Z",
+      "side": 1,
+      "message": "The issue was on my side: I forgot to make libar-pal prebuilt. \nBut btw, we seem can\u0027t build OSS libar-pal, it needs changes\nBut no devices need oss libar-pal now",
+      "parentUuid": "1a7f6df5_7975d1bb",
+      "revId": "7f00b3556e364f6a0eb61faa4287bdbdfe958c4e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
