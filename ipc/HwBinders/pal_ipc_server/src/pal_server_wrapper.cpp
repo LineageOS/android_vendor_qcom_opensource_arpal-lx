@@ -99,7 +99,7 @@ void PalClientDeathRecipient::serviceDied(uint64_t cookie,
                    const android::wp<::android::hidl::base::V1_0::IBase>& who)
 {
     std::lock_guard<std::mutex> guard(mLock);
-    ALOGD("%s : client died pid : %d", __func__, cookie);
+    ALOGD("%s : client died pid : %lu", __func__, cookie);
     int pid = (int) cookie;
     std::lock_guard<std::mutex> lock(mPalInstance->mClientLock);
     auto &clients = mPalInstance->mPalClients;
@@ -110,8 +110,8 @@ void PalClientDeathRecipient::serviceDied(uint64_t cookie,
                 std::lock_guard<std::mutex> lock(client->mActiveSessionsLock);
                 for (auto sItr = client->mActiveSessions.begin();
                           sItr != client->mActiveSessions.end(); sItr++) {
-                   ALOGD("Closing the session %pK", sItr->session_handle);
-                   ALOGV("hdle %x binder %p", sItr->session_handle, sItr->callback_binder.get());
+                   ALOGD("Closing the session %luK", sItr->session_handle);
+                   ALOGV("hdle %lx binder %p", sItr->session_handle, sItr->callback_binder.get());
                    sItr->callback_binder->client_died = true;
                    pal_stream_stop((pal_stream_handle_t *)sItr->session_handle);
                    pal_stream_close((pal_stream_handle_t *)sItr->session_handle);
@@ -142,7 +142,7 @@ void PAL::add_input_and_dup_fd(const uint64_t streamHandle, int input_fd, int du
                 /*If number of FDs increase than the MAX Cache size we delete the oldest one
                   NOTE: We still create a new fd for every input fd*/
                 if (session.callback_binder->sharedMemFdList.size() > MAX_CACHE_SIZE) {
-                    ALOGE("%s cache limit exceeded handle %p fd [input %d - dup %d]",
+                    ALOGE("%s cache limit exceeded handle %lu fd [input %d - dup %d]",
                             __func__ , streamHandle, input_fd, dup_fd );
                 }
                 session.callback_binder->sharedMemFdList.push_back(
@@ -163,7 +163,7 @@ static void printFdList(const std::vector<std::pair<int, int>> &list, const char
             s.append(std::to_string(x.second));
             s.append("} ");
         }
-        ALOGV("%s size %d, list %s", caller, list.size(), s.c_str());
+        ALOGV("%s size %zu, list %s", caller, list.size(), s.c_str());
     }
 }
 
@@ -353,7 +353,7 @@ static int32_t pal_callback(pal_stream_handle_t *stream_handle,
                             rw_done_payload->buff.alloc_info.offset,
                             rwDonePayload->cbBufInfo.frame_index);
             }
-            ALOGV("%s: frame_index=%u", __func__, rwDonePayload->cbBufInfo.frame_index);
+            ALOGV("%s: frame_index=%lu", __func__, rwDonePayload->cbBufInfo.frame_index);
         }
 
         rwDonePayload->size = rw_done_payload->buff.size;
@@ -409,7 +409,7 @@ static void print_stream_info(pal_stream_info_t *info_)
 {
    ALOGV("%s",__func__);
    pal_stream_info *info = &info_->opt_stream_info;
-   ALOGV("ver [%lld] sz [%lld] dur[%lld] has_video [%d] is_streaming [%d] lpbk_type [%d]",
+   ALOGV("ver [%ld] sz [%ld] dur[%ld] has_video [%d] is_streaming [%d] lpbk_type [%d]",
            info->version, info->size, info->duration_us, info->has_video, info->is_streaming,
            info->loopback_type);
 }
@@ -464,7 +464,7 @@ bool PAL::isValidstreamHandle(const uint64_t streamHandle) {
                     return true;
                 }
             }
-            ALOGE("%s: streamHandle: %pK for pid %d not found",
+            ALOGE("%s: streamHandle: %luK for pid %d not found",
                     __func__, streamHandle, pid);
             return false;
         }
@@ -581,12 +581,12 @@ Return<void> PAL::ipc_pal_stream_open(const hidl_vec<PalStreamAttributes>& attr_
         for(auto& client: mPalClients) {
             if (client->pid == pid) {
                 /*Another session from the same client*/
-                ALOGI("Add session for existing client %d session %pK total sessions %d", pid,
+                ALOGI("Add session for existing client %d session %luK total sessions %zu", pid,
                         (uint64_t)stream_handle, client->mActiveSessions.size());
                 struct session_info session;
                 session.session_handle = (uint64_t)stream_handle;
                 session.callback_binder = sr_clbk_data;
-                ALOGV("hdle %x binder %p", session.session_handle, session.callback_binder.get());
+                ALOGV("hdle %lx binder %p", session.session_handle, session.callback_binder.get());
                 {
                     std::lock_guard<std::mutex> lock(client->mActiveSessionsLock);
                     client->mActiveSessions.push_back(session);
@@ -598,11 +598,11 @@ Return<void> PAL::ipc_pal_stream_open(const hidl_vec<PalStreamAttributes>& attr_
         if (new_client) {
             auto client = std::make_shared<client_info>();
             struct session_info session;
-            ALOGI("Add session from new client %d session %pK", pid, (uint64_t)stream_handle);
+            ALOGI("Add session from new client %d session %luK", pid, (uint64_t)stream_handle);
             client->pid = pid;
             session.session_handle = (uint64_t)stream_handle;
             session.callback_binder = sr_clbk_data;
-            ALOGV("hdle %x binder %p", session.session_handle, session.callback_binder.get());
+            ALOGV("hdle %lx binder %p", session.session_handle, session.callback_binder.get());
             {
                 std::lock_guard<std::mutex> lock(client->mActiveSessionsLock);
                 client->mActiveSessions.push_back(session);
@@ -635,7 +635,7 @@ Return<int32_t> PAL::ipc_pal_stream_close(const uint64_t streamHandle)
     int pid = ::android::hardware::IPCThreadState::self()->getCallingPid();
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -652,14 +652,14 @@ Return<int32_t> PAL::ipc_pal_stream_close(const uint64_t streamHandle)
                         for (int i=0; i < sItr->callback_binder->sharedMemFdList.size(); i++) {
                              close(sItr->callback_binder->sharedMemFdList[i].second);
                         }
-                        ALOGV("Closing the session %pK", streamHandle);
+                        ALOGV("Closing the session %luK", streamHandle);
                         sItr->callback_binder->sharedMemFdList.clear();
                         sItr->callback_binder.clear();
                         break;
                     }
                 }
                 if (sItr != client->mActiveSessions.end()) {
-                    ALOGV("Delete session info %pK", sItr->session_handle);
+                    ALOGV("Delete session info %luK", sItr->session_handle);
                     client->mActiveSessions.erase(sItr);
                 }
             }
@@ -681,7 +681,7 @@ Return<int32_t> PAL::ipc_pal_stream_close(const uint64_t streamHandle)
 
 Return<int32_t> PAL::ipc_pal_stream_start(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -690,7 +690,7 @@ Return<int32_t> PAL::ipc_pal_stream_start(const uint64_t streamHandle) {
 
 Return<int32_t> PAL::ipc_pal_stream_stop(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -699,7 +699,7 @@ Return<int32_t> PAL::ipc_pal_stream_stop(const uint64_t streamHandle) {
 
 Return<int32_t> PAL::ipc_pal_stream_pause(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -711,7 +711,7 @@ Return<int32_t> PAL::ipc_pal_stream_drain(uint64_t streamHandle, PalDrainType ty
     pal_drain_type_t drain_type = (pal_drain_type_t) type;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -721,7 +721,7 @@ Return<int32_t> PAL::ipc_pal_stream_drain(uint64_t streamHandle, PalDrainType ty
 
 Return<int32_t> PAL::ipc_pal_stream_flush(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -730,7 +730,7 @@ Return<int32_t> PAL::ipc_pal_stream_flush(const uint64_t streamHandle) {
 
 Return<int32_t> PAL::ipc_pal_stream_suspend(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -739,7 +739,7 @@ Return<int32_t> PAL::ipc_pal_stream_suspend(const uint64_t streamHandle) {
 
 Return<int32_t> PAL::ipc_pal_stream_resume(const uint64_t streamHandle) {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -756,7 +756,7 @@ Return<void> PAL::ipc_pal_stream_set_buffer_size(const uint64_t streamHandle,
     PalBufferConfig in_buff_config_ret, out_buff_config_ret;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -813,7 +813,7 @@ Return<int32_t> PAL::ipc_pal_stream_write(const uint64_t streamHandle,
     struct pal_buffer buf = {0};
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -861,7 +861,7 @@ Return<int32_t> PAL::ipc_pal_stream_write(const uint64_t streamHandle,
 
     if (buf.buffer)
         memcpy(buf.buffer, buff_hidl.data()->buffer.data(), buf.size);
-    ALOGV("%s:%d sz %d, frame_index %u", __func__,__LINE__, buf.size, buf.frame_index);
+    ALOGV("%s:%d sz %zu, frame_index %lu", __func__,__LINE__, buf.size, buf.frame_index);
 
     addToPendingInputs(buf.alloc_info.alloc_handle,
                        buf.alloc_info.offset, buf.frame_index);
@@ -876,7 +876,7 @@ Return<void> PAL::ipc_pal_stream_read(const uint64_t streamHandle,
     hidl_vec<PalBuffer> outBuff_hidl;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -926,7 +926,7 @@ Return<int32_t> PAL::ipc_pal_stream_set_param(const uint64_t streamHandle, uint3
     }
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -953,7 +953,7 @@ Return<void> PAL::ipc_pal_stream_get_param(const uint64_t streamHandle,
     hidl_vec<PalParamPayload> paramPayload;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -986,7 +986,7 @@ Return<int32_t> PAL::ipc_pal_stream_set_device(const uint64_t streamHandle,
     int32_t ret = -ENOMEM;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -1037,7 +1037,7 @@ Return<int32_t> PAL::ipc_pal_stream_set_volume(const uint64_t streamHandle,
     int32_t ret = -ENOMEM;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -1082,7 +1082,7 @@ Return<int32_t> PAL::ipc_pal_stream_set_mute(const uint64_t streamHandle,
                                     bool state)
 {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -1106,7 +1106,7 @@ Return<void> PAL::ipc_pal_get_timestamp(const uint64_t streamHandle,
     int32_t ret = 0;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -1123,7 +1123,7 @@ Return<int32_t> PAL::ipc_pal_add_remove_effect(const uint64_t streamHandle,
                                           bool enable)
 {
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return -EINVAL;
     }
 
@@ -1188,7 +1188,7 @@ Return<void>PAL::ipc_pal_stream_create_mmap_buffer(PalStreamHandle streamHandle,
     hidl_vec<PalMmapBuffer> mMapBuffer_hidl;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -1211,7 +1211,7 @@ Return<void>PAL::ipc_pal_stream_get_mmap_position(PalStreamHandle streamHandle,
     hidl_vec<PalMmapPosition> mmap_position_hidl;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 
@@ -1245,7 +1245,7 @@ Return<void>PAL::ipc_pal_stream_get_tags_with_module_info(PalStreamHandle stream
     hidl_vec<uint8_t> payloadRet;
 
     if (!isValidstreamHandle(streamHandle)) {
-        ALOGE("%s: Invalid streamHandle: %pK", __func__, streamHandle);
+        ALOGE("%s: Invalid streamHandle: %luK", __func__, streamHandle);
         return Void();
     }
 

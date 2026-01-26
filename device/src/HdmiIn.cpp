@@ -16,7 +16,7 @@ std::shared_ptr<Device> HdmiIn::obj = nullptr;
 
 void HdmiIn::releaseObject() {
     if (obj) {
-        PAL_INFO(LOG_TAG, "use_count: %d", obj.use_count());
+        PAL_INFO(LOG_TAG, "use_count: %ld", obj.use_count());
         obj.reset();
     }
 }
