@@ -1513,7 +1513,7 @@ void SVAInterface::UpdateKeywordIndex(uint64_t kwd_start_timestamp,
 
     start_index_ = UsToBytes(kwd_start_timestamp - ftrt_start_timestamp);
     end_index_ = UsToBytes(kwd_end_timestamp - ftrt_start_timestamp);
-    PAL_INFO(LOG_TAG, "start_index : %zu, end_index : %zu",
+    PAL_INFO(LOG_TAG, "start_index : %u, end_index : %u",
         start_index_, end_index_);
 }
 

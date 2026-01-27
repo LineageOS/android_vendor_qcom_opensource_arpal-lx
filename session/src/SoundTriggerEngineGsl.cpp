@@ -1655,7 +1655,7 @@ int32_t SoundTriggerEngineGsl::RestartRecognition_l(Stream *s) {
 
         mmap_write_position_ =
             mmap_write_position_ % BytesToFrames(mmap_buffer_size_);
-        PAL_DBG(LOG_TAG, "Reset mmap write position to %zu", mmap_write_position_);
+        PAL_DBG(LOG_TAG, "Reset mmap write position to %u", mmap_write_position_);
     }
 
     exit_buffering_ = false;
