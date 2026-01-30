@@ -16,6 +16,24 @@
       "message": "Maybe better to do const char* delims ?",
       "revId": "f60184718318c45bf870cebeae608c7c2c22e7ac",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "134c85ee_0089a250",
+        "filename": "plugins/vui_interface/src/SVAExtension.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2026-01-30T12:35:41Z",
+      "side": 1,
+      "message": "perhaps, but we try to follow upstream instead.",
+      "parentUuid": "fade5159_90c8525e",
+      "revId": "f60184718318c45bf870cebeae608c7c2c22e7ac",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ],
   "submitRequirementResults": [
