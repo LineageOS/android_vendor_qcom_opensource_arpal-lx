@@ -1,5 +1,23 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fade5159_90c8525e",
+        "filename": "plugins/vui_interface/src/SVAExtension.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 36593
+      },
+      "writtenOn": "2026-01-30T12:34:41Z",
+      "side": 1,
+      "message": "Maybe better to do const char* delims ?",
+      "revId": "f60184718318c45bf870cebeae608c7c2c22e7ac",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ],
   "submitRequirementResults": [
     {
       "submitRequirement": {
