@@ -16,6 +16,23 @@
       "message": "Can\u0027t test this myself on oplus sm8550.",
       "revId": "da1ece555f557475f19588cafe82fcbc7ff05b7b",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1fdac697_870f0db7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 35315
+      },
+      "writtenOn": "2026-02-08T02:08:19Z",
+      "side": 1,
+      "message": "@bgcngm@gmail.com These commits require FF to the `lineage-23.2-caf-sm8550` branch",
+      "revId": "da1ece555f557475f19588cafe82fcbc7ff05b7b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ],
   "submitRequirementResults": [
