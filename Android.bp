@@ -32,10 +32,7 @@ cc_library_shared {
         "-Wno-macro-redefined",
         "-Wno-unused-parameter",
         "-Wno-unused-variable",
-    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
-        "sun": ["-DSOC_PERIPHERAL_PROT"],
-        default: [],
-    }),
+    ],
 
     cppflags: [
         "-fexceptions",
@@ -120,7 +117,7 @@ cc_library_shared {
         "libspf-headers",
         "libvui_dmgr_headers",
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
-        "sun": [
+        "parrot": [
             "mink_headers",
             "peripheralstate_headers",
         ],
@@ -141,7 +138,7 @@ cc_library_shared {
         "libutilscallstack",
         "libvui_intf",
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
-        "sun": ["libPeripheralStateUtils"],
+        "parrot": ["libPeripheralStateUtils"],
         default: [],
     }),
 }
