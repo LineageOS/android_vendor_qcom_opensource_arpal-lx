@@ -174,12 +174,12 @@ struct codec_specific_config {
 
 #define LC3_CSC_TBL_SIZE 6
 static struct codec_specific_config LC3_CSC[LC3_CSC_TBL_SIZE] = {
-    {8000,  7500,  26, 24},
-    {8000,  10000, 30, 24},
-    {16000, 7500,  30, 24},
-    {16000, 10000, 40, 24},
-    {32000, 7500,  60, 24},
-    {32000, 10000, 80, 24},
+    {8000,  7500,  26, BLE_LC3_DEFAULT_BIT},
+    {8000,  10000, 30, BLE_LC3_DEFAULT_BIT},
+    {16000, 7500,  30, BLE_LC3_DEFAULT_BIT},
+    {16000, 10000, 40, BLE_LC3_DEFAULT_BIT},
+    {32000, 7500,  60, BLE_LC3_DEFAULT_BIT},
+    {32000, 10000, 80, BLE_LC3_DEFAULT_BIT},
 };
 
 #define DEF_STREAM_MAP_SZ 2
@@ -193,7 +193,7 @@ static lc3_cfg_t def_toair_cfg = {
     16000,
     40,
     10000,
-    24,
+    BLE_LC3_DEFAULT_BIT,
     1,
     0,
     {0},

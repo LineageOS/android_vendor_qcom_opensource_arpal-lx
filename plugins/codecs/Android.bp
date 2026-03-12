@@ -67,7 +67,10 @@ cc_library_shared {
     cflags: [
         "-O2",
         "-fvisibility=hidden",
-    ],
+    ] + select(soong_config_variable("bluetooth_module", "leaudio_lc3_default_bit"), {
+        any @ flag_val: ["-DBLE_LC3_DEFAULT_BIT=" + flag_val],
+        default: ["-DBLE_LC3_DEFAULT_BIT=16"],
+    }),
 
     srcs: [
         "bt_base.c",
