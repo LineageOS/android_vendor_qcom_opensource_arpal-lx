@@ -2051,9 +2051,11 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                         if (sAttr.type == PAL_STREAM_DEEP_BUFFER ||
                             sAttr.type == PAL_STREAM_COMPRESSED ||
                             sAttr.type == PAL_STREAM_PCM_OFFLOAD) {
-                            PAL_DBG(LOG_TAG, "mute stream %pk during switching", sharedStream);
-                            sharedStream->mute(true);
-                            tempMutedStreams.push_back(sharedStream);
+                            if (!rm->increaseStreamUserCounter(sharedStream)) {
+                                PAL_DBG(LOG_TAG, "mute stream %pk during switching", sharedStream);
+                                sharedStream->mute(true);
+                                tempMutedStreams.push_back(sharedStream);
+                            }
                         }
                     }
                     matchFound = true;
@@ -2085,6 +2087,15 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 status = rm->getDeviceConfig(&sco_Dattr, NULL);
                 if (status) {
                     PAL_ERR(LOG_TAG, "getDeviceConfig for bt-sco failed");
+                    if (!tempMutedStreams.empty()) {
+                        for(sIter = tempMutedStreams.begin(); sIter != tempMutedStreams.end();
+                            sIter++) {
+                            (*sIter)->mute(false);
+                            rm->decreaseStreamUserCounter(*sIter);
+                            PAL_DBG(LOG_TAG, "unmute stream %pk during switching", *sIter);
+                        }
+                    }
+                    tempMutedStreams.clear();
                     mStreamMutex.unlock();
                     rm->unlockActiveStream();
                     return status;
@@ -2237,10 +2248,13 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
 
 done:
     if (!tempMutedStreams.empty()) {
+        rm->lockActiveStream();
         for(sIter = tempMutedStreams.begin(); sIter != tempMutedStreams.end(); sIter++) {
             (*sIter)->mute(false);
+            rm->decreaseStreamUserCounter(*sIter);
             PAL_DBG(LOG_TAG, "unmute stream %pk during switching", *sIter);
         }
+        rm->unlockActiveStream();
     }
     tempMutedStreams.clear();
     mStreamMutex.lock();

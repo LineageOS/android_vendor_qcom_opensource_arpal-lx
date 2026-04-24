@@ -9831,7 +9831,7 @@ int32_t ResourceManager::a2dpReconfig()
         usleep(maxLatencyMs * 1000 * latencyMuteFactor);
     }
 
-    forceDeviceSwitch(a2dpDev, &a2dpDattr, activeA2dpStreams);
+    forceDeviceSwitch(a2dpDev, &a2dpDattr);
     mActiveStreamMutex.lock();
     for (sIter = activeA2dpStreams.begin(); sIter != activeA2dpStreams.end(); sIter++) {
         if (((*sIter) != NULL) && isStreamActive(*sIter, mActiveStreams)) {
