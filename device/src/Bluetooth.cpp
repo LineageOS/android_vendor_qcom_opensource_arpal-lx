@@ -1440,6 +1440,7 @@ int BtA2dp::close_audio_source()
         mDeviceMutex.unlock();
     }
     totalActiveSessionRequests = 0;
+    param_bt_a2dp.a2dp_suspended = false;
     param_bt_a2dp.latency = 0;
     a2dpState = A2DP_STATE_DISCONNECTED;
     isConfigured = false;
@@ -1726,11 +1727,15 @@ int BtA2dp::startPlayback()
 
     if (param_bt_a2dp.a2dp_suspended) {
         // session will be restarted after suspend completion
-        PAL_INFO(LOG_TAG, "a2dp start requested during suspend state");
+        PAL_ERR(LOG_TAG, "a2dp start requested during suspend state");
         return -ENOSYS;
     } else if (a2dpState == A2DP_STATE_DISCONNECTED) {
-        PAL_INFO(LOG_TAG, "a2dp start requested when a2dp source stream is failed to open");
-        return -ENOSYS;
+        // update device status, if still disconnected, return error.
+        if (!(rm->isDeviceAvailable(deviceAttr.id) &&
+              checkDeviceStatus() != A2DP_STATE_DISCONNECTED)) {
+            PAL_ERR(LOG_TAG, "a2dp start requested when a2dp source stream is failed to open");
+            return -ENOSYS;
+        }
     }
 
     if (a2dpState != A2DP_STATE_STARTED && !totalActiveSessionRequests) {
@@ -2367,6 +2372,22 @@ BtA2dp::getInstance(struct pal_device *device, std::shared_ptr<ResourceManager> 
         }
         return objBleTx;
     }
+}
+int32_t BtA2dp::checkDeviceStatus() {
+    if (a2dpState == A2DP_STATE_DISCONNECTED) {
+        PAL_INFO(LOG_TAG, "retry to open a2dp source");
+        if (a2dpRole == SOURCE)
+            open_a2dp_source();
+        else {
+#ifdef A2DP_SINK_SUPPORTED
+            open_a2dp_sink();
+#else
+            a2dpState = A2DP_STATE_CONNECTED;
+#endif
+        }
+    }
+    PAL_DBG(LOG_TAG, "a2dpState: %d", a2dpState);
+    return a2dpState;
 }
 
 /* Scope of BtScoRX/Tx class */

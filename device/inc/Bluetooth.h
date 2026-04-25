@@ -250,6 +250,7 @@ public:
                                                std::shared_ptr<ResourceManager> Rm);
     virtual ~BtA2dp();
     DISALLOW_COPY_AND_ASSIGN(BtA2dp);
+    int32_t checkDeviceStatus();
 };
 
 class BtSco : public Bluetooth

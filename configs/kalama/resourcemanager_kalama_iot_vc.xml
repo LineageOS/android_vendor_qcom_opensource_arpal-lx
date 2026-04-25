@@ -431,7 +431,7 @@
         </in-device>
         <in-device>
             <id>PAL_DEVICE_IN_HANDSET_VA_MIC</id>
-            <back_end_name>MI2S-LPAIF_RXTX-TX-PRIMARY</back_end_name>
+            <back_end_name>MI2S-LPAIF_VA-TX-PRIMARY</back_end_name>
             <max_channels>2</max_channels>
             <channels>1</channels>
             <samplerate>48000</samplerate>
