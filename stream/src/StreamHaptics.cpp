@@ -77,7 +77,7 @@ int32_t  StreamHaptics::setParameters(uint32_t param_id, void *payload)
     } else {
        /* If Setparam for touch haptics is called when Ringtone Haptics is active
           skip the Setparam for touch haptics*/
-        PAL_DBG(LOG_TAG, "activestreams size %d",activeStreams.size());
+        PAL_DBG(LOG_TAG, "activestreams size %zu",activeStreams.size());
         for (int i = 0; i<activeStreams.size(); i++) {
             stream = static_cast<Stream *>(activeStreams[i]);
             stream->getStreamAttributes(&ActivesAttr);
@@ -284,7 +284,7 @@ int32_t StreamHaptics::HandleHapticsConcurrency(struct pal_stream_attributes *sa
     } else {
        /* If incoming stream is Ringtone Haptics and active stream is Touch
           stop the Touch haptics and start Ringtone*/
-        PAL_DBG(LOG_TAG, "activestreams size %d",activeStreams.size());
+        PAL_DBG(LOG_TAG, "activestreams size %zu",activeStreams.size());
         for (int i = 0; i<activeStreams.size(); i++) {
             stream = static_cast<Stream *>(activeStreams[i]);
             stream->getStreamAttributes(&ActivesAttr);

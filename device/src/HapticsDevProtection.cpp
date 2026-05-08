@@ -1721,7 +1721,7 @@ int32_t HapticsDevProtection::getFTMParameter(void **param)
               << ((FtmCalParam.Blq_ftm_q24)/(1<<24)) << "; Le: "
               << ((FtmCalParam.Le_mH_ftm_q24)/(1<<24));
 
-    PAL_DBG(LOG_TAG, "Get param value %s, length:%d",
+    PAL_DBG(LOG_TAG, "Get param value %s, length:%zu",
             resString.str().c_str(), resString.str().length());
     if (resString.str().length() > 0 && ((*param) != nullptr)) {
         payload_size = resString.str().length() + 1;

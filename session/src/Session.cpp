@@ -1591,7 +1591,7 @@ int dump_registers(const char *in_file_path, const char *regdump_out_file)
        read_out_size = -1;
        goto close_regdump_file;
     }
-    PAL_INFO(LOG_TAG, "Bolero Regmap Dump Size %ld and file %s", regdump_size, regdump_out_file);
+    PAL_INFO(LOG_TAG, "Bolero Regmap Dump Size %d and file %s", regdump_size, regdump_out_file);
 
 close_regdump_file:
     close(regdump_wr_fd);

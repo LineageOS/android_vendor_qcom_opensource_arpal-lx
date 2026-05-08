@@ -1735,7 +1735,7 @@ int32_t ResourceManager::voiceuiDmgrRestartUseCases(vui_dmgr_param_restart_useca
     }
 
     // Reuse SSR mechanism for stream teardown and bring up.
-    PAL_INFO(LOG_TAG, "restart %d streams", st_streams.size());
+    PAL_INFO(LOG_TAG, "restart %zu streams", st_streams.size());
     for (auto &st : st_streams) {
         st->getStreamType(&st_type);
         status = st->ssrDownHandler();
@@ -11298,7 +11298,7 @@ int ResourceManager::setParameter(uint32_t param_id, void *param_payload,
                     break;
                     default:
                     {
-                        PAL_ERR(LOG_TAG, "unsupported hap op mode",
+                        PAL_ERR(LOG_TAG, "unsupported hap op mode %d",
                                 hapModeVal->operationMode);
                         status = -EINVAL;
                         goto exit;
@@ -14910,7 +14910,7 @@ void ResourceManager::reconfigureScoStreams() {
         dattr = nullptr;
     }
 
-    PAL_DBG(LOG_TAG, "streamDevDisconnect size=%d and streamDevConnect size=%d",
+    PAL_DBG(LOG_TAG, "streamDevDisconnect size=%zu and streamDevConnect size=%zu",
             streamDevDisconnect.size(), streamDevConnect.size());
     status = streamDevSwitch(streamDevDisconnect, streamDevConnect);
     if (status) {
@@ -14966,7 +14966,7 @@ int ResourceManager::setUltrasoundGain(pal_ultrasound_gain_t gain, Stream *s)
     } else {
         status = getActiveStream_l(activeStreams, NULL);
         if ((0 != status) || (activeStreams.size() == 0)) {
-            PAL_DBG(LOG_TAG, "No active stream available, status = %d, nStream = %d",
+            PAL_DBG(LOG_TAG, "No active stream available, status = %d, nStream = %zu",
                     status, activeStreams.size());
             return -ENOENT;
         }
