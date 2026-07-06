@@ -89,6 +89,9 @@
 #include "ExtEC.h"
 #include "ECRefDevice.h"
 #include "DummyDev.h"
+#ifdef PAL_SUPPORT_AW882XX
+#include "aw_ar_api.h"
+#endif
 #include <dlfcn.h>
 
 #define MAX_CHANNEL_SUPPORTED 2
@@ -341,6 +344,20 @@ Device::Device(struct pal_device *device, std::shared_ptr<ResourceManager> Rm)
     mCurrentPriority = MIN_USECASE_PRIORITY;
     PAL_DBG(LOG_TAG,"device instance for id %d created", device->id);
 
+#ifdef PAL_SUPPORT_AW882XX
+    if (device->id == PAL_DEVICE_OUT_SPEAKER) {
+        struct aw_dev_info dev_info;
+
+        if (!virtualMixerHandle || !hwMixerHandle) {
+            PAL_ERR(LOG_TAG, "Awinic monitor init skipped, mixer unavailable");
+            return;
+        }
+
+        dev_info.virt_mixer = virtualMixerHandle;
+        dev_info.hw_mixer = hwMixerHandle;
+        aw_audioreach_monitor_init(&dev_info);
+    }
+#endif
 }
 
 Device::Device()
@@ -359,6 +376,12 @@ Device::~Device()
     customPayloadSize = 0;
     mCurrentPriority = MIN_USECASE_PRIORITY;
     PAL_DBG(LOG_TAG,"device instance for id %d destroyed", deviceAttr.id);
+
+#ifdef PAL_SUPPORT_AW882XX
+    if (this->deviceAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+        aw_audioreach_monitor_deinit();
+    }
+#endif
 }
 
 int Device::getDeviceAttributes(struct pal_device *dattr, Stream* streamHandle)
@@ -584,6 +607,11 @@ int Device::start()
     status = start_l();
     mDeviceMutex.unlock();
 
+#ifdef PAL_SUPPORT_AW882XX
+    if (this->deviceAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+        aw_audioreach_monitor_start();
+    }
+#endif
     return status;
 }
 
@@ -650,6 +678,11 @@ int Device::stop()
     status = stop_l();
     mDeviceMutex.unlock();
 
+#ifdef PAL_SUPPORT_AW882XX
+    if (this->deviceAttr.id == PAL_DEVICE_OUT_SPEAKER) {
+        aw_audioreach_monitor_stop();
+    }
+#endif
     return status;
 }
 

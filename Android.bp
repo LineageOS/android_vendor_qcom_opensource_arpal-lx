@@ -1,3 +1,55 @@
+cc_defaults {
+    name: "aw882xx_defaults",
+
+    cflags: select(soong_config_variable("qtiaudio", "aw882xx_support"), {
+        true: [
+            "-DPAL_SUPPORT_AW882XX",
+            "-Wno-macro-redefined",
+            "-Wno-tautological-compare",
+        ],
+        default: [],
+    }),
+
+    local_include_dirs: ["device/awinic_ar/inc"],
+
+    srcs: select(soong_config_variable("qtiaudio", "aw882xx_support"), {
+        true: [
+            "device/awinic_ar/src/aw_ar_cali.c",
+            "device/awinic_ar/src/aw_ar_dsp.cpp",
+            "device/awinic_ar/src/aw_ar_kmsg.c",
+        ],
+        default: [],
+    }),
+}
+
+cc_binary {
+    name: "aw882xx_cali",
+
+    cflags: [
+        "-DAW_PCM_NAME_LIST=\"PCM100,PCM102,PCM103,COMPRESS105,VOICEMMODE1p,VOICEMMODE2p,PCM110,PCM114,PCM117,PCM123,PCM126,PCM128\"",
+    ] + select(soong_config_variable("qtiaudio", "aw882xx_backend"), {
+        any @ backend: ["-DAW_BACK_END_NAME=\"" + backend + "\""],
+        default: [],
+    }),
+
+    defaults: ["aw882xx_defaults"],
+
+    enabled: select(soong_config_variable("qtiaudio", "aw882xx_support"), {
+        true: true,
+        default: false,
+    }),
+
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "libtinyalsa",
+    ],
+
+    srcs: ["device/awinic_ar/src/aw_ar_cali_exe.c"],
+
+    vendor: true,
+}
+
 cc_library_headers {
     name: "libarpal_headers",
     vendor: true,
@@ -16,6 +68,7 @@ cc_library_headers {
 
 cc_library_shared {
     name: "libar-pal",
+    defaults: ["aw882xx_defaults"],
     owner: "qti",
     vendor: true,
 
@@ -112,6 +165,9 @@ cc_library_shared {
         "utils/src/VoiceUIPlatformInfo.cpp",
     ] + select(soong_config_variable("qtiaudio", "feature_ar_memlogger"), {
         "true": ["utils/src/MemLogBuilder.cpp"],
+        default: [],
+    }) + select(soong_config_variable("qtiaudio", "aw882xx_support"), {
+        true: ["device/awinic_ar/src/aw_ar_monitor.c"],
         default: [],
     }),
 

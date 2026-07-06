@@ -70,6 +70,9 @@
 #include "SessionAlsaUtils.h"
 #include "kvh2xml.h"
 #include <agm/agm_api.h>
+#ifdef PAL_SUPPORT_AW882XX
+#include "aw_ar_api.h"
+#endif
 
 #include<fstream>
 #include<sstream>
@@ -1286,6 +1289,7 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
         goto exit;
     }
 
+#ifndef PAL_SUPPORT_AW882XX
     fp = fopen(PAL_SP_TEMP_PATH, "rb");
     if (fp) {
         PAL_DBG(LOG_TAG, "Cal File exists. Reading from it");
@@ -1297,6 +1301,7 @@ SpeakerProtection::SpeakerProtection(struct pal_device *device,
                             this);
         calThrdCreated = true;
     }
+#endif
 exit:
     PAL_DBG(LOG_TAG, "exit. calThrdCreated :%d", calThrdCreated);
 }
@@ -1676,6 +1681,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
 
     flags = PCM_IN;
 
+#ifndef PAL_SUPPORT_AW882XX
     //Setting the mode of VI module
     modeConfg.num_speakers = vi_device.channels;
     switch (rm->mSpkrProtModeValue.operationMode) {
@@ -1854,6 +1860,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
             goto free_fe;
         }
     }
+#endif
 
     txPcm = pcm_open(rm->getVirtualSndCard(), pcmDevIdTx.at(0), flags, &config);
     if (!txPcm) {
@@ -2018,6 +2025,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
     PAL_DBG(LOG_TAG, "get the audio route %s", mSndDeviceName_vi);
 
     if (flag) {
+#ifndef PAL_SUPPORT_AW882XX
         if (spkrCalState == SPKR_CALIB_IN_PROGRESS) {
             // Close the Graphs
             cv.notify_all();
@@ -2029,6 +2037,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
             cpsPcm = NULL;
             PAL_DBG(LOG_TAG, "Stopped calibration mode");
         }
+#endif
         numberOfRequest++;
         if (numberOfRequest > 1) {
             // R0T0 already set, we don't need to process the request
@@ -2087,6 +2096,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
             goto exit;
         }
 
+#ifndef PAL_SUPPORT_AW882XX
         // Set the operation mode for SP module
         PAL_DBG(LOG_TAG, "Operation mode for SP %d",
                         rm->mSpkrProtModeValue.operationMode);
@@ -2117,6 +2127,26 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
                 PAL_ERR(LOG_TAG," updateCustomPayload Failed\n");
             }
         }
+#endif
+
+#ifdef PAL_SUPPORT_AW882XX
+        {
+            struct aw_dev_info dev_info;
+            int cali_re[8] = { 0 };
+
+            if (aw_audioreach_get_re_from_file(cali_re, numberOfChannels) < 0) {
+                PAL_ERR(LOG_TAG, "get re from file failed");
+            } else {
+                dev_info.virt_mixer = virtMixer;
+                dev_info.hw_mixer = hwMixer;
+                if (aw_audioreach_dsp_set_re(&dev_info, cali_re, numberOfChannels) < 0) {
+                    PAL_ERR(LOG_TAG, "Awinic set cali re failed");
+                } else {
+                    PAL_INFO(LOG_TAG, "Awinic set cali re success");
+                }
+            }
+        }
+#endif
 
         switch(ResourceManager::cpsMode)
         {
@@ -2539,7 +2569,9 @@ int SpeakerProtection::start()
 
     if (ResourceManager::isVIRecordStarted) {
         PAL_DBG(LOG_TAG, "record running so just update SP payload");
+#ifndef PAL_SUPPORT_AW882XX
         updateSPcustomPayload();
+#endif
     }
     else {
         spkrProtProcessingMode(true);
@@ -2972,8 +3004,10 @@ int32_t SpeakerFeedback::start()
     ResourceManager::isVIRecordStarted = true;
     // Do the customPayload configuration for VI path and call the Device::start
     PAL_DBG(LOG_TAG," Feedback start\n");
+#ifndef PAL_SUPPORT_AW882XX
     if (rm->isSpeakerProtectionEnabled)
         updateVIcustomPayload();
+#endif
 
     Device::start();
 
