@@ -23,7 +23,9 @@
 
 
 
+#ifndef AWINIC_CALI_FILE
 #define AWINIC_CALI_FILE    "/mnt/vendor/persist/factory/audio/aw_cali.bin"
+#endif
 static bool g_is_single_cali = false;
 static unsigned int g_cali_re_time_ms = AW_CALI_RE_DEFAULT_TIMER;
 static unsigned int g_noise_flag = CALI_OPS_NOISE;

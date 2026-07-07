@@ -8,6 +8,9 @@ cc_defaults {
             "-Wno-tautological-compare",
         ],
         default: [],
+    }) + select(soong_config_variable("qtiaudio", "aw882xx_cali_file"), {
+        any @ path: ["-DAWINIC_CALI_FILE=\"" + path + "\""],
+        default: [],
     }),
 
     local_include_dirs: ["device/awinic_ar/inc"],
