@@ -28,9 +28,7 @@ cc_defaults {
 cc_binary {
     name: "aw882xx_cali",
 
-    cflags: [
-        "-DAW_PCM_NAME_LIST=\"PCM100,PCM102,PCM103,COMPRESS105,VOICEMMODE1p,VOICEMMODE2p,PCM110,PCM114,PCM117,PCM123,PCM126,PCM128\"",
-    ] + select(soong_config_variable("qtiaudio", "aw882xx_backend"), {
+    cflags: select(soong_config_variable("qtiaudio", "aw882xx_backend"), {
         any @ backend: ["-DAW_BACK_END_NAME=\"" + backend + "\""],
         default: [],
     }),
@@ -45,6 +43,7 @@ cc_binary {
     shared_libs: [
         "libcutils",
         "liblog",
+        "libsndcardparser",
         "libtinyalsa",
     ],
 

@@ -13,7 +13,6 @@
 
 
 #define AW_HW_CARD          (0)
-#define AW_VIRT_CARD        (100)
 
 const char *aw_back_end_name = NULL;
 int back_end_name_flag = 0;

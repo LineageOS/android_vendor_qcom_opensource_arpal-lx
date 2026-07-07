@@ -4,6 +4,8 @@
 #ifndef __AW_AR_DEV_H__
 #define __AW_AR_DEV_H__
 
+#define AW_VIRT_CARD        (100)
+
 extern const char *aw_back_end_name;
 extern int back_end_name_flag;
 

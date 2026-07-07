@@ -18,6 +18,9 @@
 
 #ifdef AW_BACK_END_NAME
 #define MODULE_SP            (0xC0000029)
+extern "C" {
+#include <snd-card-def.h>
+}
 #else
 #include "ResourceManager.h"
 #endif
@@ -843,6 +846,62 @@ static int aw_ar_dsp_read_msg(struct mixer *virt_mixer, uint32_t msg_num,
 }
 
 #ifdef AW_BACK_END_NAME
+static int aw_ar_dsp_get_pcm_list_from_card_defs(char *buf, unsigned int buf_size)
+{
+    void *card = NULL;
+    void **nodes = NULL;
+    char *name = NULL;
+    unsigned int offset = 0;
+    int node_types[2] = { SND_NODE_TYPE_PCM, SND_NODE_TYPE_COMPR };
+    int num = 0, val = 0, i = 0, t = 0;
+    int ret = AW_FAIL;
+
+    card = snd_card_def_get_card(AW_VIRT_CARD);
+    if (card == NULL) {
+        AWLOGE("no card-defs entry for card %d", AW_VIRT_CARD);
+        return AW_FAIL;
+    }
+
+    for (t = 0; t < 2; t++) {
+        num = snd_card_def_get_num_node(card, node_types[t]);
+        if (num <= 0)
+            continue;
+
+        nodes = (void **)calloc(num, sizeof(void *));
+        if (nodes == NULL)
+            goto done;
+
+        if (snd_card_def_get_nodes_for_type(card, node_types[t], nodes, num)) {
+            free(nodes);
+            nodes = NULL;
+            continue;
+        }
+
+        for (i = 0; i < num; i++) {
+            val = 0;
+            if (snd_card_def_get_int(nodes[i], "playback", &val) || (val == 0))
+                continue;
+            if (snd_card_def_get_str(nodes[i], "name", &name) || (name == NULL))
+                continue;
+            if (offset + strlen(name) + 2 > buf_size)
+                break;
+            offset += snprintf(buf + offset, buf_size - offset, "%s%s",
+                               (offset != 0) ? "," : "", name);
+        }
+        free(nodes);
+        nodes = NULL;
+    }
+
+    if (offset != 0) {
+        AWLOGI("playback pcm list from card-defs: %s", buf);
+        ret = AW_OK;
+    }
+
+done:
+    snd_card_def_put_card(card);
+    return ret;
+}
+
 static int aw_ar_dsp_platform_init(struct aw_ar_info *ar_info, bool tranfer_test)
 {
     int ret = 0;
@@ -862,7 +921,11 @@ static int aw_ar_dsp_platform_init(struct aw_ar_info *ar_info, bool tranfer_test
         AWLOGD("AW_BACK_END_NAME:%s",AW_BACK_END_NAME);
     }
 
-    memcpy(pcm_name_buf, AW_PCM_NAME_LIST, strlen(AW_PCM_NAME_LIST));
+    if (aw_ar_dsp_get_pcm_list_from_card_defs(pcm_name_buf,
+                                              sizeof(pcm_name_buf)) != AW_OK) {
+        AWLOGE("no pcm name list available");
+        return AW_FAIL;
+    }
 
 
     while((pcm_name_list[pcm_num] = strtok(pcm_name_buf_p, ",")) != NULL) {
