@@ -16,6 +16,24 @@
       "message": "Can\u0027t you symlink?",
       "revId": "1ba64a903aead0c96784e2b6336bf1346a7239f1",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5e9021b_e3a26dd6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29415
+      },
+      "writtenOn": "2026-07-07T14:42:58Z",
+      "side": 1,
+      "message": "Yeah other option is having it point to /data/vendor/audio/aw_cali.bin and having devices just symlink their persist copies to it, fine with either.",
+      "parentUuid": "a54b551f_387493c3",
+      "revId": "1ba64a903aead0c96784e2b6336bf1346a7239f1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
