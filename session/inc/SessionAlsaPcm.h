@@ -26,8 +26,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *​​​​​ Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -74,6 +74,18 @@ private:
     uint32_t svaMiid;
     static std::mutex pcmLpmRefCntMtx;
     static int pcmLpmRefCnt;
+    //Skip mic occlusion event registration for below streams
+    // - PAL_STREAM_CONTEXT_PROXY: no regular TX backend is attached in PAL; mic
+    //   occlusion routing isn’t handled via this path.
+    // - PAL_STREAM_VOICE_CALL_RECORD:  in-call record ,
+    //   for this stream, txAifBackEnds isn’t populated
+    //- PAL_STREAM_VOICE_CALL_MUSIC: in-call music(output useacse), not a
+    //   mic capture path; mic occlusion is not applicable.
+    bool shouldRegisterMicOcclusionEvent(pal_stream_type_t streamType) {
+        return (streamType != PAL_STREAM_CONTEXT_PROXY &&
+                streamType != PAL_STREAM_VOICE_CALL_RECORD &&
+                streamType != PAL_STREAM_VOICE_CALL_MUSIC);
+    }
 public:
 
     SessionAlsaPcm(std::shared_ptr<ResourceManager> Rm);

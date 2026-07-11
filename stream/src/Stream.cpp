@@ -1005,7 +1005,9 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             }
 
             mDevices.push_back(dev);
+            rm->lockGraph();
             status = session->setupSessionDevice(this, mStreamAttr->type, dev);
+            rm->unlockGraph();
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "setupSessionDevice failed:%d", status);
                 dev->close();
@@ -1174,14 +1176,15 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
     }
 
     mDevices.push_back(dev);
+    rm->lockGraph();
     status = session->setupSessionDevice(streamHandle, mStreamAttr->type, dev);
     if (0 != status) {
         PAL_ERR(LOG_TAG, "setupSessionDevice for %d failed with status %d",
                 dev->getSndDeviceId(), status);
+        rm->unlockGraph();
         goto dev_close;
     }
 
-    rm->lockGraph();
     if (currentState != STREAM_INIT && currentState != STREAM_STOPPED) {
         status = dev->start();
         if (0 != status) {
@@ -1306,7 +1309,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
     std::vector <Stream *> streamsToSwitch;
     struct pal_device streamDevAttr;
     std::vector <Stream*>::iterator sIter;
-    bool VoiceorVoip_call_active = false;
     bool has_out_device = false, has_in_device = false;
     std::vector <std::shared_ptr<Device>>::iterator dIter;
     struct pal_volume_data *volume = NULL;
@@ -1606,17 +1608,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
          * is removed above.
          */
         if (sharedBEStreamDev.size() > 0) {
-            for (const auto &elem : sharedBEStreamDev) {
-                struct pal_stream_attributes strAttr;
-                std::get<0>(elem)->getStreamAttributes(&strAttr);
-                if (strAttr.type == PAL_STREAM_VOIP ||
-                    strAttr.type == PAL_STREAM_VOIP_RX ||
-                    strAttr.type == PAL_STREAM_VOIP_TX ||
-                    strAttr.type == PAL_STREAM_VOICE_CALL) {
-                    VoiceorVoip_call_active = true;
-                    break;
-                }
-            }
             rm->getSndDeviceName(newDeviceId, CurrentSndDeviceName);
             /* compare new stream-device attr with current active stream-device attr */
             bool switchStreams = rm->compareSharedBEStreamDevAttr(sharedBEStreamDev, &newDevices[newDeviceSlots[i]], true);
@@ -1634,17 +1625,6 @@ int32_t Stream::switchDevice(Stream* streamHandle, uint32_t numDev, struct pal_d
                 }
                 curDev->getDeviceAttributes(&curDevAttr);
 
-                /* avoid device for voice/voip being switched by low priority switch*/
-                if (VoiceorVoip_call_active &&
-                    strAttr.type != PAL_STREAM_VOICE_CALL &&
-                    strAttr.type != PAL_STREAM_VOIP_RX &&
-                    strAttr.type != PAL_STREAM_VOIP_TX &&
-                    strAttr.type != PAL_STREAM_VOIP &&
-                    curDevAttr.id != newDevices[newDeviceSlots[i]].id) {
-                    ar_mem_cpy(&(newDevices[newDeviceSlots[i]]), sizeof(struct pal_device),
-                               &curDevAttr, sizeof(struct pal_device));
-                    rm->getSndDeviceName(newDevices[newDeviceSlots[i]].id, CurrentSndDeviceName);
-                }
 
                 /*
                  * for current stream, if custom key updated, even reset of the attr
@@ -1853,6 +1833,10 @@ bool Stream::checkStreamMatch(pal_device_id_t pal_device_id,
 
     //device
     for (int i = 0; i < mDevices.size();i++) {
+       if (mDevices[i] == NULL){
+             PAL_ERR(LOG_TAG,"mDevices[%d] is NULL \n", i);
+             return false;
+       }
        status = mDevices[i]->getDeviceAttributes(&dAttr);
        if (0 != status) {
           PAL_ERR(LOG_TAG,"getDeviceAttributes Failed \n");

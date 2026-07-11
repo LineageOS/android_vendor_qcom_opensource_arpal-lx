@@ -26,9 +26,9 @@
 <!--  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN     -->
 <!--  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE                               -->
 
-<!-- Changes from Qualcomm Innovation Center are provided under the following license: -->
+<!-- Changes from Qualcomm Technologies, Inc. are provided under the following license: -->
 <!--                                                                                   -->
-<!-- Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.       -->
+<!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.                -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear                                       -->
 <resource_manager_info>
     <config_params>
@@ -39,6 +39,13 @@
         <param key="upd_dedicated_be" value ="false" />
         <param key="upd_set_custom_gain" value ="false" />
     </config_params>
+    <config_lpm>
+        <use_disable_lpm>1</use_disable_lpm>
+        <lpm_supported_streams>
+            <lpm_supported_stream>PAL_STREAM_LOW_LATENCY</lpm_supported_stream>
+            <lpm_supported_stream>PAL_STREAM_ULTRA_LOW_LATENCY</lpm_supported_stream>
+        </lpm_supported_streams>
+    </config_lpm>
     <config_gapless key="gapless_supported" value="1"/>
     <bt_codecs>
         <codec codec_format="CODEC_TYPE_AAC" codec_type="enc|dec"
@@ -478,18 +485,18 @@ should always be in sync with it -->
             <quick_cal_time>0</quick_cal_time>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
-                <priority>2</priority>
+                <priority>1</priority>
                 <channels>1</channels>
                 <snd_device_name>speaker-mono-2</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_VOIP_RX</name>
                 <samplerate>16000</samplerate>
-                <priority>3</priority>
+                <priority>2</priority>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_ULTRASOUND</name>
-                <priority>1</priority>
+                <priority>4</priority>
                 <samplerate>96000</samplerate>
             </usecase>
         </out-device>
@@ -503,17 +510,17 @@ should always be in sync with it -->
             <snd_device_name>handset</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
-                <priority>2</priority>
+                <priority>1</priority>
                 <snd_device_name>voice-handset</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_VOIP_RX</name>
-                <priority>3</priority>
+                <priority>2</priority>
                 <snd_device_name>voice-handset</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_ULTRASOUND</name>
-                <priority>1</priority>
+                <priority>4</priority>
                 <samplerate>96000</samplerate>
             </usecase>
         </out-device>

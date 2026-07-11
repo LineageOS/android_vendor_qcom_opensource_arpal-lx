@@ -867,10 +867,12 @@ public:
     bool isDeviceReady(pal_device_id_t id);
     static bool isBtScoDevice(pal_device_id_t id);
     static bool isBtDevice(pal_device_id_t id);
+    static bool isBtA2dpDevice(pal_device_id_t id);
     int32_t a2dpSuspend(pal_device_id_t dev_id);
     int32_t a2dpResume(pal_device_id_t dev_id);
     int32_t a2dpCaptureSuspend(pal_device_id_t dev_id);
     int32_t a2dpCaptureResume(pal_device_id_t dev_id);
+    int32_t a2dpReconfig();
     bool isPluginDevice(pal_device_id_t id);
     bool isDpDevice(pal_device_id_t id);
     bool isPluginPlaybackDevice(pal_device_id_t id);

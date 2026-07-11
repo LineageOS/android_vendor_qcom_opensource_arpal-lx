@@ -49,7 +49,7 @@
 -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<-- Changes from Qualcomm Technologies, Inc. are provided under the following license:
+<!-- Changes from Qualcomm Technologies, Inc. are provided under the following license:
 -->
 <!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 -->
@@ -503,18 +503,18 @@ should always be in sync with it -->
             <quick_cal_time>0</quick_cal_time>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
-                <priority>2</priority>
+                <priority>1</priority>
                 <channels>1</channels>
                 <snd_device_name>speaker-mono-2</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_VOIP_RX</name>
                 <samplerate>16000</samplerate>
-                <priority>3</priority>
+                <priority>2</priority>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_ULTRASOUND</name>
-                <priority>1</priority>
+                <priority>4</priority>
                 <samplerate>96000</samplerate>
             </usecase>
             <usecase>
@@ -535,17 +535,17 @@ should always be in sync with it -->
             <snd_device_name>handset</snd_device_name>
             <usecase>
                 <name>PAL_STREAM_VOICE_CALL</name>
-                <priority>2</priority>
+                <priority>1</priority>
                 <snd_device_name>voice-handset</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_VOIP_RX</name>
-                <priority>3</priority>
+                <priority>2</priority>
                 <snd_device_name>voice-handset</snd_device_name>
             </usecase>
             <usecase>
                 <name>PAL_STREAM_ULTRASOUND</name>
-                <priority>1</priority>
+                <priority>4</priority>
                 <samplerate>96000</samplerate>
             </usecase>
         </out-device>

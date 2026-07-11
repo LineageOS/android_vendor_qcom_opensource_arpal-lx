@@ -350,7 +350,7 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
     struct mixer_ctl *beMetaDataMixerCtrl = nullptr;
     std::vector<std::shared_ptr<Device>> associatedDevices;
     std::shared_ptr<Device> beDevObj = nullptr;
-    struct mixer *mixerHandle;
+    struct mixer *mixerHandle = nullptr;
     uint32_t i;
     uint32_t streamPropId[] = {0x08000010, 1, 0x1}; /** gsl_subgraph_platform_driver_props.xml */
     uint32_t devicePropId[] = {0x08000010, 2, 0x2, 0x5};
@@ -402,6 +402,10 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
         }
     }
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
+    if (mixerHandle == nullptr) {
+        PAL_ERR(LOG_TAG, "mixerHandle is null");
+        goto exit;
+    }
 
     /** Get mixer controls (struct mixer_ctl *) for both FE and BE */
     if (sAttr.type == PAL_STREAM_COMPRESSED)
@@ -1406,7 +1410,7 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
     struct mixer_ctl *txFeMixerCtrls[FE_MAX_NUM_MIXER_CONTROLS] = { nullptr };
     struct mixer_ctl *txBeMixerCtrl = nullptr;
     std::vector<std::shared_ptr<Device>> associatedDevices;
-    struct mixer *mixerHandle;
+    struct mixer *mixerHandle = nullptr;
     uint32_t streamPropId[] = {0x08000010, 1, 0x1}; /** gsl_subgraph_platform_driver_props.xml */
     uint32_t devicePropId[] = {0x08000010, 2, 0x2, 0x5};
     uint32_t streamDevicePropId[] = {0x08000010, 1, 0x3}; /** gsl_subgraph_platform_driver_props.xml */
@@ -1441,6 +1445,10 @@ int SessionAlsaUtils::open(Stream * streamHandle, std::shared_ptr<ResourceManage
     PayloadBuilder* builder = new PayloadBuilder();
 
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
+    if (mixerHandle == nullptr) {
+        PAL_ERR(LOG_TAG, "mixerHandle is null");
+        goto exit;
+    }
     // get keyvalue pair info
     for (i = 0; i < associatedDevices.size(); i++) {
         associatedDevices[i]->getDeviceAttributes(&dAttr, streamHandle);
@@ -1805,7 +1813,7 @@ int SessionAlsaUtils::close(Stream * streamHandle, std::shared_ptr<ResourceManag
     struct mixer_ctl *txFeMixerCtrls[FE_MAX_NUM_MIXER_CONTROLS] = { nullptr };
     struct mixer_ctl *txBeMixerCtrl = nullptr;
     std::vector<std::shared_ptr<Device>> associatedDevices;
-    struct mixer *mixerHandle;
+    struct mixer *mixerHandle = nullptr;
     uint32_t streamPropId[] = {0x08000010, 1, 0x1}; /** gsl_subgraph_platform_driver_props.xml */
     uint32_t devicePropId[] = {0x08000010, 2, 0x2, 0x5};
     uint32_t streamDevicePropId[] = {0x08000010, 1, 0x3}; /** gsl_subgraph_platform_driver_props.xml */
@@ -1829,6 +1837,10 @@ int SessionAlsaUtils::close(Stream * streamHandle, std::shared_ptr<ResourceManag
         }
     }
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
+    if (mixerHandle == nullptr) {
+        PAL_ERR(LOG_TAG, "mixerHandle is null");
+        goto exit;
+    }
 
     // get audio mixer
     SessionAlsaUtils::getAgmMetaData(emptyKV, emptyKV,
