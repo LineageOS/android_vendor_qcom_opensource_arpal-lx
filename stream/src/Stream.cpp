@@ -28,7 +28,7 @@
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1253,7 +1253,9 @@ int32_t Stream::handleBTDeviceNotReady(bool& a2dpSuspend)
             }
 
             mDevices.push_back(dev);
+            rm->lockGraph();
             status = session->setupSessionDevice(this, mStreamAttr->type, dev);
+            rm->unlockGraph();
             if (0 != status) {
                 PAL_ERR(LOG_TAG, "setupSessionDevice failed:%d", status);
                 dev->close();
@@ -1327,16 +1329,22 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
                 rm->deregisterDevice(mDevices[i], this);
             }
 
-            if(mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER &&
-                     ResourceManager::isSpeakerProtectionEnabled) {
-               status = mDevices[i]->stop();
-               if (0 != status) {
-                   PAL_ERR(LOG_TAG, "device stop failed with status %d", status);
-                   rm->unlockGraph();
-                   goto exit;
-               }
+            bool isDeviceStopped = false;
+            if ((currentState != STREAM_INIT && currentState != STREAM_STOPPED) &&
+                mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER &&
+                ResourceManager::isSpeakerProtectionEnabled) {
+                /*
+                 * Special handling if speaker protection enabled to disable vi
+                 * feedback firstly before disconnecting session device to avoid
+                 * glitch in vi_tx.
+                 */
+                status = mDevices[i]->stop();
+                isDeviceStopped = true;
+                if (0 != status) {
+                    PAL_ERR(LOG_TAG, "device stop failed with status %d", status);
+                    goto exit;
+                }
             }
-
             rm->lockGraph();
             status = session->disconnectSessionDevice(streamHandle, mStreamAttr->type, mDevices[i]);
             if (0 != status) {
@@ -1349,12 +1357,14 @@ int32_t Stream::disconnectStreamDevice_l(Stream* streamHandle, pal_device_id_t d
              * hence stop A2DP/BLE device to match device start&stop count.
              */
 
-            if ((currentState != STREAM_INIT && currentState != STREAM_STOPPED) ||
+            if (((currentState != STREAM_INIT && currentState != STREAM_STOPPED) ||
                 ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
                 ((mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_SCO) ||
+                (mDevices[i]->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
-                 isMMap)) {
+                 isMMap)) && !isDeviceStopped) {
                 status = mDevices[i]->stop();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "device stop failed with status %d", status);
@@ -1460,10 +1470,12 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
     }
 
     mDevices.push_back(dev);
+    rm->lockGraph();
     status = session->setupSessionDevice(streamHandle, mStreamAttr->type, dev);
     if (0 != status) {
         PAL_ERR(LOG_TAG, "setupSessionDevice for %d failed with status %d",
                 dev->getSndDeviceId(), status);
+        rm->unlockGraph();
         goto dev_close;
     }
 
@@ -1475,11 +1487,12 @@ int32_t Stream::connectStreamDevice_l(Stream* streamHandle, struct pal_device *d
      * Currently device switch to BT is not supported for stopped mmap stream.
      */
     // TODO: add support for device switch to BT for stopped streams
-    rm->lockGraph();
     if ((currentState != STREAM_INIT && currentState != STREAM_STOPPED) ||
         ((currentState == STREAM_INIT || currentState == STREAM_STOPPED) &&
         ((dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_A2DP) ||
         (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_BLE) ||
+        (dev->getSndDeviceId() == PAL_DEVICE_OUT_BLUETOOTH_SCO) ||
+        (dev->getSndDeviceId() == PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
         (dev->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) &&
         isMMap)) {
         status = dev->start();

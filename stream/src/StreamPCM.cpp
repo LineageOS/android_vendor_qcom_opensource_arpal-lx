@@ -26,9 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -206,8 +206,12 @@ int32_t  StreamPCM::open()
     /* Check for BT device connected state */
     for (int32_t i = 0; i < mDevices.size(); i++) {
         pal_device_id_t dev_id = (pal_device_id_t) mDevices[i]->getSndDeviceId();
-        if (rm->isBtDevice(dev_id) && !(rm->isDeviceAvailable(dev_id))) {
-            PAL_ERR(LOG_TAG, "BT device %d not connected, cannot open stream", dev_id);
+        if (rm->isBtDevice(dev_id) &&
+            (!rm->isDeviceAvailable(dev_id) ||
+             (!rm->isDeviceReady(dev_id) && mDevices.size() == 1))) {
+            PAL_ERR(LOG_TAG,
+              "BT device %d not connected or not ready, cannot open stream",
+              dev_id);
             status = -ENODEV;
             goto exit;
         }
@@ -527,6 +531,11 @@ int32_t StreamPCM::start()
 
             rm->lockGraph();
             for (int32_t i=0; i < mDevices.size(); i++) {
+                if ((rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId())) && isMMap) {
+                    PAL_DBG(LOG_TAG, "skip IN BT A2DP/BLE device start, as its done already");
+                    status = 0;
+                    continue;
+                }
                 status = mDevices[i]->start();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "Tx device start is failed with status %d",
@@ -739,6 +748,11 @@ int32_t StreamPCM::stop()
 
             rm->lockGraph();
             for (int32_t i=0; i < mDevices.size(); i++) {
+                if ((rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId())) && isMMap) {
+                    PAL_DBG(LOG_TAG, "skip IN BT A2DP/BLE device stop, to be done in close/disconnect");
+                    status = 0;
+                    continue;
+                }
                 status = mDevices[i]->stop();
                 if (0 != status) {
                     PAL_ERR(LOG_TAG, "Tx device stop failed with status %d", status);
@@ -1712,9 +1726,23 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
     mStreamMutex.lock();
     if (currentState == STREAM_INIT) {
         rm->lockGraph();
+
         for (int32_t i=0; i < mDevices.size(); i++) {
             if (rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId()) ||
                 (mDevices[i]->getSndDeviceId() == PAL_DEVICE_OUT_SPEAKER)) {
+
+                if (rm->isBtDevice((pal_device_id_t) mDevices[i]->getSndDeviceId()) &&
+                    !rm->isDeviceReady((pal_device_id_t) mDevices[i]->getSndDeviceId())) {
+                     if (mDevices.size() == 1) {
+                         PAL_ERR(LOG_TAG, "createMmapBuffer failed for a2dp/ble/sco devices as device not ready");
+                         status = -EINVAL;
+                         rm->unlockGraph();
+                         goto exit;
+                     } else {
+                           continue;
+                     }
+                }
+
                 PAL_DBG(LOG_TAG, "start BT devices as to populate the full GKVs");
                 status = mDevices[i]->start();
                 btDevStarted = !status;
@@ -1725,6 +1753,7 @@ int32_t StreamPCM::createMmapBuffer(int32_t min_size_frames,
                 }
             }
         }
+
         status = session->createMmapBuffer(this, min_size_frames, info);
         if (0 != status) {
             PAL_ERR(LOG_TAG, "createMmapBuffer failed with status = %d", status);

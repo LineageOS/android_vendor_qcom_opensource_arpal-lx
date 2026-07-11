@@ -1080,7 +1080,7 @@ start_pcm:
         fbDev->isConfigured = true;
         fbDev->deviceStartStopCount++;
         fbDev->deviceCount++;
-        PAL_DBG(LOG_TAG, " deviceCount %d deviceStartStopCount %d for device id %d",
+        PAL_DBG(LOG_TAG, " fbDev deviceCount %d deviceStartStopCount %d for device id %d",
                 fbDev->deviceCount, fbDev->deviceStartStopCount, fbDev->deviceAttr.id);
     }
 
@@ -1632,8 +1632,9 @@ int BtA2dp::start()
         customPayloadSize = 0;
     }
 
-    if (!status && isAbrEnabled)
+    if (!status && isAbrEnabled) {
         startAbr();
+    }
 exit:
     mDeviceMutex.unlock();
     return status;
@@ -1644,8 +1645,9 @@ int BtA2dp::stop()
     int status = 0;
 
     mDeviceMutex.lock();
-    if (isAbrEnabled)
+    if (isAbrEnabled) {
         stopAbr();
+    }
 
     Device::stop_l();
 
@@ -1685,8 +1687,9 @@ int BtA2dp::startPlayback()
     if (a2dpState != A2DP_STATE_STARTED && !totalActiveSessionRequests) {
         codecFormat = CODEC_TYPE_INVALID;
 
-        if (!isConfigured)
+        if (!isConfigured) {
             isAbrEnabled = false;
+        }
 
         PAL_DBG(LOG_TAG, "calling BT module stream start");
         /* This call indicates BT IPC lib to start playback */
@@ -2751,8 +2754,9 @@ int BtSco::start()
         customPayload = NULL;
         customPayloadSize = 0;
     }
-    if (!status && isAbrEnabled)
+    if (!status && isAbrEnabled) {
         startAbr();
+    }
 
 exit:
     mDeviceMutex.unlock();
@@ -2764,8 +2768,9 @@ int BtSco::stop()
     int status = 0;
     mDeviceMutex.lock();
 
-    if (isAbrEnabled)
+    if (isAbrEnabled) {
         stopAbr();
+    }
 
     if (pluginCodec) {
         pluginCodec->close_plugin(pluginCodec);
@@ -2779,8 +2784,9 @@ int BtSco::stop()
     Device::stop_l();
     if (isAbrEnabled == false)
         codecFormat = CODEC_TYPE_INVALID;
-    if (deviceStartStopCount == 0)
+    if (deviceStartStopCount == 0) {
         isConfigured = false;
+    }
 
     mDeviceMutex.unlock();
     return status;

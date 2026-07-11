@@ -8271,6 +8271,8 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
     std::vector <Stream *> streamsToSwitch;
     std::vector <Stream*>::iterator sIter;
     struct pal_device streamDevAttr;
+    struct pal_stream_attributes sAttr;
+    std::vector<std::shared_ptr<Device>> devices;
 
     PAL_DBG(LOG_TAG, "Enter");
 
@@ -8338,6 +8340,45 @@ bool ResourceManager::updateDeviceConfig(std::shared_ptr<Device> *inDev,
             for (sIter = streamsToSwitch.begin(); sIter != streamsToSwitch.end(); sIter++) {
                 streamDevDisconnect.push_back({(*sIter), streamDevAttr.id});
                 streamDevConnect.push_back({(*sIter), &streamDevAttr});
+            }
+        }
+    }
+    /*
+     * Switching any existing playback streams active on previous device
+     * when new device is selected for call, as both of them have dangling link
+     * to TX device, and vise versa, i.e. switching active streams on previous device
+     * to new voice device if voice call is starting on a different device.
+     */
+    if (inStrAttr->type == PAL_STREAM_VOICE_CALL) {
+        for (auto& str: mActiveStreams) {
+            if (!isStreamActive(str, mActiveStreams))
+                continue;
+            status = str->getStreamAttributes(&sAttr);
+            if (status != 0) {
+                PAL_ERR(LOG_TAG,"stream get attributes failed");
+                continue;
+            }
+            if (sAttr.direction == PAL_AUDIO_OUTPUT &&
+                (sAttr.type == PAL_STREAM_LOW_LATENCY ||
+                sAttr.type == PAL_STREAM_DEEP_BUFFER ||
+                sAttr.type == PAL_STREAM_PCM_OFFLOAD ||
+                sAttr.type == PAL_STREAM_COMPRESSED ||
+                sAttr.type == PAL_STREAM_GENERIC ||
+                sAttr.type == PAL_STREAM_VOIP_RX ||
+                sAttr.type == PAL_STREAM_ULTRA_LOW_LATENCY)) {
+                devices.clear();
+                str->getAssociatedDevices(devices);
+                if (devices.size() > 0) {
+                    for (auto device: devices) {
+                        if ((isInputDevId(device->getSndDeviceId()) && isInputDevId(inDevAttr->id)) ||
+                            (isOutputDevId(device->getSndDeviceId()) && isOutputDevId(inDevAttr->id))) {
+                            if (device->getSndDeviceId() != inDevAttr->id) {
+                                streamDevDisconnect.push_back({str, device->getSndDeviceId()});
+                                streamDevConnect.push_back({str, inDevAttr});
+                            }
+                        }
+                    }
+                }
             }
         }
     }
