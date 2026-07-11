@@ -34,8 +34,8 @@
  */
 
 /*
-Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+Changes from Qualcomm Technologies, Inc. are provided under the following license:
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 SPDX-License-Identifier: BSD-3-Clause-Clear
 
 Redistribution and use in source and binary forms, with or without
@@ -1118,10 +1118,12 @@ int SessionAlsaVoice::start(Stream * s)
         s->setVolume(volume);
     };
     /*call to apply volume*/
+    status = setConfig(s, CALIBRATION, TAG_STREAM_VOLUME, RX_HOSTLESS);
+    if (0 != status) {
+        PAL_ERR(LOG_TAG, "setConfig failed with status %d", status);
+    }
     if (rm->isCRSCallEnabled) {
         setConfig(s, MODULE, CRS_CALL_VOLUME, RX_HOSTLESS);
-    } else {
-        setConfig(s, CALIBRATION, TAG_STREAM_VOLUME, RX_HOSTLESS);
     }
 
     /*set tty mode*/

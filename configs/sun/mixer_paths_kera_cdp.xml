@@ -794,6 +794,9 @@
     <path name="display-port1">
     </path>
 
+    <path name="hdmi">
+    </path>
+
     <path name="speaker-and-usb-headphones">
         <path name="speaker" />
         <path name="usb-headphones" />

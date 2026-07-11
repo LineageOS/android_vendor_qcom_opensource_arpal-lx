@@ -10347,12 +10347,24 @@ int32_t ResourceManager::a2dpCaptureResumeFromDummy(pal_device_id_t dev_id)
         mActiveStreamMutex.unlock();
         goto exit;
     }
+    for (sIter = restoredStreams.begin(); sIter != restoredStreams.end(); sIter++) {
+        if (increaseStreamUserCounter(*sIter)) {
+            PAL_ERR(LOG_TAG, "restoredStreams %pk increaseStreamUserCounter failed", *sIter);
+        }
+    }
     mActiveStreamMutex.unlock();
 
     PAL_DBG(LOG_TAG, "restoring a2dp/ble streams");
     status = streamDevSwitch(streamDevDisconnect, streamDevConnect);
     if (status) {
         PAL_ERR(LOG_TAG, "streamDevSwitch failed %d", status);
+        mActiveStreamMutex.lock();
+        for (sIter = restoredStreams.begin(); sIter != restoredStreams.end(); sIter++) {
+            if (decreaseStreamUserCounter(*sIter)) {
+                PAL_ERR(LOG_TAG, "restoredStreams %pk decreaseStreamUserCounter failed", *sIter);
+            }
+        }
+        mActiveStreamMutex.unlock();
         goto exit;
     }
 
@@ -10368,6 +10380,9 @@ int32_t ResourceManager::a2dpCaptureResumeFromDummy(pal_device_id_t dev_id)
                 (*sIter)->a2dpMuted = false;
             }
             (*sIter)->unlockStreamMutex();
+        }
+        if (decreaseStreamUserCounter(*sIter)) {
+            PAL_ERR(LOG_TAG, "restoredStreams %pk decreaseStreamUserCounter failed", *sIter);
         }
     }
     mActiveStreamMutex.unlock();
