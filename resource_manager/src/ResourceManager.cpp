@@ -3984,11 +3984,11 @@ int ResourceManager::increaseStreamUserCounter(Stream* s)
         it->second.second) {
         if (0 == it->second.first) {
             s->waitStreamSmph();
-            PAL_DBG(LOG_TAG, "stream %p in use", s);
+            PAL_VERBOSE(LOG_TAG, "stream %p in use", s);
         }
-        PAL_DBG(LOG_TAG, "stream %p counter was %d", s, it->second.first);
+        PAL_VERBOSE(LOG_TAG, "stream %p counter was %d", s, it->second.first);
         it->second.first = it->second.first + 1;
-        PAL_DBG(LOG_TAG, "stream %p counter increased to %d", s, it->second.first);
+        PAL_VERBOSE(LOG_TAG, "stream %p counter increased to %d", s, it->second.first);
         return 0;
     } else {
         PAL_ERR(LOG_TAG, "stream %p is not found or inactive.", s);
@@ -4002,7 +4002,7 @@ int ResourceManager::decreaseStreamUserCounter(Stream* s)
     printStreamUserCounter(s);
     it = mActiveStreamUserCounter.find(s);
     if (it != mActiveStreamUserCounter.end()) {
-        PAL_DBG(LOG_TAG, "stream %p counter was %d", s, it->second.first);
+        PAL_VERBOSE(LOG_TAG, "stream %p counter was %d", s, it->second.first);
         if (0 == it->second.first) {
             PAL_ERR(LOG_TAG, "counter of stream %p has already been 0.", s);
             return -EINVAL;
@@ -4010,10 +4010,10 @@ int ResourceManager::decreaseStreamUserCounter(Stream* s)
 
         it->second.first = it->second.first - 1;
         if (0 == it->second.first) {
-            PAL_DBG(LOG_TAG, "stream %p not in use", s);
+            PAL_VERBOSE(LOG_TAG, "stream %p not in use", s);
             s->postStreamSmph();
         }
-        PAL_DBG(LOG_TAG, "stream %p counter decreased to %d", s, it->second.first);
+        PAL_VERBOSE(LOG_TAG, "stream %p counter decreased to %d", s, it->second.first);
         return 0;
     } else {
         PAL_ERR(LOG_TAG, "stream %p is not found.", s);
