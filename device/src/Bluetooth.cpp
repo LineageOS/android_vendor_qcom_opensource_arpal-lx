@@ -2171,6 +2171,7 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
             break;
         }
     }
+    [[fallthrough]];
     case PAL_PARAM_ID_BT_A2DP_TWS_CONFIG:
     {
         isTwsMonoModeOn = param_a2dp->is_tws_mono_mode_on;
@@ -2271,6 +2272,7 @@ int32_t BtA2dp::setDeviceParameter(uint32_t param_id, void *param)
              break;
        }
     }
+    [[fallthrough]];
     case PAL_PARAM_ID_SET_SINK_METADATA:
         if (deviceAttr.id == PAL_DEVICE_IN_BLUETOOTH_BLE) {
           if (btoffload_update_metadata_api) {
@@ -2544,9 +2546,9 @@ void BtSco::convertCodecInfo(audio_lc3_codec_cfg_t &lc3CodecInfo,
         streamMapStr = match.suffix().str();
     }
 
-    PAL_DBG(LOG_TAG, "stream map out size: %d, stream map in size: %d", steamMapOut.size(), steamMapIn.size());
+    PAL_DBG(LOG_TAG, "stream map out size: %zu, stream map in size: %zu", steamMapOut.size(), steamMapIn.size());
     if ((steamMapOut.size() == 0) || (steamMapIn.size() == 0)) {
-        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %d, steamMapIn.size %d",
+        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %zu, steamMapIn.size %zu",
                 steamMapOut.size(), steamMapIn.size());
         return;
     }
