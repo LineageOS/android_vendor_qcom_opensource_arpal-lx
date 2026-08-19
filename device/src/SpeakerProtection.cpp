@@ -1727,7 +1727,7 @@ bool SpeakerProtection::canDeviceProceedForCalibration(unsigned long *sec)
     if (isDynamicCalTriggered) {
         PAL_DBG(LOG_TAG, "Dynamic Calibration triggered");
     } else if (*sec < minIdleTime) {
-        PAL_DBG(LOG_TAG, "Device not idle for minimum time. %lu", sec);
+        PAL_DBG(LOG_TAG, "Device not idle for minimum time. %lu", *sec);
         spkrCalibrateWait();
         PAL_DBG(LOG_TAG, "Waited for device to be idle for min time");
         return false;

@@ -3069,7 +3069,7 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
 
     /*scaling the volume by PLAYBACK_VOLUME_MAX factor*/
     voldB = (long)(vol * (PLAYBACK_VOLUME_MAX*1.0));
-    PAL_VERBOSE(LOG_TAG,"volume sent:%f \n",voldB);
+    PAL_VERBOSE(LOG_TAG,"volume sent:%ld \n",voldB);
 
     switch (static_cast<uint32_t>(tag)) {
     case TAG_STREAM_VOLUME:
