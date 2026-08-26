@@ -16,6 +16,23 @@
       "message": "lgtm",
       "revId": "b3cb54488e675961d6c9eb6193fa7b0ebc6d4e99",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5246d0e9_25bf39c5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 37711
+      },
+      "writtenOn": "2026-08-26T12:20:24Z",
+      "side": 1,
+      "message": "This patch fixes SmartPA initialization for devices with non-standard channel naming schemes (such as Xiaomi Pad 6 Pro). It allows `adev_crus_smartpa_init` to iterate through alternate prefix sets (\"TL/TR/BL/BR\" alongside \"TL/TH/BL/BH\") and fixes the retry loop logic when a control is missing.",
+      "revId": "b3cb54488e675961d6c9eb6193fa7b0ebc6d4e99",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
