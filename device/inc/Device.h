@@ -184,6 +184,26 @@ public:
     virtual bool isPluginDevice(pal_device_id_t id) { return false; }
     virtual bool isDpDevice(pal_device_id_t id) { return false; }
     virtual bool isPluginPlaybackDevice(pal_device_id_t id) { return false; }
+    /*
+     * A prebuilt libar-pal can carry further virtuals after these. Without
+     * them a source built device plugin exports a vtable shorter than the one
+     * the prebuilt indexes, and the prebuilt reads past its end.
+     */
+#if PAL_VENDOR_EXTRA_DEVICE_VIRTUALS > 0
+    virtual int32_t palVendorDeviceVirtual1() { return 0; }
+#endif
+#if PAL_VENDOR_EXTRA_DEVICE_VIRTUALS > 1
+    virtual int32_t palVendorDeviceVirtual2() { return 0; }
+#endif
+#if PAL_VENDOR_EXTRA_DEVICE_VIRTUALS > 2
+    virtual int32_t palVendorDeviceVirtual3() { return 0; }
+#endif
+#if PAL_VENDOR_EXTRA_DEVICE_VIRTUALS > 3
+    virtual int32_t palVendorDeviceVirtual4() { return 0; }
+#endif
+#if PAL_VENDOR_EXTRA_DEVICE_VIRTUALS > 4
+#error "declare more slots here to match the prebuilt libar-pal"
+#endif
 
     static std::shared_ptr<PluginManager> pm;
 };
