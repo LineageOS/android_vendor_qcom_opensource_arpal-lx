@@ -8,6 +8,9 @@ cc_library_headers {
     }) + select(soong_config_variable("qtiaudio", "extra_in_devices"), {
         any @ count: ["-DPAL_VENDOR_EXTRA_IN_DEVICES=" + count],
         default: ["-DPAL_VENDOR_EXTRA_IN_DEVICES=0"],
+    }) + select(soong_config_variable("qtiaudio", "extra_device_virtuals"), {
+        any @ count: ["-DPAL_VENDOR_EXTRA_DEVICE_VIRTUALS=" + count],
+        default: ["-DPAL_VENDOR_EXTRA_DEVICE_VIRTUALS=0"],
     }),
 
     export_include_dirs: [
