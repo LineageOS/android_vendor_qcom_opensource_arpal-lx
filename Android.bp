@@ -2,6 +2,14 @@ cc_library_headers {
     name: "libarpal_headers",
     vendor: true,
 
+    export_cflags: select(soong_config_variable("qtiaudio", "extra_out_devices"), {
+        any @ count: ["-DPAL_VENDOR_EXTRA_OUT_DEVICES=" + count],
+        default: ["-DPAL_VENDOR_EXTRA_OUT_DEVICES=0"],
+    }) + select(soong_config_variable("qtiaudio", "extra_in_devices"), {
+        any @ count: ["-DPAL_VENDOR_EXTRA_IN_DEVICES=" + count],
+        default: ["-DPAL_VENDOR_EXTRA_IN_DEVICES=0"],
+    }),
+
     export_include_dirs: [
         "context_manager/inc",
         "device/inc",
