@@ -456,7 +456,7 @@ typedef enum {
     PAL_DEVICE_OUT_RECORD_PROXY = 25,
     PAL_DEVICE_OUT_BLUETOOTH_HFP = 26,
     // Add new OUT devices here, increment MAX and MIN below when you do so
-    PAL_DEVICE_OUT_MAX = 27,
+    PAL_DEVICE_OUT_MAX = 27 + PAL_VENDOR_EXTRA_OUT_DEVICES,
     //INPUT DEVICES
     PAL_DEVICE_IN_MIN = PAL_DEVICE_OUT_MAX,
     PAL_DEVICE_IN_HANDSET_MIC = PAL_DEVICE_IN_MIN +1,
@@ -488,7 +488,7 @@ typedef enum {
     PAL_DEVICE_IN_RECORD_PROXY = PAL_DEVICE_IN_MIN + 27,
     PAL_DEVICE_IN_BLUETOOTH_HFP = PAL_DEVICE_IN_MIN + 28,
     // Add new IN devices here, increment MAX and MIN below when you do so
-    PAL_DEVICE_IN_MAX = PAL_DEVICE_IN_MIN + 29,
+    PAL_DEVICE_IN_MAX = PAL_DEVICE_IN_MIN + 29 + PAL_VENDOR_EXTRA_IN_DEVICES,
 } pal_device_id_t;
 
 typedef enum {
