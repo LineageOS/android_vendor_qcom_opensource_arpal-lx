@@ -54,6 +54,34 @@ extern "C" Stream* CreateHapticsStream(const struct pal_stream_attributes *sattr
     return new StreamHaptics(sattr, dattr, no_of_devices, modifiers, no_of_modifiers, rm);
 }
 
+#ifdef PAL_VENDOR_NO_STREAM_MIXER_EVENT_CALLBACK
+static void hapticsMixerEventCallbackEntry(uint64_t hdl, uint32_t event_id,
+                                           void *data, uint32_t event_size)
+{
+    std::shared_ptr<ResourceManager> rm = ResourceManager::getInstance();
+
+    rm->lockActiveStream();
+    if (!rm->isActiveStream((pal_stream_handle_t *)hdl)) {
+        PAL_ERR(LOG_TAG, "callback called on invalid stream object");
+        rm->unlockActiveStream();
+        return;
+    }
+    StreamHaptics *str = reinterpret_cast<StreamHaptics *>(hdl);
+    if (rm->increaseStreamUserCounter(str)) {
+        rm->unlockActiveStream();
+        PAL_ERR(LOG_TAG, "callback called on invalid stream object");
+        return;
+    }
+    rm->unlockActiveStream();
+
+    str->HandleCallback(hdl, event_id, data, event_size);
+
+    rm->lockActiveStream();
+    rm->decreaseStreamUserCounter(str);
+    rm->unlockActiveStream();
+}
+#endif
+
 pal_stream_haptics_type_t StreamHaptics::activeHapticsType = PAL_STREAM_HAPTICS_RINGTONE;
 std::mutex StreamHaptics::activeHapticsTypeMutex;
 
@@ -62,7 +90,11 @@ StreamHaptics::StreamHaptics(const struct pal_stream_attributes *sattr, struct p
                     const uint32_t no_of_modifiers __unused, const std::shared_ptr<ResourceManager> rm):
                   StreamPCM(sattr,dattr,no_of_devices,modifiers,no_of_modifiers,rm)
 {
+#ifdef PAL_VENDOR_NO_STREAM_MIXER_EVENT_CALLBACK
+    session->registerCallBack(hapticsMixerEventCallbackEntry,((uint64_t) this));
+#else
     session->registerCallBack(Stream::mixerEventCallbackEntry,((uint64_t) this));
+#endif
 }
 
 StreamHaptics::~StreamHaptics()
