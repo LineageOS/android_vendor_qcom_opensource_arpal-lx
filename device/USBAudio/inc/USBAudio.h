@@ -87,6 +87,7 @@
 // Supported sample rates for USB
 #define USBID_SIZE                16
 /* support positional and index masks to 8ch */
+#undef MAX_SUPPORTED_CHANNEL_MASKS
 #define MAX_SUPPORTED_CHANNEL_MASKS 8
 #define MAX_HIFI_CHANNEL_COUNT 8
 #define MIN_CHANNEL_COUNT 1

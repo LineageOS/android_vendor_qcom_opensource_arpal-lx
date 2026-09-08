@@ -121,7 +121,7 @@ void fillSoundDoseInfo(pal_sound_dose_info_t *palSoundDoseInfo, void *data, bool
         uint32_t msbTime = timestampBase[2 * i + 1];
         palSoundDoseInfo->timestamp[i] = (static_cast<uint64_t>(msbTime) << 32) | lsbTime;
         palSoundDoseInfo->timestamp[i] = palSoundDoseInfo->timestamp[i] / 1000000LL;
-        PAL_VERBOSE(LOG_TAG, "Mel values i %d, timestamp %llu", i, palSoundDoseInfo->timestamp[i]);
+        PAL_VERBOSE(LOG_TAG, "Mel values i %d, timestamp %lu", i, palSoundDoseInfo->timestamp[i]);
     }
 }
 

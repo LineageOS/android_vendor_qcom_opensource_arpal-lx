@@ -37,6 +37,7 @@
 #include <cutils/properties.h>
 #include <tinyalsa/asoundlib.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <dlfcn.h>
 #include <mutex>
 #include <iostream>
@@ -6212,7 +6213,7 @@ int ResourceManager::findActiveStreamsNotInDisconnectList(
 
     rm->getActiveStream_l(activeStreams, devObj);
 
-    PAL_DBG(LOG_TAG, "activeStreams size = %d, device: %s", activeStreams.size(),
+    PAL_DBG(LOG_TAG, "activeStreams size = %zu, device: %s", activeStreams.size(),
             deviceNameLUT.at((pal_device_id_t)devObj->getSndDeviceId()).c_str());
 
     for (sIter = activeStreams.begin(); sIter != activeStreams.end(); sIter++) {
