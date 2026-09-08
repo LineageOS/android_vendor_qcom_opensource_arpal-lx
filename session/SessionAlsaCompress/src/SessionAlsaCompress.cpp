@@ -49,6 +49,7 @@
 #include "PluginManager.h"
 #include "Utils.h"
 
+#undef CHS_2
 #define CHS_2 2
 #define AACObjHE_PS 29
 

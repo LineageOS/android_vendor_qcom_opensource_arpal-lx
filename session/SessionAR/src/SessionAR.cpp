@@ -734,6 +734,7 @@ int32_t SessionAR::getParameters(Stream *s __unused, uint32_t param_id, void **p
         }
         case PAL_PARAM_ID_DIRECTION_OF_ARRIVAL:
             status = this->getParamWithTag(nullptr, TAG_ECNS, param_id, payload);
+            break;
         default:
             PAL_ERR(LOG_TAG, "Error:Unsupported param id %u", param_id);
             status = -EINVAL;
