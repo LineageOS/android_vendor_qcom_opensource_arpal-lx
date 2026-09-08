@@ -505,7 +505,7 @@ int SessionAgm::read(Stream *s, struct pal_buffer *buf, int *size )
 
     status = agm_session_read_with_metadata(agmSessHandle, &agm_buffer, &bytes_read);
 
-    PAL_VERBOSE(LOG_TAG, "writing buffer (%zu bytes) to agmSessHandle device returned %d",
+    PAL_VERBOSE(LOG_TAG, "writing buffer (%zu bytes) to agmSessHandle device returned %u",
              buf->size, bytes_read);
 
     if (size)
@@ -571,7 +571,7 @@ int SessionAgm::write(Stream *s, struct pal_buffer *buf, int * size)
 
     status = agm_session_write_with_metadata(agmSessHandle, &agm_buffer, &bytes_written);
 
-    PAL_VERBOSE(LOG_TAG, "writing buffer (%zu bytes) to agmSessHandle device returned %d",
+    PAL_VERBOSE(LOG_TAG, "writing buffer (%zu bytes) to agmSessHandle device returned %zu",
              buf->size, bytes_written);
 
     if (size)
