@@ -14,6 +14,9 @@ cc_library_headers {
     }) + select(soong_config_variable("qtiaudio", "nonvirtual_stream_isinitialized"), {
         true: ["-DPAL_VENDOR_NONVIRTUAL_STREAM_ISINITIALIZED"],
         default: [],
+    }) + select(soong_config_variable("qtiaudio", "no_stream_mixer_event_callback"), {
+        true: ["-DPAL_VENDOR_NO_STREAM_MIXER_EVENT_CALLBACK"],
+        default: [],
     }),
 
     export_include_dirs: [
