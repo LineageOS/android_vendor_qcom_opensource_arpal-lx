@@ -51,6 +51,7 @@
 // TODO: find another way to print debug logs by default
 #define ST_DBG_LOGS
 #ifdef ST_DBG_LOGS
+#undef PAL_DBG
 #define PAL_DBG(LOG_TAG,...)  PAL_INFO(LOG_TAG,__VA_ARGS__)
 #endif
 
@@ -243,7 +244,7 @@ int32_t SoundTriggerEngineGsl::StartBuffering(StreamSoundTrigger *s) {
             det_streams_q_.pop();
             buffer_->getIndices(s, &start_index, &end_index, &ftrt_size);
             event_notified = false;
-            PAL_DBG(LOG_TAG, "new detected stream added, size %d", det_streams_q_.size());
+            PAL_DBG(LOG_TAG, "new detected stream added, size %zu", det_streams_q_.size());
             kw_transfer_begin = std::chrono::steady_clock::now();
         }
 
@@ -378,7 +379,7 @@ int32_t SoundTriggerEngineGsl::StartBuffering(StreamSoundTrigger *s) {
                 ATRACE_ASYNC_END("stEngine: read FTRT data", (int32_t)module_type_);
                 kw_transfer_latency_ = std::chrono::duration_cast<std::chrono::milliseconds>(
                     kw_transfer_end - kw_transfer_begin).count();
-                PAL_INFO(LOG_TAG, "FTRT data read done! total_read_size %zu, ftrt_size %zu, read latency %llums",
+                PAL_INFO(LOG_TAG, "FTRT data read done! total_read_size %zu, ftrt_size %u, read latency %llums",
                         total_read_size, ftrt_size, (long long)kw_transfer_latency_);
                 if (s) {
                     mutex_.unlock();
@@ -1150,7 +1151,7 @@ int32_t SoundTriggerEngineGsl::RestartRecognition_l(StreamSoundTrigger *s) {
 
         mmap_write_position_ =
             mmap_write_position_ % BytesToFrames(mmap_buffer_size_);
-        PAL_DBG(LOG_TAG, "Reset mmap write position to %zu", mmap_write_position_);
+        PAL_DBG(LOG_TAG, "Reset mmap write position to %u", mmap_write_position_);
     }
 
     exit_buffering_ = false;

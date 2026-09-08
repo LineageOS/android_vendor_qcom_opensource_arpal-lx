@@ -820,7 +820,7 @@ int SessionAlsaUtils::rwACDBTunnel(Stream * streamHandle, std::shared_ptr<Resour
 
     acdbGKV.clear();
     acdbGKV.assign(acdbGKVSet.begin(), acdbGKVSet.end());
-    PAL_INFO(LOG_TAG, "ACDB gkv size = 0x%x", acdbGKV.size());
+    PAL_INFO(LOG_TAG, "ACDB gkv size = 0x%zx", acdbGKV.size());
     for (auto kv = acdbGKV.begin(); kv != acdbGKV.end(); kv++) {
         PAL_INFO(LOG_TAG, "unique gkv key=0x%x value=0x%x",
                     kv->first, kv->second);
@@ -834,7 +834,7 @@ int SessionAlsaUtils::rwACDBTunnel(Stream * streamHandle, std::shared_ptr<Resour
         goto exit;
     }
 
-    PAL_DBG(LOG_TAG, "payload size = 0x%x", payloadSize);
+    PAL_DBG(LOG_TAG, "payload size = 0x%zx", payloadSize);
     status = rmHandle->getVirtualAudioMixer(&mixerHandle);
     if (status) {
         PAL_ERR(LOG_TAG, "Error: Failed to get mixer handle\n");
@@ -880,7 +880,7 @@ int SessionAlsaUtils::rwACDBTunnel(Stream * streamHandle, std::shared_ptr<Resour
         __builtin_add_overflow(effectACDBPayload->num_kvs * sizeof(pal_key_value_pair_t),
             sizeof(pal_effect_custom_payload_t), &checkSum);
         __builtin_sub_overflow(effectACDBPayload->blob_size, checkSum, &payloadSize);
-        PAL_DBG(LOG_TAG, "payload size = 0x%x", payloadSize);
+        PAL_DBG(LOG_TAG, "payload size = 0x%zx", payloadSize);
         ar_mem_cpy((uint8_t *)(effectACDBPayload->blob +
             sizeof(pal_effect_custom_payload_t) +
             effectACDBPayload->num_kvs * sizeof(pal_key_value_pair_t)),

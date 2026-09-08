@@ -2005,7 +2005,7 @@ int SessionAlsaPcm::write(Stream *s, struct pal_buffer *buf, int * size)
             if (sAttr.out_media_config.sample_rate)
                 ns = pcm_bytes_to_frames(pcm, sizeWritten)*1000000000LL/
                     sAttr.out_media_config.sample_rate;
-            PAL_DBG(LOG_TAG, "1.bufsize:%u ns:%ld", sizeWritten, ns);
+            PAL_DBG(LOG_TAG, "1.bufsize:%zu ns:%ld", sizeWritten, ns);
             requestAdmFocus(s, ns);
             status =  pcm_mmap_write(pcm, data,  sizeWritten);
             releaseAdmFocus(s);
@@ -2037,7 +2037,7 @@ int SessionAlsaPcm::write(Stream *s, struct pal_buffer *buf, int * size)
             if (sAttr.out_media_config.sample_rate)
                 ns = pcm_bytes_to_frames(pcm, sizeWritten)*1000000000LL/
                     sAttr.out_media_config.sample_rate;
-            PAL_DBG(LOG_TAG, "2.bufsize:%u ns:%ld", sizeWritten, ns);
+            PAL_DBG(LOG_TAG, "2.bufsize:%zu ns:%ld", sizeWritten, ns);
             requestAdmFocus(s, ns);
             status =  pcm_mmap_write(pcm, data,  sizeWritten);
             releaseAdmFocus(s);
@@ -3251,8 +3251,8 @@ int SessionAlsaPcm::createMmapBuffer(Stream *s, int32_t min_size_frames,
 
         PAL_INFO(LOG_TAG, "Opening PCM device card_id %d, device_id %d,"
                 " rate %u, format %u, channels %u, period_size %u, period_count %u,"
-                "start_threshold %lu, stop_threshold %lu, silence_threshold %lu, silence_size %lu,"
-                " avail_min %lu",
+                "start_threshold %u, stop_threshold %u, silence_threshold %u, silence_size %u,"
+                " avail_min %d",
                 rm->getVirtualSndCard(), pcmDevIds.at(0),
                 config.rate, config.format, config.channels, config.period_size,
                 config.period_count, config.start_threshold, config.stop_threshold,
