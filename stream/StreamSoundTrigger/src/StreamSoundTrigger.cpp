@@ -4249,9 +4249,9 @@ uint32_t StreamSoundTrigger::GetMMAModelType() {
         if (!status && param.data) {
             mode_bit = *(uint32_t *)param.data;
             if (mode_bit & (1 << NVD))
-                return MMA_NVD;
+                return NVD;
             else if (mode_bit & (1 << SPEECH))
-                return MMA_VAD;
+                return SPEECH;
         }
     }
 
