@@ -89,7 +89,7 @@ int32_t  StreamHaptics::setParameters(uint32_t param_id, void *payload)
          PAL_DBG(LOG_TAG, "No Haptics stream is active");
          goto error;
     }
-    PAL_DBG(LOG_TAG, "activestreams size %d",activeStreams.size());
+    PAL_DBG(LOG_TAG, "activestreams size %zu",activeStreams.size());
 
     mStreamMutex.lock();
     // Stream may not know about tags, so use setParameters instead of setConfig
@@ -107,6 +107,7 @@ int32_t  StreamHaptics::setParameters(uint32_t param_id, void *payload)
                 }
             }
         }
+        [[fallthrough]];
         //fall through this case if above condition is not true.
         case PAL_PARAM_ID_HAPTICS_CNFG:
         case PARAM_ID_HAPTICS_WAVE_DESIGNER_UPDATE_PARAM:

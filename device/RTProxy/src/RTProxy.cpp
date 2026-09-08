@@ -56,6 +56,9 @@ extern "C" void CreateRTProxyDevice(struct pal_device *device,
             case PAL_DEVICE_IN_RECORD_PROXY:
             case PAL_DEVICE_IN_TELEPHONY_RX:
                 *dev = RTProxyIn::getInstance(device, rm);
+                break;
+            default:
+                break;
         }
     } else {
         PAL_ERR(LOG_TAG, "Invalid input parameters");
