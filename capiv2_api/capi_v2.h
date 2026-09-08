@@ -76,8 +76,22 @@ typedef struct stage2_uv_wrapper_threshold_config {
     float anti_spoofing_threshold;
 } stage2_uv_wrapper_threshold_config_t;
 
+typedef struct stage2_uv_wrapper_ctiuv_config {
+    uint32_t nnvad_hangover_frames;
+    uint32_t nnvad_threshold;
+    uint32_t nnvad_min_speech_frames;
+    uint32_t nnvad_pre_guard_frames;
+    int32_t tiuv_thresholds[3];
+    uint32_t tiuv_min_speech_frames;
+    uint32_t tiuv_overlap_frames;
+    uint32_t get_max;
+    int32_t timer_frames;
+    uint32_t reserved[7];
+} stage2_uv_wrapper_ctiuv_config_t;
+
 typedef struct stage2_uv_wrapper_result {
-    uint32_t reserved[8];
+    uint32_t reserved[7];
+    int32_t timeout;
     int32_t is_detected;
     int32_t is_anti_spoofing_passed;
     int32_t final_user_score;
@@ -108,6 +122,7 @@ typedef enum _STAGE2_UV_WRAPPER_STRUCT_ID {
     STAGE2_UV_WRAPPER_ID_ENROLLMENT,
     STAGE2_UV_WRAPPER_ID_MATCHING,
     STAGE2_UV_WRAPPER_ID_INFO_ALL,
+    STAGE2_UV_WRAPPER_ID_CTIUV_PARAMS = 21,
 }STAGE2_UV_WRAPPER_STRUCT_ID;
 
 typedef struct capi_v2_buf_t capi_v2_buf_t;
