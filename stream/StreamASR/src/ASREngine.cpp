@@ -48,6 +48,7 @@
 
 #define ASR_DBG_LOGS
 #ifdef ASR_DBG_LOGS
+#undef PAL_DBG
 #define PAL_DBG(LOG_TAG,...)  PAL_INFO(LOG_TAG,__VA_ARGS__)
 #endif
 
@@ -72,7 +73,7 @@ ASREngine::ASREngine(Stream *s, std::shared_ptr<ASRStreamConfig> smCfg)
     numOutput = 0;
     rxEcDev = nullptr;
     asrInfo = nullptr;
-    smCfg = smCfg;
+    this->smCfg = smCfg;
     engState = ASR_ENG_IDLE;
     streamHandle = s;
     builder = new PayloadBuilder();

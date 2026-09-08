@@ -321,7 +321,7 @@ int32_t StreamASR::storeModelToFile(int32_t fd, uint32_t size) {
     PAL_INFO(LOG_TAG, "Enter, fd %d size %d", fd, size);
     if (fd < 0 || size == 0) {
         if (fd == -1 && stat(ASR_MODEL_FILE_NAME, &stats) == 0) {
-            PAL_INFO(LOG_TAG, "Model is not passed, use existing model, size %d", stats.st_size);
+            PAL_INFO(LOG_TAG, "Model is not passed, use existing model, size %ld", stats.st_size);
             return 0;
         } else {
             PAL_ERR(LOG_TAG, "Invalid fd and size, and no existing model to use");
@@ -1176,6 +1176,7 @@ int32_t StreamASR::ASRIdle::ProcessEvent(
              PAL_INFO(LOG_TAG, "EC enable : %d", data->isEnable);
              asrStream.enableEc = data->isEnable;
              PAL_INFO(LOG_TAG, "EC will be handled after engine start!!!");
+             break;
         }
         case ASR_EV_INTERNAL_PAUSE:
         case ASR_EV_PAUSE: {

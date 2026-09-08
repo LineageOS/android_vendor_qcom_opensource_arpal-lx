@@ -1919,7 +1919,7 @@ void CustomVA::UpdateKeywordIndex(uint64_t kwd_start_timestamp,
 
     start_index_ = UsToBytes(kwd_start_timestamp - ftrt_start_timestamp);
     end_index_ = UsToBytes(kwd_end_timestamp - ftrt_start_timestamp);
-    ALOGI("%s: %d: start_index: %zu, end_index: %zu",
+    ALOGI("%s: %d: start_index: %u, end_index: %u",
         __func__, __LINE__, start_index_, end_index_);
 }
 

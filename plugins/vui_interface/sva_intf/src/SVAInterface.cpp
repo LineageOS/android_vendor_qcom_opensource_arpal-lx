@@ -757,8 +757,7 @@ int32_t SVAInterface::ParseRecognitionConfig(void *s,
                     }
                     det_perf_mode = (struct st_det_perf_mode_info *)
                         (opaque_ptr + sizeof(struct st_param_header));
-                    ALOGD("%s: %d: set perf mode %d", det_perf_mode->mode,
-                        __func__, __LINE__);
+                    ALOGD("%s: %d: set perf mode %d", __func__, __LINE__, det_perf_mode->mode);
                     opaque_size += sizeof(struct st_param_header) +
                         sizeof(struct st_det_perf_mode_info);
                     opaque_ptr += sizeof(struct st_param_header) +
@@ -4023,7 +4022,7 @@ void SVAInterface::DeregisterModel(void *s) {
         if (sm_info_map_[s]->wakeup_config)
             free(sm_info_map_[s]->wakeup_config);
         if (sm_info_map_[s]->info)
-            delete(sm_info_map_[s]->info);
+            delete((SoundModelInfo *)sm_info_map_[s]->info);
         sm_info_map_[s]->sec_threshold.clear();
         sm_info_map_[s]->sec_threshold.shrink_to_fit();
         sm_info_map_[s]->sec_det_level.clear();
