@@ -75,10 +75,6 @@
 #define CALIBRATION_MODE 1
 #define FACTORY_TEST_MODE 2
 
-#define LPASS_WR_CMD_REG_PHY_ADDR   0x6AB4020
-#define LPASS_RD_CMD_REG_PHY_ADDR   0x6AB4024
-#define LPASS_RD_FIFO_REG_PHY_ADDR  0x6AB4040
-
 #define AB_INITIALIZE_PKD_REG_ADDR  0x8c113081
 #define AB_TRIGGER_PKD_REG_ADDR     0x0c113081
 #define AB_STOP_PKD_REG_ADDR        0x84113081
@@ -1953,7 +1949,7 @@ int32_t HapticsDevProtection::getFTMParameter(void **param)
               << FtmCalParam.payload_size << "; payload_data: "
               << std::string((char*)FtmCalParam.payload_data, FtmCalParam.payload_size);
 
-    PAL_DBG(LOG_TAG, "Get param value %s, length:%d",
+    PAL_DBG(LOG_TAG, "Get param value %s, length:%zu",
             resString.str().c_str(), resString.str().length());
     if (resString.str().length() > 0 && ((*param) != nullptr)) {
         payload_size = resString.str().length() + 1;

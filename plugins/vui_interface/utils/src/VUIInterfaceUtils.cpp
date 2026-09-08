@@ -63,6 +63,7 @@
 #include <algorithm>
 #include "VUIInterfaceUtils.h"
 
+#undef LOG_TAG
 #define LOG_TAG "PAL: VUIInterfaceUtils"
 //#define LOG_NDEBUG 0
 #define SML_LIB "liblistensoundmodel2vendor.so"

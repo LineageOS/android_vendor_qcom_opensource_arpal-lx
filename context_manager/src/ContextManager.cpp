@@ -1268,7 +1268,7 @@ int32_t UsecaseACD::GetAckDataOnSuccessfullStart(uint32_t *size, void *data)
             sizeof(uint32_t) * requested_context_list->num_contexts);
     } else {
         rc = -ENODATA;
-        PAL_ERR(LOG_TAG, "size %d too small for ack data in UsecaseACD, need %d",
+        PAL_ERR(LOG_TAG, "size %d too small for ack data in UsecaseACD, need %zu",
             (int)(*size), sizeof(asps_acd_usecase_register_ack_payload_t)
             + sizeof(uint32_t) * requested_context_list->num_contexts);
     }

@@ -71,6 +71,9 @@ extern "C" void CreateBtDevice(struct pal_device *device,
             case PAL_DEVICE_IN_BLUETOOTH_HFP:
             case PAL_DEVICE_OUT_BLUETOOTH_HFP:
                 *dev = BtSco::getInstance(device, rm);
+                break;
+            default:
+                break;
         }
     } else {
         PAL_ERR(LOG_TAG, "Invalid input parameters");
@@ -2413,6 +2416,7 @@ uint32_t BtA2dp::getLatency(uint32_t slatency)
         case CODEC_TYPE_APTX_AD:
         case CODEC_TYPE_LC3:
              tunedLatency = 50;
+             break;
         case CODEC_TYPE_APTX_AD_QLEA:
         case CODEC_TYPE_APTX_AD_R4:
             latency += slatency;
@@ -2775,9 +2779,9 @@ void BtSco::convertCodecInfo(audio_lc3_codec_cfg_t &lc3CodecInfo,
         streamMapStr = match.suffix().str();
     }
 
-    PAL_DBG(LOG_TAG, "stream map out size: %d, stream map in size: %d", steamMapOut.size(), steamMapIn.size());
+    PAL_DBG(LOG_TAG, "stream map out size: %zu, stream map in size: %zu", steamMapOut.size(), steamMapIn.size());
     if ((steamMapOut.size() == 0) || (steamMapIn.size() == 0)) {
-        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %d, steamMapIn.size %d",
+        PAL_ERR(LOG_TAG, "invalid size steamMapOut.size %zu, steamMapIn.size %zu",
                 steamMapOut.size(), steamMapIn.size());
         return;
     }
