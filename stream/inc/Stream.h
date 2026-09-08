@@ -278,8 +278,10 @@ public:
     virtual int32_t DisconnectDevice(pal_device_id_t device_id) { return 0; }
     virtual int32_t ConnectDevice(pal_device_id_t device_id) { return 0; }
     virtual uint32_t getCallbackEventId() { return 0; }
+#ifndef PAL_VENDOR_NO_STREAM_MIXER_EVENT_CALLBACK
     virtual void HandleCallback(uint64_t hdl, uint32_t event_id,
                                 void *data, uint32_t event_size) { return; }
+#endif
     static void handleStreamCreateFailure(struct pal_stream_attributes *attributes,
                                       pal_stream_callback cb, uint64_t cookie);
     static void mixerEventCallbackEntry(uint64_t cookie, uint32_t event_id,
@@ -303,6 +305,10 @@ public:
     void addmDevice(struct pal_device *dattr);
     void removeLastmDevice();
     virtual std::shared_ptr<CaptureProfile> GetCurrentCaptureProfile(){return nullptr;};
+#ifdef PAL_VENDOR_NO_STREAM_MIXER_EVENT_CALLBACK
+    virtual void HandleCallback(uint64_t hdl, uint32_t event_id,
+                                void *data, uint32_t event_size) { return; }
+#endif
 };
 
 #endif//STREAM_H_
