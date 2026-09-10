@@ -3363,6 +3363,39 @@ int PayloadBuilder::populateStreamCkv(Stream *s,
             }
             break;
      }
+
+#ifdef PAL_VOIP_SAMPLE_RATE_CALIBRATION
+    if (sAttr.type == PAL_STREAM_VOIP_TX) {
+        // Select the VoIP processing profile by capture sample rate for
+        // calibration databases using this key.
+        constexpr uint32_t voipSampleRateKey = 0x0D100000;
+        int sampleRateProfile = -1;
+        switch (sAttr.in_media_config.sample_rate) {
+        case 8000:
+            sampleRateProfile = 0;
+            break;
+        case 16000:
+            sampleRateProfile = 1;
+            break;
+        case 32000:
+            sampleRateProfile = 2;
+            break;
+        case 48000:
+            sampleRateProfile = 3;
+            break;
+        default:
+            PAL_ERR(LOG_TAG, "Unsupported VoIP calibration sample rate %u",
+                    sAttr.in_media_config.sample_rate);
+            break;
+        }
+        if (sampleRateProfile >= 0) {
+            keyVector.emplace_back(voipSampleRateKey, sampleRateProfile);
+            PAL_INFO(LOG_TAG, "VoIP sample-rate calibration: rate %u, key %#x, value %d",
+                    sAttr.in_media_config.sample_rate, voipSampleRateKey,
+                    sampleRateProfile);
+        }
+    }
+#endif
 exit:
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
     return status;

@@ -39,6 +39,9 @@ cc_library_shared {
         "pineapple": ["-DSOC_PERIPHERAL_PROT"],
         "volcano": ["-DWSA_V883X_ADDR"],
         default: [],
+    }) + select(soong_config_variable("qtiaudio", "pal_voip_sample_rate_calibration"), {
+        true: ["-DPAL_VOIP_SAMPLE_RATE_CALIBRATION"],
+        default: [],
     }),
 
     cppflags: [
