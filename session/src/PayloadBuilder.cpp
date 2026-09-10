@@ -3114,6 +3114,39 @@ int PayloadBuilder::populateStreamCkv(Stream *s,
             }
             break;
      }
+
+#ifdef PAL_SAMSUNG_VOIP_CALIBRATION
+    if (sAttr.type == PAL_STREAM_VOIP_TX) {
+        // Samsung's VoIP graphs select their rate-specific processing
+        // through this calibration key. The default profile bypasses it.
+        constexpr uint32_t samsungVoipRateKey = 0x0D100000;
+        int samsungRate = -1;
+        switch (sAttr.in_media_config.sample_rate) {
+        case 8000:
+            samsungRate = 0;
+            break;
+        case 16000:
+            samsungRate = 1;
+            break;
+        case 32000:
+            samsungRate = 2;
+            break;
+        case 48000:
+            samsungRate = 3;
+            break;
+        default:
+            PAL_ERR(LOG_TAG, "Unsupported Samsung VoIP sample rate %u",
+                    sAttr.in_media_config.sample_rate);
+            break;
+        }
+        if (samsungRate >= 0) {
+            keyVector.emplace_back(samsungVoipRateKey, samsungRate);
+            PAL_INFO(LOG_TAG, "Samsung VoIP calibration: rate %u, key %#x, value %d",
+                    sAttr.in_media_config.sample_rate, samsungVoipRateKey,
+                    samsungRate);
+        }
+    }
+#endif
 exit:
     PAL_DBG(LOG_TAG, "Exit, status %d", status);
     return status;

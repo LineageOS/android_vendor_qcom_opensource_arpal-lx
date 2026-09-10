@@ -37,6 +37,9 @@ cc_library_shared {
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "kalama": ["-DSOC_PERIPHERAL_PROT"],
         default: [],
+    }) + select(soong_config_variable("qtiaudio", "pal_samsung_voip_calibration"), {
+        true: ["-DPAL_SAMSUNG_VOIP_CALIBRATION"],
+        default: [],
     }) + select(soong_config_variable("qtiaudio", "pal_spkr_protection_path"), {
         any @ path: ["-DPAL_SP_I_TEMP_PATH=\"" + path + "\""],
         default: ["-DPAL_SP_I_TEMP_PATH=\"/data/vendor/audio/audio_sp1.cal\""],
