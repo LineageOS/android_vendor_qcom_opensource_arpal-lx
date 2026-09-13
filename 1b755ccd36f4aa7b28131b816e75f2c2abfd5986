@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f2230ce_50d30a2a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-09-13T00:20:07Z",
+      "side": 1,
+      "message": "hate stuffing samsung specific shit in qti repo - ik it needs to go here, but lets identify it differently than \"Samsung\"",
+      "revId": "1b755ccd36f4aa7b28131b816e75f2c2abfd5986",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
