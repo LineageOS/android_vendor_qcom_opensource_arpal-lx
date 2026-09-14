@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26f283fd_bb844396",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-09-14T16:36:33Z",
+      "side": 1,
+      "message": "Fixes the same echo on speaker issue as on sm8550",
+      "revId": "11390828f46ae7036dfac2002f28993b2f5ed67a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
