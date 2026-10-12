@@ -46,6 +46,9 @@ cc_library_shared {
     }) + select(soong_config_variable("qtiaudio", "pal_spkr_protection_path2"), {
         any @ path: ["-DPAL_SP_II_TEMP_PATH=\"" + path + "\""],
         default: ["-DPAL_SP_II_TEMP_PATH=\"/data/vendor/audio/audio_sp2.cal\""],
+    }) + select(soong_config_variable("qtiaudio", "pal_config_dir_override"), {
+        any @ path: ["-DPAL_CONFIG_DIR_OVERRIDE=\"" + path + "\""],
+        default: [],
     }),
 
     cppflags: [

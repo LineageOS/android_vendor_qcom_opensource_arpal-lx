@@ -81,7 +81,9 @@
 #include "fluence_ffv_common_calibration.h"
 #include "mspp_module_calibration_api.h"
 
-#if defined(FEATURE_IPQ_OPENWRT) || defined(LINUX_ENABLED)
+#if defined(PAL_CONFIG_DIR_OVERRIDE)
+#define USECASE_XML_FILE PAL_CONFIG_DIR_OVERRIDE "/usecaseKvManager.xml"
+#elif defined(FEATURE_IPQ_OPENWRT) || defined(LINUX_ENABLED)
 #define USECASE_XML_FILE "/etc/usecaseKvManager.xml"
 #else
 #define USECASE_XML_FILE "/vendor/etc/usecaseKvManager.xml"

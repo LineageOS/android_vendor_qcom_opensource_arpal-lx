@@ -1505,6 +1505,16 @@ int ResourceManager::init_audio()
     strlcat(rmngr_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
     strlcat(mixer_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
 
+#ifdef PAL_CONFIG_DIR_OVERRIDE
+    /* Device ships sound card agnostic configs in a fixed directory */
+    snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s/%s%s", PAL_CONFIG_DIR_OVERRIDE,
+            MIXER_XML_BASE_STRING_NAME, XML_FILE_EXT);
+    strlcpy(mixer_xml_file_wo_variant, mixer_xml_file, XML_PATH_MAX_LENGTH);
+    snprintf(rmngr_xml_file, sizeof(rmngr_xml_file), "%s/%s%s", PAL_CONFIG_DIR_OVERRIDE,
+            RMNGR_XMLFILE_BASE_STRING_NAME, XML_FILE_EXT);
+    strlcpy(rmngr_xml_file_wo_variant, rmngr_xml_file, XML_PATH_MAX_LENGTH);
+#endif
+
     audio_route = audio_route_init(snd_hw_card, mixer_xml_file);
     PAL_INFO(LOG_TAG, "audio route %pK, mixer path %s", audio_route, mixer_xml_file);
     if (!audio_route) {
