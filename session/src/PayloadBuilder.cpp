@@ -75,6 +75,7 @@
 #include <agm/agm_api.h>
 #include <bt_intf.h>
 #include <bt_ble.h>
+#include <unistd.h>
 #include "sp_vi.h"
 #include "sp_rx.h"
 #include "cps_data_router.h"
@@ -86,6 +87,7 @@
 #else
 #define USECASE_XML_FILE "/vendor/etc/usecaseKvManager.xml"
 #endif
+#define ODM_USECASE_XML_FILE "/odm/etc/usecaseKvManager.xml"
 
 #define PARAM_ID_CHMIXER_COEFF 0x0800101F
 #define CUSTOM_STEREO_NUM_OUT_CH 0x0002
@@ -1084,6 +1086,7 @@ int PayloadBuilder::init()
 {
     XML_Parser parser;
     FILE *file = NULL;
+    const char *xml_file = USECASE_XML_FILE;
     int ret = 0;
     int bytes_read;
     void *buf = NULL;
@@ -1094,8 +1097,12 @@ int PayloadBuilder::init()
     all_devices.clear();
     all_devicepps.clear();
 
-    PAL_INFO(LOG_TAG, "XML parsing started %s", USECASE_XML_FILE);
-    file = fopen(USECASE_XML_FILE, "r");
+    /* Prefer the sku agnostic config in ODM if it exists */
+    if (access(ODM_USECASE_XML_FILE, F_OK) == 0)
+        xml_file = ODM_USECASE_XML_FILE;
+
+    PAL_INFO(LOG_TAG, "XML parsing started %s", xml_file);
+    file = fopen(xml_file, "r");
     if (!file) {
         PAL_ERR(LOG_TAG, "Failed to open xml");
         ret = -EINVAL;

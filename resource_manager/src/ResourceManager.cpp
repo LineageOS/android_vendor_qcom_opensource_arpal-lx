@@ -105,6 +105,9 @@
 #define MIXER_XML_BASE_STRING_NAME "mixer_paths"
 #define RMNGR_XMLFILE_BASE_STRING_NAME "resourcemanager"
 
+#define ODM_MIXER_XML_FILE "/odm/etc/" MIXER_XML_BASE_STRING_NAME XML_FILE_EXT
+#define ODM_RMNGR_XML_FILE "/odm/etc/" RMNGR_XMLFILE_BASE_STRING_NAME XML_FILE_EXT
+
 #define MAX_RETRY_CNT 20
 #define LOWLATENCY_PCM_DEVICE 15
 #define DEEP_BUFFER_PCM_DEVICE 0
@@ -1504,6 +1507,16 @@ int ResourceManager::init_audio()
     strlcat(rmngr_xml_file, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
     strlcat(rmngr_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
     strlcat(mixer_xml_file_wo_variant, XML_FILE_EXT, XML_PATH_MAX_LENGTH);
+
+    /* Prefer the sku agnostic configs in ODM if they exist */
+    if (access(ODM_MIXER_XML_FILE, F_OK) == 0) {
+        strlcpy(mixer_xml_file, ODM_MIXER_XML_FILE, XML_PATH_MAX_LENGTH);
+        strlcpy(mixer_xml_file_wo_variant, ODM_MIXER_XML_FILE, XML_PATH_MAX_LENGTH);
+    }
+    if (access(ODM_RMNGR_XML_FILE, F_OK) == 0) {
+        strlcpy(rmngr_xml_file, ODM_RMNGR_XML_FILE, XML_PATH_MAX_LENGTH);
+        strlcpy(rmngr_xml_file_wo_variant, ODM_RMNGR_XML_FILE, XML_PATH_MAX_LENGTH);
+    }
 
     audio_route = audio_route_init(snd_hw_card, mixer_xml_file);
     PAL_INFO(LOG_TAG, "audio route %pK, mixer path %s", audio_route, mixer_xml_file);
