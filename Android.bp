@@ -37,6 +37,9 @@ cc_library_shared {
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "kalama": ["-DSOC_PERIPHERAL_PROT"],
         default: [],
+    }) + select(soong_config_variable("qtiaudio", "pal_prefer_master_gain"), {
+        true: ["-DPAL_PREFER_MASTER_GAIN"],
+        default: [],
     }) + select(soong_config_variable("qtiaudio", "pal_voip_sample_rate_calibration"), {
         true: ["-DPAL_VOIP_SAMPLE_RATE_CALIBRATION"],
         default: [],
