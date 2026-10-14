@@ -102,6 +102,7 @@ private:
     uint64_t cbCookie;
     uint32_t svaMiid;
     uint32_t vaMicChannels;
+    bool multichVolumeSet = false;
     static std::mutex pcmLpmRefCntMtx;
     static int pcmLpmRefCnt;
     int32_t configureInCallRxMFC();

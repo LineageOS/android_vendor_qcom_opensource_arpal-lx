@@ -148,6 +148,9 @@ int SessionAlsaPcm::open(Stream * s)
     PAL_DBG(LOG_TAG, "Enter");
     status = s->getStreamAttributes(&sAttr);
     streamHandle = s;
+#ifdef PAL_PREFER_MASTER_GAIN
+    multichVolumeSet = false;
+#endif
     if (0 != status) {
         PAL_ERR(LOG_TAG, "getStreamAttributes Failed \n");
         goto exit;
@@ -2807,7 +2810,14 @@ int SessionAlsaPcm::setParameters(Stream *streamHandle, int tagId, uint32_t para
                 goto exit;
             }
 
+#ifdef PAL_PREFER_MASTER_GAIN
+            if (vdata->no_of_volpair > 1 && sAttr.out_media_config.ch_info.channels > 1 &&
+                    (multichVolumeSet || vdata->no_of_volpair != 2 ||
+                     vdata->volume_pair[0].vol != vdata->volume_pair[1].vol)) {
+                multichVolumeSet = true;
+#else
             if (vdata->no_of_volpair > 1 && sAttr.out_media_config.ch_info.channels > 1) {
+#endif
                 builder->payloadMultichVolumemConfig(&paramData, &paramSize, miid, vdata);
             } else {
                 builder->payloadVolumeConfig(&paramData, &paramSize, miid, vdata);
