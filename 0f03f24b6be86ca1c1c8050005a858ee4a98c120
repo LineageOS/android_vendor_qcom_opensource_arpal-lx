@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0c1c0f9_6ae9a46b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-10-14T18:05:21Z",
+      "side": 1,
+      "message": "Tested on samsung sm8550, fixes audio in IMS calls with common IMS impl.",
+      "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
