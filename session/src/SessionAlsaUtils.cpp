@@ -912,7 +912,7 @@ int SessionAlsaUtils::rwACDBTunnel(Stream * streamHandle, std::shared_ptr<Resour
         __builtin_add_overflow(effectACDBPayload->num_kvs * sizeof(pal_key_value_pair_t),
             sizeof(pal_effect_custom_payload_t), &checkSum);
         __builtin_sub_overflow(effectACDBPayload->blob_size, checkSum, &payloadSize);
-        PAL_DBG(LOG_TAG, "payload size = 0x%x", payloadSize);
+        PAL_DBG(LOG_TAG, "payload size = 0x%zx", payloadSize);
         ar_mem_cpy((uint8_t *)(effectACDBPayload->blob +
             sizeof(pal_effect_custom_payload_t) +
             effectACDBPayload->num_kvs * sizeof(pal_key_value_pair_t)),
