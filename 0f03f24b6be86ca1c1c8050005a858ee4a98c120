@@ -53,6 +53,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "481be78a_84decdea",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-10-16T08:14:08Z",
+      "side": 1,
+      "message": "at the least sm8650 will need this, tho i am still using stock audio stack on that one.",
+      "parentUuid": "f150cbd9_aef47def",
+      "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d090e16d_663c840f",
@@ -84,6 +102,24 @@
       "side": 1,
       "message": "Done",
       "parentUuid": "d090e16d_663c840f",
+      "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "573ef032_2a39d6be",
+        "filename": "session/src/SessionAlsaPcm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2556,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-10-16T08:14:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e33c544_544408c1",
       "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
