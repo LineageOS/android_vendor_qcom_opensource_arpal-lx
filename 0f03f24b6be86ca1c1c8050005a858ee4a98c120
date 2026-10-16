@@ -89,6 +89,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fda50a78_6e603a30",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-10-16T09:43:21Z",
+      "side": 1,
+      "message": "Yes, i will pick to sm8650 when i will have a need for it there. I don\u0027t think any other OEMs should be affected apart from samsung.",
+      "parentUuid": "70b41c93_6af5c287",
+      "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d090e16d_663c840f",
