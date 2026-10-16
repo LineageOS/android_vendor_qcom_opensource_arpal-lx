@@ -68,6 +68,24 @@
       "message": "drop the comment, there are almost no comments in this entire file, and the ones that are there are styled as multi line not repetitive //.",
       "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e33c544_544408c1",
+        "filename": "session/src/SessionAlsaPcm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2556,
+      "author": {
+        "id": 29914
+      },
+      "writtenOn": "2026-10-16T07:45:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d090e16d_663c840f",
+      "revId": "0f03f24b6be86ca1c1c8050005a858ee4a98c120",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
