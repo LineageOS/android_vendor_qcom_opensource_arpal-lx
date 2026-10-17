@@ -3242,6 +3242,24 @@ int PayloadBuilder::populateDevicePPCkv(Stream *s, std::vector <std::pair<int,in
                 //keyVector.push_back(std::make_pair(CHANNELS,
                 //                                   dAttr.config.ch_info.channels));
                 break;
+            case PAL_STREAM_VOIP_RX:
+            case PAL_STREAM_VOIP_TX:
+            {
+                // Oplus calibration databases select the VoIP DevicePP
+                // calibration by stream sample rate and leave the default
+                // calibration muted. Databases without this key ignore it.
+                constexpr int voipSampleRateKey = 0xEF000001;
+                const uint32_t rates[] = {8000, 16000, 32000, 48000};
+                for (uint32_t rate : rates) {
+                    if (sattr->in_media_config.sample_rate == rate ||
+                        sattr->out_media_config.sample_rate == rate) {
+                        PAL_INFO(LOG_TAG, "VoIP DevicePP sample rate ckv %u", rate);
+                        keyVector.push_back(std::make_pair(voipSampleRateKey, rate));
+                        break;
+                    }
+                }
+                break;
+            }
             default:
                 PAL_VERBOSE(LOG_TAG,"stream type %d doesn't support DevicePP CKV ", sattr->type);
                 goto free_sattr;
