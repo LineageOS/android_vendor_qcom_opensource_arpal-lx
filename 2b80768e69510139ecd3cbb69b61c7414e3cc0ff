@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cb9644d9_4435b620",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32811
+      },
+      "writtenOn": "2026-10-26T20:22:21Z",
+      "side": 1,
+      "message": "Verified on udon (OnePlus 11R)",
+      "revId": "2b80768e69510139ecd3cbb69b61c7414e3cc0ff",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
