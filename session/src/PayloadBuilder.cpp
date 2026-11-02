@@ -91,6 +91,10 @@
 
 #define PARAM_ID_CHMIXER_COEFF 0x0800101F
 #define CUSTOM_STEREO_NUM_OUT_CH 0x0002
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+#include "OplusSpeakerProtection.h"
+#define OPLUS_SPEAKER_SCENE 0xEF000000
+#endif
 #define CUSTOM_STEREO_NUM_IN_CH 0x0002
 #define Q14_GAIN_ZERO_POINT_FIVE 0x2000
 #define CUSTOM_STEREO_CMD_PARAM_SIZE 24
@@ -3656,6 +3660,11 @@ int PayloadBuilder::populateCalKeyVector(Stream *s, std::vector <std::pair<int,i
                     PAL_DBG(LOG_TAG, "Mono channel speaker");
                     ckv.push_back(std::make_pair(SPK_PRO_DEV_MAP, RIGHT_MONO));
                 }
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+                // The tuning is selected by speaker scene.
+                ckv.push_back(std::make_pair(OPLUS_SPEAKER_SCENE,
+                                             OplusSpeakerProtection::getSpeakerScene(s)));
+#endif
                 break;
             }
         }
