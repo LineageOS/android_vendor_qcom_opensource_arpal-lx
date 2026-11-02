@@ -178,6 +178,9 @@ public:
     void getSamplerateChannelBitwidthTags(struct pal_media_config *config,
         uint32_t &sr_tag, uint32_t &ch_tag, uint32_t &bitwidth_tag);
     virtual int32_t getFrontEndId(uint32_t ldir) {return -EINVAL;}
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+    virtual int getPlaybackPcmId() { return -1; }
+#endif
     virtual uint32_t getMIID(const char *backendName __unused, uint32_t tagId __unused, uint32_t *miid __unused) { return -EINVAL; }
     int getEffectParameters(Stream *s, effect_pal_payload_t *effectPayload);
     int setEffectParameters(Stream *s, effect_pal_payload_t *effectPayload);
