@@ -65,6 +65,9 @@
 #include "SpeakerMic.h"
 #include "Speaker.h"
 #include "SpeakerProtection.h"
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+#include "OplusSpeakerProtection.h"
+#endif
 #include "USBAudio.h"
 #include "HeadsetMic.h"
 #include "HandsetMic.h"
@@ -8844,6 +8847,9 @@ int ResourceManager::setConfigParams(struct str_parms *parms)
 
     ret = setHapticsPriorityParam(parms, value, len);
     ret = setHapticsDrivenParam(parms, value, len);
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+    OplusSpeakerProtection::setConfigParams(parms, value, len);
+#endif
 
     /* Not checking return value as this is optional */
     setLpiLoggingParams(parms, value, len);
@@ -13686,6 +13692,14 @@ void ResourceManager::startTag(void *userdata, const XML_Char *tag_name,
         return;
     } else if(strcmp(tag_name, "param") == 0) {
         processConfigParams(attr);
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+    } else if (strcmp(tag_name, "bat_to_dblvl_map") == 0) {
+        OplusSpeakerProtection::addBatteryGainLevel((const char **)attr);
+        return;
+    } else if (strcmp(tag_name, "vdd_to_gain_map") == 0) {
+        OplusSpeakerProtection::addVddGain((const char **)attr);
+        return;
+#endif
     } else if (strcmp(tag_name, "codec") == 0) {
         processBTCodecInfo(attr, XML_GetSpecifiedAttributeCount(data->parser));
         return;
