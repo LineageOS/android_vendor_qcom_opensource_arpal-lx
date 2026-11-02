@@ -139,6 +139,9 @@ public:
         std::shared_ptr<Device> deviceToDisconnect) override;
     bool isActive();
     int32_t getFrontEndId(uint32_t ldir) override;
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+    int getPlaybackPcmId() override { return pcmDevIds.empty() ? -1 : pcmDevIds.at(0); }
+#endif
     uint32_t getMIID(const char *backendName, uint32_t tagId, uint32_t *miid) override;
     struct mixer_ctl* getFEMixerCtl(const char *controlName, int *device, pal_stream_direction_t dir) override;
     int createMmapBuffer(Stream *s, int32_t min_size_frames,
