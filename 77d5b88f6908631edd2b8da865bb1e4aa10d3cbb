@@ -16,6 +16,24 @@
       "message": "Stock OplusSpeakerProtection covers awinic too btw, which is mostly used by nords. so just addressing tfa98xxx would leave out nords",
       "revId": "77d5b88f6908631edd2b8da865bb1e4aa10d3cbb",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30999842_8fdf37bb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 30975
+      },
+      "writtenOn": "2026-11-03T16:54:07Z",
+      "side": 1,
+      "message": "Thanks, added Awinic support in ps2. It\u0027s now a common speaker protection part with per amp backends (TFA98xx and Awinic) picked at runtime, like stock. Tested on TFA only, need to verify Awinic on a Nord",
+      "parentUuid": "351c4533_1cc0324e",
+      "revId": "77d5b88f6908631edd2b8da865bb1e4aa10d3cbb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
