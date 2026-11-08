@@ -2197,22 +2197,23 @@ void SpeakerProtection::updateCpsCustomPayload(int miid)
     PayloadBuilder* builder = new PayloadBuilder();
     uint8_t* payload = NULL;
     size_t payloadSize = 0;
+    int num_ch = vi_device.channels;
     lpass_swr_hw_reg_cfg_t *cpsRegCfg = NULL;
-    pkd_reg_addr_t pkedRegAddr[numberOfChannels];
+    pkd_reg_addr_t pkedRegAddr[num_ch];
     cps_reg_wr_values_t *cps_thrsh_values;
     param_id_cps_lpass_swr_thresholds_cfg_t *cps_thrsh_cfg;
     int dev_num;
     int val, ret = 0;
 
-    memset(&pkedRegAddr, 0, sizeof(pkd_reg_addr_t) * numberOfChannels);
+    memset(&pkedRegAddr, 0, sizeof(pkd_reg_addr_t) * num_ch);
     // Payload for ParamID : PARAM_ID_CPS_LPASS_HW_INTF_CFG
     cpsRegCfg = (lpass_swr_hw_reg_cfg_t *) calloc(1, sizeof(lpass_swr_hw_reg_cfg_t)
-                       + sizeof(pkd_reg_addr_t) * numberOfChannels);
+                       + sizeof(pkd_reg_addr_t) * num_ch);
     if (cpsRegCfg == NULL) {
         PAL_ERR(LOG_TAG,"Unable to allocate Memory for CPS config\n");
         goto exit;
     }
-    cpsRegCfg->num_spkr = numberOfChannels;
+    cpsRegCfg->num_spkr = num_ch;
     cpsRegCfg->lpass_wr_cmd_reg_phy_addr = LPASS_WR_CMD_REG_PHY_ADDR;
     cpsRegCfg->lpass_rd_cmd_reg_phy_addr = LPASS_RD_CMD_REG_PHY_ADDR;
     cpsRegCfg->lpass_rd_fifo_reg_phy_addr = LPASS_RD_FIFO_REG_PHY_ADDR;
@@ -2220,18 +2221,18 @@ void SpeakerProtection::updateCpsCustomPayload(int miid)
     // Payload for ParamID : PARAM_ID_CPS_LPASS_SWR_THRESHOLDS_CFG
     cps_thrsh_cfg = (param_id_cps_lpass_swr_thresholds_cfg_t*) calloc(1,
                        sizeof(param_id_cps_lpass_swr_thresholds_cfg_t)
-                       + (sizeof(cps_reg_wr_values_t) * numberOfChannels));
+                       + (sizeof(cps_reg_wr_values_t) * num_ch));
     if (cps_thrsh_cfg == NULL) {
         PAL_ERR(LOG_TAG,"Unable to allocate Memory for CPS SWR Threshold config\n");
         goto exit;
     }
-    cps_thrsh_cfg->num_spkr = numberOfChannels;
+    cps_thrsh_cfg->num_spkr = num_ch;
     cps_thrsh_cfg->vbatt_lower_threshold_1 = CPS_WSA_VBATT_LOWER_THRESHOLD_1;
     cps_thrsh_cfg->vbatt_lower_threshold_2 = CPS_WSA_VBATT_LOWER_THRESHOLD_2;
     cps_thrsh_values = (cps_reg_wr_values_t *)((uint8_t*)cps_thrsh_cfg
                          + sizeof(param_id_cps_lpass_swr_thresholds_cfg_t));
 
-    for (int i = 0; i < numberOfChannels; i++) {
+    for (int i = 0; i < num_ch; i++) {
         switch (i)
         {
             case 0 :
@@ -2281,7 +2282,7 @@ void SpeakerProtection::updateCpsCustomPayload(int miid)
         cps_thrsh_values++;
     }
     memcpy(cpsRegCfg->pkd_reg_addr, pkedRegAddr, sizeof(pkd_reg_addr_t) *
-                    numberOfChannels);
+                    num_ch);
 
     // Payload builder for ParamID : PARAM_ID_CPS_LPASS_HW_INTF_CFG
     payloadSize = 0;
@@ -3029,6 +3030,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
     struct mixer_ctl *connectCtrl = NULL;
     struct audio_route *audioRoute = NULL;
     struct vi_r0t0_cfg_t r0t0Array[numberOfChannels];
+    int r0t0Offset = 0;
     struct agmMetaData deviceMetaData(nullptr, 0);
     struct mixer_ctl *beMetaDataMixerCtrl = nullptr;
     FILE *fp;
@@ -3113,6 +3115,9 @@ int SpeakerProtection::viTxSetupThreadLoop()
             goto exit;
         }
 
+        if (mDeviceAttr.id == PAL_DEVICE_OUT_SPEAKER)
+            strlcpy(mSndDeviceName_vi, vi_device.sndDevName.c_str(), DEVICE_NAME_MAX_SIZE);
+
          if (mDeviceAttr.id == PAL_DEVICE_OUT_HANDSET) {
            strlcat(mSndDeviceName_vi, VI_FEEDBACK_MONO_1, DEVICE_NAME_MAX_SIZE);
         }
@@ -3132,7 +3137,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
         }
 
         // Enable the VI module
-        switch (numberOfChannels) {
+        switch (vi_device.channels) {
             case 1 :
                  if (mDeviceAttr.id == PAL_DEVICE_OUT_HANDSET)
                       calVector.push_back(std::make_pair(SPK_PRO_VI_MAP, LEFT_SPKR));
@@ -3228,7 +3233,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
         flags = PCM_IN;
 
         //Setting the mode of VI module
-        modeConfg.num_speakers = numberOfChannels;
+        modeConfg.num_speakers = vi_device.channels;
         switch (rm->mSpkrProtModeValue.operationMode) {
             case PAL_SP_MODE_FACTORY_TEST:
                 modeConfg.th_operation_mode = FACTORY_TEST_MODE;
@@ -3268,7 +3273,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
 
         // Setting Channel Map configuration for VI module
         // TODO: Move this to ACDB file
-        viChannelMapConfg.num_ch = numberOfChannels * 2;
+        viChannelMapConfg.num_ch = vi_device.channels * 2;
         payloadSize = 0;
 
         builder->payloadSPConfig(&payload, &payloadSize, miid,
@@ -3302,7 +3307,7 @@ int SpeakerProtection::viTxSetupThreadLoop()
         if (rm->mSpkrProtModeValue.operationMode) {
             PAL_DBG(LOG_TAG, "Operation mode %d", rm->mSpkrProtModeValue.operationMode);
             param_id_sp_th_vi_ftm_cfg_t viFtmConfg;
-            viFtmConfg.num_ch = numberOfChannels;
+            viFtmConfg.num_ch = vi_device.channels;
             switch (rm->mSpkrProtModeValue.operationMode) {
                 case PAL_SP_MODE_FACTORY_TEST:
                     viParamId = PARAM_ID_SP_TH_VI_FTM_CFG;
@@ -3367,17 +3372,21 @@ int SpeakerProtection::viTxSetupThreadLoop()
         }
         spR0T0confg = (param_id_sp_th_vi_r0t0_cfg_t*)calloc(1,
                             sizeof(param_id_sp_th_vi_r0t0_cfg_t) +
-                            sizeof(vi_r0t0_cfg_t) * numberOfChannels);
+                            sizeof(vi_r0t0_cfg_t) * vi_device.channels);
 
         if (!spR0T0confg) {
             PAL_ERR(LOG_TAG," unable to create speaker config payload\n");
             goto free_fe;
         }
-        spR0T0confg->num_ch = numberOfChannels;
+        spR0T0confg->num_ch = vi_device.channels;
 
-        for (int i = 0; i < numberOfChannels; i++) {
-            spR0T0confg->r0t0_cfg[i].r0_cali_q24 = r0t0Array[i].r0_cali_q24;
-            spR0T0confg->r0t0_cfg[i].t0_cali_q6 = r0t0Array[i].t0_cali_q6;
+        // A mono speaker uses the last entries of the calibration file
+        if (mDeviceAttr.id == PAL_DEVICE_OUT_SPEAKER && vi_device.channels < numberOfChannels)
+            r0t0Offset = numberOfChannels - vi_device.channels;
+
+        for (int i = 0; i < vi_device.channels; i++) {
+            spR0T0confg->r0t0_cfg[i].r0_cali_q24 = r0t0Array[i + r0t0Offset].r0_cali_q24;
+            spR0T0confg->r0t0_cfg[i].t0_cali_q6 = r0t0Array[i + r0t0Offset].t0_cali_q6;
             PAL_DBG (LOG_TAG,"R0 %x ", spR0T0confg->r0t0_cfg[i].r0_cali_q24);
             PAL_DBG (LOG_TAG,"T0 %x ", spR0T0confg->r0t0_cfg[i].t0_cali_q6);
 
@@ -3479,6 +3488,7 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
 {
     int ret = 0, dir = TX_HOSTLESS, flags, viParamId = 0;
     char mSndDeviceName_vi[128] = {0};
+    char mSndDeviceName_SP[128] = {0};
     uint8_t* payload = NULL;
     uint32_t devicePropId[] = {0x08000010, 1, 0x2};
     uint32_t miid = 0;
@@ -3535,6 +3545,20 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
         spkrProtSetSpkrStatus(flag);
         // Speaker in use. Start the Processing Mode
 
+        rm = ResourceManager::getInstance();
+        if (!rm) {
+            PAL_ERR(LOG_TAG, "Failed to get resource manager instance");
+            goto exit;
+        }
+
+        dev = Device::getInstance(&mDeviceAttr, rm);
+        dev->getCurrentSndDevName(mSndDeviceName_SP);
+
+        if (mDeviceAttr.id == PAL_DEVICE_OUT_SPEAKER && strstr(mSndDeviceName_SP, "mono"))
+            rm->getDeviceInfo(PAL_DEVICE_IN_VI_FEEDBACK, PAL_STREAM_VOICE_CALL, "", &vi_device);
+        else if (mDeviceAttr.id == PAL_DEVICE_OUT_SPEAKER)
+            rm->getDeviceInfo(PAL_DEVICE_IN_VI_FEEDBACK, PAL_STREAM_PROXY, "", &vi_device);
+
         /* Instantiate the viTxSetupThread
          * Move the complete vi tx setup path to that
          * and return back */
@@ -3543,11 +3567,6 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
                     this);
             PAL_DBG(LOG_TAG, " Created vi tx thread :%s ", __func__);
             viTxSetupThrdCreated = true;
-        }
-        rm = ResourceManager::getInstance();
-        if (!rm) {
-            PAL_ERR(LOG_TAG, "Failed to get resource manager instance");
-            goto exit;
         }
 
         memset(&device, 0, sizeof(device));
@@ -3672,6 +3691,8 @@ int32_t SpeakerProtection::spkrProtProcessingMode(bool flag)
             }
 
             ret = rm->getSndDeviceName(device.id , mSndDeviceName_vi);
+            if (mDeviceAttr.id == PAL_DEVICE_OUT_SPEAKER)
+                strlcpy(mSndDeviceName_vi, vi_device.sndDevName.c_str(), DEVICE_NAME_MAX_SIZE);
             rm->getBackendName(device.id, backEndName);
             if (!strlen(backEndName.c_str())) {
                 PAL_ERR(LOG_TAG, "Failed to obtain tx backend name for %d", device.id);
