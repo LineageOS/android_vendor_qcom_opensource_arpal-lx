@@ -16,6 +16,23 @@
       "message": "11-20 01:20:17.744  1446 11749 I PAL: OplusSpeakerProtection: openViPath: 283: VI path started on pcm 121",
       "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5feaf328_6c7722e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 35825
+      },
+      "writtenOn": "2026-11-19T20:00:28Z",
+      "side": 1,
+      "message": "also nord4 uses tfa98xx too",
+      "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
