@@ -50,6 +50,24 @@
       "message": "Can you also add these conditionally?",
       "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41b2c95e_48d79c7e",
+        "filename": "Android.bp",
+        "patchSetId": 4
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 30975
+      },
+      "writtenOn": "2026-11-22T18:20:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d4af6fe1_b954f131",
+      "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
