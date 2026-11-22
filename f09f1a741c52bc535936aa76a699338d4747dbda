@@ -33,6 +33,23 @@
       "message": "also nord4 uses tfa98xx too",
       "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4af6fe1_b954f131",
+        "filename": "Android.bp",
+        "patchSetId": 4
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-11-22T18:00:19Z",
+      "side": 1,
+      "message": "Can you also add these conditionally?",
+      "revId": "f09f1a741c52bc535936aa76a699338d4747dbda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
