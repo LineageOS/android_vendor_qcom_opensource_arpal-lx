@@ -132,6 +132,7 @@ private:
                           int size, int dir);
     char* getMixerVoiceStream(Stream *s, int dir);
     uint32_t getMIID(const char *backendName, uint32_t tagId, uint32_t *miid) override;
+    int32_t getFrontEndId(uint32_t ldir) override;
     struct mixer_ctl* getFEMixerCtl(const char *controlName, int *device, pal_stream_direction_t dir) override;
     int setSidetone(int deviceId, Stream * s, bool enable);
     int setHWSidetone(Stream * s, bool enable);

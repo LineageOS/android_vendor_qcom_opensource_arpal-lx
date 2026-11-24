@@ -1999,6 +1999,16 @@ struct mixer_ctl* SessionAlsaCompress::getFEMixerCtl(const char *controlName, in
     return ctl;
 }
 
+int32_t SessionAlsaCompress::getFrontEndId(uint32_t ldir __unused)
+{
+    int32_t device = -EINVAL;
+
+    if (compressDevIds.size())
+        device = compressDevIds.at(0);
+
+    return device;
+}
+
 uint32_t SessionAlsaCompress::getMIID(const char *backendName, uint32_t tagId, uint32_t *miid)
 {
     int status = 0;

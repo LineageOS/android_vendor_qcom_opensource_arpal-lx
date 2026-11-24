@@ -31,6 +31,9 @@
 #include "Speaker.h"
 #include "ResourceManager.h"
 #include "SpeakerProtection.h"
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+#include "OplusSpeakerProtection.h"
+#endif
 #include "Device.h"
 #include "kvh2xml.h"
 
@@ -47,7 +50,11 @@ std::shared_ptr<Device> Speaker::getInstance(struct pal_device *device,
 {
     if (!obj) {
         if (ResourceManager::isSpeakerProtectionEnabled) {
+#ifdef PAL_OPLUS_SPEAKER_PROTECTION
+            std::shared_ptr<Device> sp(new OplusSpeakerProtection(device, Rm));
+#else
             std::shared_ptr<Device> sp(new SpeakerProtection(device, Rm));
+#endif
             obj = sp;
         }
         else {

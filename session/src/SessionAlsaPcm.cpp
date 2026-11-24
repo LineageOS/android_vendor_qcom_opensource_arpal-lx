@@ -386,6 +386,45 @@ struct mixer_ctl* SessionAlsaPcm::getFEMixerCtl(const char *controlName, int *de
     return ctl;
 }
 
+int32_t SessionAlsaPcm::getFrontEndId(uint32_t ldir)
+{
+    int32_t status = 0;
+    int32_t device = -EINVAL;
+    struct pal_stream_attributes sAttr = {};
+
+    if (!streamHandle) {
+        PAL_ERR(LOG_TAG, "Session handle not found");
+        goto exit;
+    }
+    status = streamHandle->getStreamAttributes(&sAttr);
+    if (0 != status) {
+        PAL_ERR(LOG_TAG, "getStreamAttributes Failed \n");
+        goto exit;
+    }
+
+    switch(sAttr.direction) {
+    case (PAL_AUDIO_INPUT | PAL_AUDIO_OUTPUT):
+        switch(ldir) {
+        case RX_HOSTLESS:
+            if (pcmDevRxIds.size())
+                device = pcmDevRxIds.at(0);
+            break;
+        case TX_HOSTLESS:
+            if (pcmDevTxIds.size())
+                device = pcmDevTxIds.at(0);
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        if (pcmDevIds.size())
+            device = pcmDevIds.at(0);
+    }
+exit:
+    return device;
+}
+
 uint32_t SessionAlsaPcm::getMIID(const char *backendName, uint32_t tagId, uint32_t *miid)
 {
     int status = 0;
